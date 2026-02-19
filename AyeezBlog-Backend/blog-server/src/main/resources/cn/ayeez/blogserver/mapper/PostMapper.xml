@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.PostMapper">
+
+    <select id="pages" resultType="cn.ayeez.blogpojo.entity.Post">
+        SELECT
+        id,
+        title,
+        cover,
+        create_time as createTime,
+        update_time as updateTime
+        FROM blog_post
+        <where>
+            <if test="title != null and title != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="begin != null">
+                AND create_time >= #{begin}
+            </if>
+            <if test="end != null">
+                AND create_time <![CDATA[ <= ]]> #{end}
+            </if>
+        </where>
+        ORDER BY
+        <choose>
+            <when test="orderBy != null and orderBy != ''">
+                ${orderBy}
+            </when>
+            <otherwise>
+                create_time
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="orderType != null and orderType.toLowerCase() == 'asc'">
+                ASC
+            </when>
+            <otherwise>
+                DESC
+            </otherwise>
+        </choose>
+    </select>
+</mapper>

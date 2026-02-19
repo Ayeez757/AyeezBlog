@@ -1,0 +1,41 @@
+#配置数据库的连接信息
+spring:
+  application:
+    name: blog-server
+  #数据库的链接信息
+  datasource:
+    url: jdbc:mysql://localhost:3306/ayeezblog
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 1234
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+#mybatis的相关配置
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #开启驼峰命名映射
+    map-underscore-to-camel-case: true
+  # 添加Mapper位置配置
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: cn.ayeez.blogpojo.entity
+
+# PageHelper分页配置
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: pageNum=pageNum;pageSize=pageSize;
+
+# 服务器端口配置
+server:
+  port: 8080
+
+aliyun:
+  oss:
+    endpoint: https://oss-cn-beijing.aliyuncs.com
+    bucketName: javaweb-ayeez
+    region: cn-beijing

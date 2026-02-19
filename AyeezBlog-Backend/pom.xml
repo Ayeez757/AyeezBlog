@@ -28,6 +28,7 @@
         <module>blog-common</module>
         <module>blog-pojo</module>
         <module>blog-server</module>
+
     </modules>
 
     <properties>
@@ -48,6 +49,8 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope> <!-- provided 更合适 -->
         </dependency>
+
+
     </dependencies>
 
     <build>

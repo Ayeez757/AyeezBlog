@@ -1,36 +1,74 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+<!-- blog-server/pom.xml -->
+<project>
     <modelVersion>4.0.0</modelVersion>
 
-    <!--    继承父工程-->
+    <!-- 继承父工程 -->
     <parent>
         <groupId>cn.ayeez</groupId>
         <artifactId>AyeezBlog-Backend</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <groupId>cn.ayeez</groupId>
 
     <artifactId>blog-server</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>blog-server</name>
-    <description>server for blog</description>
 
     <dependencies>
-
-        <!-- 其他 server 需要的依赖 -->
+        <!-- Web 依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- 依赖其他模块 -->
+        <dependency>
+            <groupId>cn.ayeez</groupId>
+            <artifactId>blog-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>cn.ayeez</groupId>-->
+<!--            <artifactId>blog-controller</artifactId>-->
+<!--            <version>0.0.1-SNAPSHOT</version>-->
+<!--        </dependency>-->
+        <dependency>
+            <artifactId>blog-pojo</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <groupId>cn.ayeez</groupId>
+        </dependency>
+        <!-- MySQL驱动 -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+        <!-- MyBatis -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
+        <!-- 数据库相关依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <!--分页插件PageHelper-->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version>1.4.6</version>
+        </dependency>
+
     </dependencies>
 
-
     <build>
-
+        <plugins>
+            <!--  打包插件 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
 </project>
