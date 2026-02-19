@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 Spring Boot 官方父 POM -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>cn.ayeez</groupId>
+    <artifactId>AyeezBlog-Backend</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>AyeezBlog-Backend</name>
+    <description>Parent POM for Ayeez Blog</description>
+
+    <!-- 关键：声明为父/聚合工程 -->
+    <packaging>pom</packaging>
+
+    <!-- 聚合子模块 -->
+    <modules>
+        <module>blog-common</module>
+        <module>blog-pojo</module>
+        <module>blog-server</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <!-- 统一管理依赖版本（子模块可省略版本号） -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- 如果有第三方库需要统一版本，放这里 -->
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- 公共依赖（所有子模块都会继承） -->
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope> <!-- provided 更合适 -->
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- 统一插件配置 -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
