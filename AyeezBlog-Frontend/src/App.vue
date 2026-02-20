@@ -7,10 +7,10 @@ import Header from './components/header.vue';
 <template>
   <header>
       <Header />
-  </header>
-
-  <!-- <view>hello world</view> -->
-
+      
+    </header>
+    <!-- <view style="height: 68px;"><br></view> -->
+    <router-view />
 
 
 </template>

@@ -16,8 +16,7 @@
         <nav class="header-nav">
             <ul>
                 <li v-for="(item, index) in navItems" :key="index" class="nav-item">
-                    <a :href="`#${item.section}`" @click="navigate(item.section)">{{ item.name }}</a>
-                    
+                    <a @click.prevent="navigate(item.section)" href="#">{{ item.name }}</a>
                     <div class="fluorescent-bar"></div>
                 </li>
             </ul>
@@ -35,7 +34,7 @@ export default {
         return {
             // 把导航项提出来
             navItems: [
-                { name: "首页", section: "home" },
+                { name: "首页", section: "" },
                 { name: "关于", section: "about" },
                 { name: "归档", section: "archive" },
                 { name: "友链", section: "links" },
@@ -52,7 +51,7 @@ export default {
             this.animateTitle(); // 执行标题动画
             this.animateNavItems(); // 执行导航项动画
         });
-        
+
     },
     methods: {
         animateTitle() {
@@ -82,31 +81,31 @@ export default {
             });
         },
         animateNavItems() {
-      this.$nextTick(() => {
-        const navItems = document.querySelectorAll(".nav-item");
-        
-        // 使用保守的延迟时间确保所有项都能显示
-        navItems.forEach((item, index) => {
-          // 先重置样式确保正确初始状态
-          item.style.opacity = "0";
-          item.style.transform = "translateX(100%)";
-          item.style.position = "relative";
-          
-          const delay = index * 200 + 400; // 每200ms一个间隔
-          
-          setTimeout(() => {
-            item.style.transition = "all 0.6s ease-out";
-            item.style.transform = "translateX(0)";
-            item.style.opacity = "1";
-          }, delay);
-        });
-      });
-    },
+            this.$nextTick(() => {
+                const navItems = document.querySelectorAll(".nav-item");
+
+                // 使用保守的延迟时间确保所有项都能显示
+                navItems.forEach((item, index) => {
+                    // 先重置样式确保正确初始状态
+                    item.style.opacity = "0";
+                    item.style.transform = "translateX(100%)";
+                    item.style.position = "relative";
+
+                    const delay = index * 200 + 400; // 每200ms一个间隔
+
+                    setTimeout(() => {
+                        item.style.transition = "all 0.6s ease-out";
+                        item.style.transform = "translateX(0)";
+                        item.style.opacity = "1";
+                    }, delay);
+                });
+            });
+        },
         goHome() {
             this.$router.push("/");
         },
         navigate(section) {
-            this.$router.push(`/#${section}`);
+            this.$router.push(`/${section}`);
         }
     }
 };
@@ -123,7 +122,7 @@ export default {
     /* 渐变颜色 */
     border-radius: 2px;
     /* 圆角效果 */
-    box-shadow: 0 0 10px #6bff7a, 0 0 20px #00ff80, 0 0 30px #6bff7a;
+    box-shadow: 5px 0px 10px #6bff7a, 15px 0px 20px #00ff80, 25px 0px 30px #6bff7a;
     /* box-shadow: 5px 0px 10px #6bff7a, 15px 0px 20px #00ff80, 25px 0px 30px #6bff7a; */
     /* 发光效果 */
     animation: glow-pulse 2s infinite alternate;
@@ -149,7 +148,7 @@ export default {
     justify-content: space-between;
     align-items: center;
     padding: 5px 40px;
-    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.788);
     /* 半透明黑色背景 */
     color: rgba(235, 235, 235, 0.866);
     position: fixed;
@@ -233,7 +232,7 @@ export default {
     width: 100%;
     height: 0.5px;
     /* 横线高度 */
-    background: linear-gradient(90deg, #06cc1ab8, #25fc90a2, #06cc1aa6);
+    background: linear-gradient(90deg, #04650db8, #25fc90a2, #024509a6);
     /* 渐变绿色 */
     /* box-shadow: 0 0 5px #06cc1a, 0 0 10px #25fc91; 发光效果 */
     z-index: 1001;
@@ -243,16 +242,18 @@ export default {
 /* 导航项低下荧光条探照灯 */
 /* 导航项容器样式 */
 .nav-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  opacity: 0; /* 初始隐藏 */
-  transform: translateX(100%); /* 初始向右偏移 */
-  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  /* 确保有足够的空间显示 */
-  /* min-width: 60px; */
-  overflow: visible;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    /* 初始隐藏 */
+    transform: translateX(100%);
+    /* 初始向右偏移 */
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* 确保有足够的空间显示 */
+    /* min-width: 60px; */
+    overflow: visible;
 }
 
 /* 荧光条样式 */

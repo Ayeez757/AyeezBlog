@@ -1,8 +1,27 @@
 body {
-  /* background-image: url('https://blog.ayeez.cn/imgs/bg/p7.jpg'); 替换为你自己的图片路径 */
-  background-color: rgb(18, 18, 18);
-  background-size: cover; /* 让背景图覆盖整个页面 */
-  background-position: center; /* 让背景图居中显示 */
-  background-repeat: no-repeat; /* 防止背景图重复 */
-  background-attachment: fixed; /* 让背景图固定，不随滚动条移动 */
+  background-image: url('https://qiniu.ayeez.cn/20260220211049919.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow-y: scroll; /* 强制显示垂直滚动条 */
+}
+
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+  /* border-radius: 10px; */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e211e;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #646464;
 }
