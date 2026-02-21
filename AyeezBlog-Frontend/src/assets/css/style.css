@@ -5,6 +5,7 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   overflow-y: scroll; /* 强制显示垂直滚动条 */
+  color:white;
 }
 
 /* 自定义滚动条样式 */

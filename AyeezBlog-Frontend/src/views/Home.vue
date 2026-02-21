@@ -1,16 +1,32 @@
 <template>
   <div class="home">
+
+    <!-- 左上角搓的拐角线 -->
+    <div class="left-top-line"></div>
+    <div class="left-top-line2"></div>
+    <div class="left-top-line3"></div>
+    <div class="left-top-line4"></div>
+    <div class="left-top-line5"></div>
+
+
+
+
     <!-- 左侧标语 -->
     <div class="welcome-banner">
       <div class="line1" ref="line1"></div>
       <div class="line2" ref="line2"></div>
+
     </div>
 
-<div class="content">
-  <p class="fade-in-text">这里是阿叶 Ayeez Blog 的博客。</p>
-  <p class="fade-in-text">很高兴与你相遇！</p>
-  <p class="fade-in-text">这里会分享技术与生活~</p>
-</div>
+    <div class="content">
+      <p class="fade-in-text">这里是阿叶 Ayeez Blog 的博客。</p>
+      <p class="fade-in-text">很高兴与你相遇！</p>
+      <p class="fade-in-text">这里会分享技术与生活~</p>
+      <div class="left-bottom-line6"></div>
+    </div>
+
+    <div class="blank" style="height: 60px;"></div>
+
 
 
 
@@ -22,34 +38,128 @@
     <!-- 向下箭头 -->
     <div class="arrow-down"></div>
   </div>
+
+  <!-- 新增的横向卡片 -->
+  <div class="card-container">
+    <div class="card">
+      <img id="home-card-avatar" src="https://blog.ayeez.cn/imgs/photo.jpg" alt="头像">
+      <div class="card-content">
+        <text style="font-size: 20px;font-weight: 1000;padding: 5px;">公告！</text>
+        <text>这是新博客，仍然在开发中~</text>
+        <text>旧站：https://blog.ayeez.cn （仍在使用中）</text>
+        <text>qq闲聊交流群：421300955</text>
+        <!-- 圆形图标链接 -->
+        <div class="social-icons">
+          <a href="https://github.com/ayeez757/" target="_blank" class="icon github">
+            <i class="fab fa-github"></i>
+          </a>
+          <a href="https://space.bilibili.com/499974079" target="_blank" class="icon bilibili">
+            <i class="fab fa-bilibili"></i> <!-- 自定义图标或用其他替代 -->
+          </a>
+          <a href="https://v.douyin.com/GGeliQdHOQ0/" target="_blank" class="icon douyin">
+            <i class="fab fa-tiktok"></i> <!-- 抖音暂无官方图标，可用 TikTok 替代 -->
+          </a>
+          <a href="mailto:3406608593@qq.com" class="icon email">
+            <i class="fas fa-envelope"></i>
+          </a>
+          <a href="https://qiniu.ayeez.cn/20260221221801914.png" target="_blank" class="icon qq">
+            <i class="fab fa-qq"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+<!-- 文章卡片展示区域 -->
+    <div class="posts-container">
+      <div v-for="post in posts" :key="post.id" class="post-card">
+        <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
+        <div class="post-info">
+          <h3 class="post-title">{{ post.title }}</h3>
+          <p class="post-date">更新于 {{ formatDate(post.updateTime) }}</p>
+          <p class="post-description">{{ truncateContent(post.content) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分页控件 -->
+    <div class="pagination">
+      <button @click="prevPage" :disabled="currentPage === 1">上一页</button>
+      <span>{{ currentPage }} / {{ totalPages }}</span>
+      <button @click="nextPage" :disabled="currentPage === totalPages">下一页</button>
+    </div>
+
+  </div>
+
+
 </template>
 
 <script>
+import { fetchPosts } from '@/api'; // 引入 API 方法
+
 export default {
   name: 'Home',
-  mounted() {
-    console.log('Component mounted'); // 调试日志
+  data() {
+    return {
+      posts: [],
+      currentPage: 1,
+      pageSize: 10,
+      total: 0,
+      defaultCover: 'https://blog.ayeez.cn/imgs/bg/bg.jpg'
+    };
+  },
+  computed: {
+    totalPages() {
+      return Math.ceil(this.total / this.pageSize);
+    }
+  },
+  async mounted() {
+    await this.loadPosts(); // 加载文章数据
     this.animateText();
   },
   methods: {
+    async loadPosts() {
+      try {
+        const response = await fetchPosts(this.currentPage, this.pageSize);
+        this.posts = response.data.rows; // 文章列表
+        this.total = response.data.total; // 总条数
+      } catch (error) {
+        console.error('加载文章失败:', error);
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        this.loadPosts();
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+        this.loadPosts();
+      }
+    },
+    formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('zh-CN');
+    },
+    truncateContent(content) {
+      if (!content) return '暂无描述';
+      return content.length > 100 ? content.substring(0, 100) + '...' : content;
+    },
     animateText() {
       const line1Text = 'WELCOME\u00A0TO';
       const line2Text = 'AYEEZ BLOG！';
 
-      // 检查 DOM 元素是否存在
       if (!this.$refs.line1 || !this.$refs.line2) {
         console.error('DOM elements not found');
         return;
       }
 
-      // 处理第一行文字（逐字动画）
       const line1HTML = this.wrapCharacters(line1Text);
       this.$refs.line1.innerHTML = line1HTML;
 
-      // 处理第二行文字（整体渐变 + 弹性滑入动画）
       this.$refs.line2.textContent = line2Text;
 
-      // 触发动画
       this.triggerAnimation(this.$refs.line1);
       this.triggerAnimation(this.$refs.line2);
     },
@@ -68,6 +178,7 @@ export default {
   }
 };
 </script>
+
 
 <style>
 /* 引入 Bebas Neue 字体 */
@@ -160,7 +271,7 @@ export default {
 /* 引导线和箭头的容器 */
 .arrow-container {
   position: absolute;
-  bottom: 30px;
+  bottom: 60px;
   /* 距离底部的距离 */
   left: 50%;
   transform: translateX(-50%);
@@ -230,5 +341,244 @@ export default {
   to {
     opacity: 1;
   }
+}
+
+.left-top-line {
+  position: absolute;
+  top: 80px;
+  left: 70px;
+  width: 130px;
+  height: 10px;
+  background-color: rgb(111, 155, 119);
+}
+
+.left-top-line2 {
+  position: absolute;
+  top: 90px;
+  left: 70px;
+  width: 10px;
+  height: 10px;
+  background-color: rgb(111, 155, 119);
+}
+
+.left-top-line3 {
+  position: absolute;
+  top: 110px;
+  left: 70px;
+  width: 10px;
+  height: 5px;
+  background-color: rgb(111, 155, 119);
+}
+
+.left-top-line4 {
+  position: absolute;
+  top: 80px;
+  left: 210px;
+  width: 20px;
+  height: 10px;
+  background-color: rgb(111, 155, 119);
+}
+
+.left-top-line5 {
+  position: absolute;
+  top: 80px;
+  left: 250px;
+  width: 5px;
+  height: 10px;
+  background-color: rgb(111, 155, 119);
+}
+
+.left-bottom-line6 {
+  position: absolute;
+  left: 70px;
+  width: 350px;
+  height: 7px;
+  background-color: rgb(80, 105, 84);
+}
+
+/* 卡片容器样式 */
+.card-container {
+  flex-direction: column;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  /* 水平居中 */
+  margin-top: 95vh;
+  /*露出来一点在第一面*/
+}
+
+.card {
+  display: flex;
+  gap: 20px;
+  position: relative;
+  /* 为伪元素定位做准备 */
+  width: 60%;
+  max-width: 900px;
+  background: linear-gradient(135deg,
+      rgba(130, 183, 128, 0.3),
+      rgba(33, 184, 66, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  /* padding: 20px; */
+  /* margin:20px; */
+  text-align: center;
+  color: white;
+  box-shadow:
+    inset 0 0 10px rgba(255, 255, 255, 0.2),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.1),
+      transparent);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+#home-card-avatar {
+  width: 170px;
+  height: 170px;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  margin:20px;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  text-align: left;
+}
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #919d8bcb;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.icon:hover {
+  transform: scale(1.1);
+  background-color: #555;
+}
+
+/* 特定平台的颜色 */
+.github:hover {
+  background-color: #181818;
+}
+
+.bilibili:hover {
+  background-color: #FB7299;
+}
+
+.douyin:hover {
+  background-color: #181818;
+}
+
+.email:hover {
+  background-color: #b2b206;
+}
+
+.qq:hover {
+  background-color: #12b7f5;
+}
+
+.posts-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 每行三个卡片 */
+  gap: 20px; /* 卡片之间的间距 */
+  padding: 20px 0px;
+  width: 60%;
+    max-width: 900px;
+  box-sizing: border-box; /* 包含 padding 和 border 在内计算宽度 */
+}
+
+.post-card {
+    background: linear-gradient(135deg,
+      rgba(108, 171, 106, 0.3),
+      rgba(42, 184, 73, 0.6));
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-5px);
+}
+
+.post-cover {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.post-info {
+  padding: 15px;
+}
+
+.post-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.post-date {
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 10px;
+}
+
+.post-description {
+  font-size: 14px;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+/* 分页控件样式 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.pagination button {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  /* transition: background 0.3s ease; */
+}
+
+.pagination button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
