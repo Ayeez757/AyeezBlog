@@ -1,4 +1,8 @@
 <template>
+<!-- 加载动画 -->
+    <LoadingSpinner v-if="isLoading" />
+
+
   <div class="home">
 
     <!-- 左上角搓的拐角线 -->
@@ -44,7 +48,7 @@
     <div class="card">
       <img id="home-card-avatar" src="https://blog.ayeez.cn/imgs/photo.jpg" alt="头像">
       <div class="card-content">
-        <text style="font-size: 20px;font-weight: 1000;padding: 5px;">公告！</text>
+        <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
         <text>这是新博客，仍然在开发中~</text>
         <text>旧站：https://blog.ayeez.cn （仍在使用中）</text>
         <text>qq闲聊交流群：421300955</text>
@@ -70,16 +74,23 @@
     </div>
     
 <!-- 文章卡片展示区域 -->
-    <div class="posts-container">
-      <div v-for="post in posts" :key="post.id" class="post-card">
-        <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
-        <div class="post-info">
-          <h3 class="post-title">{{ post.title }}</h3>
-          <p class="post-date">更新于 {{ formatDate(post.updateTime) }}</p>
-          <p class="post-description">{{ truncateContent(post.content) }}</p>
-        </div>
-      </div>
+<div class="posts-container">
+  <div 
+    v-for="post in posts" 
+    :key="post.id" 
+    class="post-card"
+    :class="{ 'scan-active': hoveredCardId === post.id }"
+    @mouseenter="hoveredCardId = post.id"
+    @mouseleave="hoveredCardId = null"
+  >
+    <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
+    <div class="post-info">
+      <h3 class="post-title" style="margin: 0;">{{ post.title }}</h3>
+      <p class="post-description">{{ truncateContent(post.description) }}</p>
+      <p class="post-date">更新于 {{ formatDate(post.updateTime) }}</p>
     </div>
+  </div>
+</div>
 
     <!-- 分页控件 -->
     <div class="pagination">
@@ -104,7 +115,8 @@ export default {
       currentPage: 1,
       pageSize: 10,
       total: 0,
-      defaultCover: 'https://blog.ayeez.cn/imgs/bg/bg.jpg'
+      defaultCover: 'https://blog.ayeez.cn/imgs/bg/bg.jpg',
+      hoveredCardId: null // 记录当前悬停的卡片 ID
     };
   },
   computed: {
@@ -142,9 +154,9 @@ export default {
       const date = new Date(dateString);
       return date.toLocaleDateString('zh-CN');
     },
-    truncateContent(content) {
-      if (!content) return '暂无描述';
-      return content.length > 100 ? content.substring(0, 100) + '...' : content;
+    truncateContent(description) {
+      if (!description) return '暂无描述';
+      return description.length > 100 ? description.substring(0, 100) + '...' : description;
     },
     animateText() {
       const line1Text = 'WELCOME\u00A0TO';
@@ -412,8 +424,8 @@ export default {
   gap: 20px;
   position: relative;
   /* 为伪元素定位做准备 */
-  width: 60%;
-  max-width: 900px;
+  width: 70%;
+  max-width: 1000px;
   background: linear-gradient(135deg,
       rgba(130, 183, 128, 0.3),
       rgba(33, 184, 66, 0.6));
@@ -506,29 +518,70 @@ export default {
   grid-template-columns: repeat(3, 1fr); /* 每行三个卡片 */
   gap: 20px; /* 卡片之间的间距 */
   padding: 20px 0px;
-  width: 60%;
-    max-width: 900px;
+  width: 70%;
+    max-width: 1000px;
   box-sizing: border-box; /* 包含 padding 和 border 在内计算宽度 */
 }
 
 .post-card {
-    background: linear-gradient(135deg,
-      rgba(108, 171, 106, 0.3),
-      rgba(42, 184, 73, 0.6));
+  background: linear-gradient(135deg,
+    rgba(108, 171, 106, 0.3),
+    rgba(42, 184, 73, 0.6));
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, border 0.3s ease; /* 添加边框过渡 */
+    border: 2px solid #ffffff00; 
+  position: relative; /* 为伪元素定位做准备 */
 }
 
+/* 鼠标悬停时的样式 */
 .post-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-5px); /* 卡片上浮 */
+  border: 2px solid #00b828; /* 绿色边框 */
+  box-shadow: 0 6px 15px rgba(0, 184, 40, 0.4); /* 增强阴影效果 */
 }
 
+/* 扫描线动画 */
+.post-card::before {
+  content: '';
+  position: absolute;
+  top: -100%; /* 初始位置在卡片上方 */
+  left: 0;
+  width: 100%;
+  height: 5px; /* 扫描线高度 */
+  background: linear-gradient(to bottom, transparent, #00b828, transparent); /* 绿色渐变 */
+  z-index: 10; /* 确保扫描线在内容之上 */
+  transition: none; /* 禁用默认过渡 */
+}
+
+/* 仅在当前悬停卡片上触发动画 */
+.post-card.scan-active::before {
+  animation: scanLine 1s ease-in-out; /* 触发扫描动画 */
+}
+
+/* 扫描线关键帧动画 */
+@keyframes scanLine {
+  0% {
+    top: 0%; /* 起始位置 */
+  }
+  100% {
+    top: 100%; /* 结束位置 */
+  }
+}
+/* 默认状态：图片为黑白 */
 .post-cover {
   width: 100%;
   height: 180px;
   object-fit: cover;
+  filter: grayscale(100%); /* 黑白效果 */
+  transition: filter 0.3s ease; /* 添加过渡动画 */
+}
+
+/* 鼠标悬停时：恢复彩色 */
+.post-card:hover .post-cover {
+  filter: grayscale(0%); /* 移除黑白效果 */
+  
 }
 
 .post-info {
@@ -543,15 +596,16 @@ export default {
 }
 
 .post-date {
-  font-size: 14px;
+  font-size: 12px;
   color: #ccc;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
+  text-align: right;
 }
 
 .post-description {
-  font-size: 14px;
+  font-size: 13px;
   color: #aaa;
-  line-height: 1.5;
+  line-height: 1.3;
 }
 
 /* 分页控件样式 */

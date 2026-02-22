@@ -27,6 +27,14 @@ export default {
     return {
       logs: [
                 {
+          date: '2026-02-22',
+          version: 'v0.4.0',
+          changes: [
+            '后端：分页查询增加了文章描述',
+            '前端：调整了文章卡片样式',
+          ]
+        },
+        {
           date: '2026-02-21',
           version: 'v0.3.0',
           changes: [

@@ -45,4 +45,10 @@ public class Post {
      * 数据库字段：update_time DATETIME(3)
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 文章描述
+     * 数据库字段：description VARCHAR(255)
+     */
+    private String description;
 }

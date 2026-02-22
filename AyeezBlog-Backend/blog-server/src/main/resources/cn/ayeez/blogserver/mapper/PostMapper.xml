@@ -9,6 +9,7 @@
         id,
         title,
         cover,
+        description,
         create_time as createTime,
         update_time as updateTime
         FROM blog_post
