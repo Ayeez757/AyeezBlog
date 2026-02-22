@@ -1,6 +1,7 @@
 <template>
-<!-- 加载动画 -->
-    <LoadingSpinner v-if="isLoading" />
+ <!-- 加载动画 -->
+    <LoadingSpinner v-if="isLoading" @animation-finished="onAnimationFinished" />
+
 
 
   <div class="home">
@@ -72,25 +73,19 @@
         </div>
       </div>
     </div>
-    
-<!-- 文章卡片展示区域 -->
-<div class="posts-container">
-  <div 
-    v-for="post in posts" 
-    :key="post.id" 
-    class="post-card"
-    :class="{ 'scan-active': hoveredCardId === post.id }"
-    @mouseenter="hoveredCardId = post.id"
-    @mouseleave="hoveredCardId = null"
-  >
-    <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
-    <div class="post-info">
-      <h3 class="post-title" style="margin: 0;">{{ post.title }}</h3>
-      <p class="post-description">{{ truncateContent(post.description) }}</p>
-      <p class="post-date">更新于 {{ formatDate(post.updateTime) }}</p>
+
+    <!-- 文章卡片展示区域 -->
+    <div class="posts-container">
+      <div v-for="post in posts" :key="post.id" class="post-card" :class="{ 'scan-active': hoveredCardId === post.id }"
+        @mouseenter="hoveredCardId = post.id" @mouseleave="hoveredCardId = null">
+        <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
+        <div class="post-info">
+          <h3 class="post-title" style="margin: 0;">{{ post.title }}</h3>
+          <p class="post-description">{{ truncateContent(post.description) }}</p>
+          <p class="post-date">更新于 {{ formatDate(post.updateTime) }}</p>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <!-- 分页控件 -->
     <div class="pagination">
@@ -106,29 +101,50 @@
 
 <script>
 import { fetchPosts } from '@/api'; // 引入 API 方法
+import LoadingSpinner from '@/components/LoadingSpinner.vue'; // 引入加载动画组件
 
 export default {
   name: 'Home',
+  components: {
+    LoadingSpinner // 注册加载动画组件
+  },
   data() {
     return {
+      // 文章数据
       posts: [],
       currentPage: 1,
       pageSize: 10,
       total: 0,
       defaultCover: 'https://blog.ayeez.cn/imgs/bg/bg.jpg',
-      hoveredCardId: null // 记录当前悬停的卡片 ID
+
+      // 悬停卡片 ID
+      hoveredCardId: null,
+
+      // 加载状态
+      isLoading: true
     };
   },
   computed: {
+    // 计算总页数
     totalPages() {
       return Math.ceil(this.total / this.pageSize);
     }
   },
   async mounted() {
-    await this.loadPosts(); // 加载文章数据
-    this.animateText();
+    try {
+      // 等待所有资源加载完成
+      await Promise.all([
+        this.preloadFonts(), // 预加载字体
+        this.preloadImages(), // 预加载图片
+        this.loadPosts() // 加载文章数据//在犹豫要不要放下面
+      ]);
+    } finally {
+      this.isLoading = false; // 隐藏加载动画
+      this.animateText(); // 触发文本动画
+    }
   },
   methods: {
+    // 加载文章数据
     async loadPosts() {
       try {
         const response = await fetchPosts(this.currentPage, this.pageSize);
@@ -138,26 +154,36 @@ export default {
         console.error('加载文章失败:', error);
       }
     },
+
+    // 上一页
     prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--;
         this.loadPosts();
       }
     },
+
+    // 下一页
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
         this.loadPosts();
       }
     },
+
+    // 格式化日期
     formatDate(dateString) {
       const date = new Date(dateString);
       return date.toLocaleDateString('zh-CN');
     },
+
+    // 截取描述内容
     truncateContent(description) {
       if (!description) return '暂无描述';
       return description.length > 100 ? description.substring(0, 100) + '...' : description;
     },
+
+    // 触发文本动画
     animateText() {
       const line1Text = 'WELCOME\u00A0TO';
       const line2Text = 'AYEEZ BLOG！';
@@ -175,17 +201,56 @@ export default {
       this.triggerAnimation(this.$refs.line1);
       this.triggerAnimation(this.$refs.line2);
     },
+
+    // 将文本拆分为字符并包装
     wrapCharacters(text) {
       return text
         .split('')
         .map(char => `<span class="char">${char}</span>`)
         .join('');
     },
+
+    // 触发逐字动画
     triggerAnimation(container) {
       const chars = container.querySelectorAll('.char');
       chars.forEach((char, index) => {
         char.style.animationDelay = `${index * 0.1}s`;
       });
+    },
+
+    // 预加载字体
+    preloadFonts() {
+      return new Promise((resolve) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap';
+        link.onload = () => {
+          console.log('字体加载完成');
+          resolve();
+        };
+        document.head.appendChild(link);
+      });
+    },
+
+    // 预加载图片
+    preloadImages() {
+      const images = [
+        'https://blog.ayeez.cn/imgs/photo.jpg',
+        'https://blog.ayeez.cn/imgs/bg/bg.jpg'
+        // 可以添加更多需要预加载的图片
+      ];
+      return Promise.all(
+        images.map((src) => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+              console.log(`图片加载完成: ${src}`);
+              resolve();
+            };
+          });
+        })
+      );
     }
   }
 };
@@ -249,7 +314,7 @@ export default {
   opacity: 0;
   transform: translateX(100%);
   /* 初始位置在右侧 */
-  animation: slideInLeft 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  animation: slideInLeft 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   /* 弹性滑入 */
 }
 
@@ -458,7 +523,7 @@ export default {
   width: 170px;
   height: 170px;
   border: 3px solid rgba(255, 255, 255, 0.5);
-  margin:20px;
+  margin: 20px;
 }
 
 .card-content {
@@ -515,73 +580,94 @@ export default {
 
 .posts-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 每行三个卡片 */
-  gap: 20px; /* 卡片之间的间距 */
+  grid-template-columns: repeat(3, 1fr);
+  /* 每行三个卡片 */
+  gap: 20px;
+  /* 卡片之间的间距 */
   padding: 20px 0px;
   width: 70%;
-    max-width: 1000px;
-  box-sizing: border-box; /* 包含 padding 和 border 在内计算宽度 */
+  max-width: 1000px;
+  box-sizing: border-box;
+  /* 包含 padding 和 border 在内计算宽度 */
 }
 
 .post-card {
   background: linear-gradient(135deg,
-    rgba(108, 171, 106, 0.3),
-    rgba(42, 184, 73, 0.6));
+      rgba(108, 171, 106, 0.3),
+      rgba(42, 184, 73, 0.6));
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, border 0.3s ease; /* 添加边框过渡 */
-    border: 2px solid #ffffff00; 
-  position: relative; /* 为伪元素定位做准备 */
+  transition: transform 0.3s ease, border 0.3s ease;
+  /* 添加边框过渡 */
+  border: 2px solid #ffffff00;
+  position: relative;
+  /* 为伪元素定位做准备 */
 }
 
 /* 鼠标悬停时的样式 */
 .post-card:hover {
-  transform: translateY(-5px); /* 卡片上浮 */
-  border: 2px solid #00b828; /* 绿色边框 */
-  box-shadow: 0 6px 15px rgba(0, 184, 40, 0.4); /* 增强阴影效果 */
+  transform: translateY(-5px);
+  /* 卡片上浮 */
+  border: 2px solid #00b828;
+  /* 绿色边框 */
+  box-shadow: 0 6px 15px rgba(0, 184, 40, 0.4);
+  /* 增强阴影效果 */
 }
 
 /* 扫描线动画 */
 .post-card::before {
   content: '';
   position: absolute;
-  top: -100%; /* 初始位置在卡片上方 */
+  top: -100%;
+  /* 初始位置在卡片上方 */
   left: 0;
   width: 100%;
-  height: 5px; /* 扫描线高度 */
-  background: linear-gradient(to bottom, transparent, #00b828, transparent); /* 绿色渐变 */
-  z-index: 10; /* 确保扫描线在内容之上 */
-  transition: none; /* 禁用默认过渡 */
+  height: 5px;
+  /* 扫描线高度 */
+  background: linear-gradient(to bottom, transparent, #00b828, transparent);
+  /* 绿色渐变 */
+  z-index: 10;
+  /* 确保扫描线在内容之上 */
+  transition: none;
+  /* 禁用默认过渡 */
 }
 
 /* 仅在当前悬停卡片上触发动画 */
 .post-card.scan-active::before {
-  animation: scanLine 1s ease-in-out; /* 触发扫描动画 */
+  animation: scanLine 1s ease-in-out;
+  /* 触发扫描动画 */
 }
 
 /* 扫描线关键帧动画 */
 @keyframes scanLine {
   0% {
-    top: 0%; /* 起始位置 */
+    top: 0%;
+    /* 起始位置 */
   }
+
   100% {
-    top: 100%; /* 结束位置 */
+    top: 100%;
+    /* 结束位置 */
   }
 }
+
 /* 默认状态：图片为黑白 */
 .post-cover {
   width: 100%;
   height: 180px;
   object-fit: cover;
-  filter: grayscale(100%); /* 黑白效果 */
-  transition: filter 0.3s ease; /* 添加过渡动画 */
+  filter: grayscale(100%);
+  /* 黑白效果 */
+  transition: filter 0.3s ease;
+  /* 添加过渡动画 */
 }
 
 /* 鼠标悬停时：恢复彩色 */
 .post-card:hover .post-cover {
-  filter: grayscale(0%); /* 移除黑白效果 */
-  
+  filter: grayscale(0%);
+  /* 移除黑白效果 */
+
 }
 
 .post-info {
