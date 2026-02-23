@@ -6,6 +6,7 @@ import cn.ayeez.blogpojo.dto.request.PostQueryParam;
 import cn.ayeez.blogpojo.dto.response.PageResult;
 import cn.ayeez.blogpojo.entity.Post;
 import cn.ayeez.blogserver.service.postServer.PostServer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author: 阿叶Ayeez
  * 博客文章controller
  */
+@Slf4j
 @RestController
 @RequestMapping("/post")
 public class PostController {
@@ -29,9 +31,19 @@ public class PostController {
      */
     @GetMapping("/list")
     public Result list(PostQueryParam queryParam) {
+        log.info("获取文章列表，参数：{}", queryParam);
         PageResult<Post> result = postServer.listDetail(queryParam);
         return Result.success(result);
     }
 
+    /**
+     * 根据id获取文章
+     */
+    @GetMapping("/get")
+    public Result get(String id) {
+        log.info("获取id为{}的文章",id);
+        Post post = postServer.get(id);
+        return Result.success(post);
+    }
 
 }

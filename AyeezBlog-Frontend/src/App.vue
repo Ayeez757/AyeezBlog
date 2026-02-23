@@ -10,6 +10,7 @@ import Header from './components/header.vue';
       
     </header>
     <!-- <view style="height: 68px;"><br></view> -->
+
     <router-view />
 
 

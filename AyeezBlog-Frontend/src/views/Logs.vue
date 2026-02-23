@@ -27,6 +27,15 @@ export default {
     return {
       logs: [
                 {
+          date: '2026-02-23',
+          version: 'v0.5.0',
+          changes: [
+            '前端：加了文章页面，根据旧博客路径路由文章，并渲染markdown内容（markdown-it）',
+            '前端：修改了文章页面的样式，能够解析markdown中的图片，并调整了图片的样式，解析了代码块并加上了高亮(highlight.js)，解析了frontMatter并展示了标题、标签、分类、描述等信息(front-matter)',
+            '前端：给文章页面加上了目录（toc），并且在文章内容中添加了锚点链接',
+            '后端：给所有接口加上slf4j日志输出',
+          ]
+        },{
           date: '2026-02-22',
           version: 'v0.4.0',
           changes: [

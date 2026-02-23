@@ -11,4 +11,9 @@ public interface PostServer {
      * 包括：文章标题、作者、发布时间、更新时间、分类、标签、阅读数、点赞数、评论数
      */
     public PageResult<Post> listDetail(PostQueryParam queryParam);
+
+    /**
+     * 根据ID获取文章
+     */
+    Post get(String id);
 }

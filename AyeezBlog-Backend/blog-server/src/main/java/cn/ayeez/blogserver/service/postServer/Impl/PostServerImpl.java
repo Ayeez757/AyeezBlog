@@ -36,6 +36,17 @@ public class PostServerImpl implements PostServer {
         // 构造返回结果
         return new PageResult<>(p.getTotal(), p.getResult());
     }
+
+    /**
+     * 根据ID获取文章
+     * @param id
+     * @return
+     */
+    @Override
+    public Post get(String id) {
+        Post post = postMapper.get(id);
+        return post;
+    }
 }
 
 

@@ -42,4 +42,16 @@
             </otherwise>
         </choose>
     </select>
+    <select id="get" resultType="cn.ayeez.blogpojo.entity.Post">
+        SELECT
+        id,
+        title,
+        content,
+        cover,
+        description,
+        create_time as createTime,
+        update_time as updateTime
+        FROM blog_post
+        WHERE id = #{id}
+    </select>
 </mapper>

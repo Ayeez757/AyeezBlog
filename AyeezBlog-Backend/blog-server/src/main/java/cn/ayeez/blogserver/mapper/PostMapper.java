@@ -17,4 +17,9 @@ public interface PostMapper {
      * 分页查询文章
      */
     List<Post> pages(PostQueryParam queryParam);
+
+    /**
+     * 根据ID查询文章
+     */
+    Post get(String id);
 }

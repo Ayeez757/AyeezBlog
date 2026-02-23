@@ -8,6 +8,7 @@ import Links from '@/views/Links.vue';
 import FriendsCircle from '@/views/FriendsCircle.vue';
 import Comments from '@/views/Comments.vue';
 import Logs from '@/views/Logs.vue';
+import PostDetail from '@/views/PostDetail.vue';
 
 
 const routes = [
@@ -18,6 +19,12 @@ const routes = [
   { path: '/fc', name: 'FriendsCircle', component: FriendsCircle },
   { path: '/comments', name: 'Comments', component: Comments },
   { path: '/logs', name: 'Logs', component: Logs },
+  {
+    path: '/posts/:id',
+    name: 'PostDetail',
+    component: PostDetail,
+    props: true // 允许通过 props 接收路由参数
+  }
 
 ];
 

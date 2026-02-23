@@ -1,6 +1,6 @@
 <template>
- <!-- 加载动画 -->
-    <LoadingSpinner v-if="isLoading" @animation-finished="onAnimationFinished" />
+  <!-- 加载动画 -->
+  <LoadingSpinner v-if="isLoading" @animation-finished="onAnimationFinished" />
 
 
 
@@ -51,7 +51,7 @@
       <div class="card-content">
         <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
         <text>这是新博客，仍然在开发中~</text>
-        <text>旧站：https://blog.ayeez.cn （仍在使用中）</text>
+        <text>旧站：<a href="https://blog.ayeez.cn" target="_blank">https://blog.ayeez.cn</a> （仍在使用中）</text>
         <text>qq闲聊交流群：421300955</text>
         <!-- 圆形图标链接 -->
         <div class="social-icons">
@@ -77,7 +77,7 @@
     <!-- 文章卡片展示区域 -->
     <div class="posts-container">
       <div v-for="post in posts" :key="post.id" class="post-card" :class="{ 'scan-active': hoveredCardId === post.id }"
-        @mouseenter="hoveredCardId = post.id" @mouseleave="hoveredCardId = null">
+        @mouseenter="hoveredCardId = post.id" @mouseleave="hoveredCardId = null" @click="goToPost(post.id)">
         <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
         <div class="post-info">
           <h3 class="post-title" style="margin: 0;">{{ post.title }}</h3>
@@ -144,6 +144,11 @@ export default {
     }
   },
   methods: {
+
+    // 跳转到文章详情页
+    goToPost(postId) {
+      this.$router.push({ name: 'PostDetail', params: { id: postId } });
+    },
     // 加载文章数据
     async loadPosts() {
       try {
@@ -686,12 +691,14 @@ export default {
   color: #ccc;
   margin-bottom: 0px;
   text-align: right;
+  margin-top: 3px;
 }
 
 .post-description {
   font-size: 13px;
   color: #aaa;
   line-height: 1.3;
+  margin-bottom: 0;
 }
 
 /* 分页控件样式 */

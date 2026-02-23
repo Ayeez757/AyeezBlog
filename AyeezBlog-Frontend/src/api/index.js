@@ -37,3 +37,8 @@ export const deleteLog = (id) => request('DELETE', `/logs/${id}`);
 // 获取文章列表（支持分页）
 export const fetchPosts = (page = 1, pageSize = 10) =>
   request('GET', `/post/list?page=${page}&pageSize=${pageSize}`);
+
+// 获取单篇文章的 API（调用后端接口）
+export const fetchPostById = (id) => {
+  return request('GET', `/post/get?id=${id}`); // 调用后端接口
+};
