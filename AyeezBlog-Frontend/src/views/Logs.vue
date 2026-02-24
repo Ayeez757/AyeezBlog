@@ -27,6 +27,12 @@ export default {
     return {
       logs: [
                 {
+          date: '2026-02-24',
+          version: 'v0.6.0',
+          changes: [
+            '创建了管理端vue项目'
+          ]
+        },{
           date: '2026-02-23',
           version: 'v0.5.0',
           changes: [
