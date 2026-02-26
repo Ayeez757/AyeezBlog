@@ -27,6 +27,12 @@ export default {
     return {
       logs: [
                 {
+          date: '2026-02-26',
+          version: 'v0.7.0',
+          changes: [
+            '运维：初次将前后端服务以及数据库用docker部署到服务器上，前端用的nginx反向代理，编写了dockerfile文件',
+          ]
+        },{
           date: '2026-02-24',
           version: 'v0.6.0',
           changes: [

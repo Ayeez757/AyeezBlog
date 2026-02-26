@@ -1,13 +1,14 @@
+#TODO部署后要改配置
 #配置数据库的连接信息
 spring:
   application:
     name: blog-server
   #数据库的链接信息
   datasource:
-    url: jdbc:mysql://localhost:3306/ayeezblog
+    url: jdbc:mysql://${hm.db.host}:3306/ayeezblog
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 1234
+    password: ${hm.db.password}
   servlet:
     multipart:
       max-file-size: 10MB

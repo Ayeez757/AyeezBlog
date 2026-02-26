@@ -3,6 +3,7 @@ import axios from 'axios';
 
 // 直接在这里配置后端接口地址
 const BASE_URL = 'http://localhost:8080/'; // 手动修改这里的地址
+// const BASE_URL = 'http://111.228.53.6:8080/'; // 手动修改这里的地址
 
 // 创建 axios 实例
 const apiClient = axios.create({

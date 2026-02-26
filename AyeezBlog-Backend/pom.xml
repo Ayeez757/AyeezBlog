@@ -6,7 +6,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- 继承 Spring Boot 官方父 POM -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -20,7 +19,7 @@
     <name>AyeezBlog-Backend</name>
     <description>Parent POM for Ayeez Blog</description>
 
-    <!-- 关键：声明为父/聚合工程 -->
+    <!-- 声明为父工程 -->
     <packaging>pom</packaging>
 
     <!-- 聚合子模块 -->
