@@ -228,7 +228,7 @@ export default {
       return new Promise((resolve) => {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap';
+        link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue';
         link.onload = () => {
           console.log('字体加载完成');
           resolve();
@@ -264,7 +264,16 @@ export default {
 
 <style>
 /* 引入 Bebas Neue 字体 */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap'); */
+
+/* 声明本地字体 */
+@font-face {
+  font-family: 'Bebas Neue';
+  src: url('@/assets/fonts/BebasNeue-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* 优化加载体验 */
+}
 
 .home {
   position: absolute;
@@ -277,7 +286,7 @@ export default {
 
 /* 左侧标语样式 */
 .welcome-banner {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: 'Bebas Neue', Arial, sans-serif;
   text-align: left;
   color: #fff;
   padding: 100px;

@@ -1,0 +1,40 @@
+name: 部署前端
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'AyeezBlog-Frontend/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: AyeezBlog-Frontend/package-lock.json
+
+      - name: 安装依赖
+        working-directory: ./AyeezBlog-Frontend
+        run: npm ci
+
+      - name: 构建项目
+        working-directory: ./AyeezBlog-Frontend
+        run: npm run build
+
+      - name: 部署到服务器（rsync）
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete
+          path: AyeezBlog-Frontend/dist/
+          remote_path: /var/lib/docker/volumes/html/_data/
+          remote_host: ${{ secrets.SERVER_HOST }}
+          remote_user: ${{ secrets.SERVER_USER }}
+          remote_key: ${{ secrets.SERVER_SSH_KEY }}
