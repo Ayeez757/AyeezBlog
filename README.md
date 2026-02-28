@@ -117,10 +117,10 @@ npm run dev
 ```
 访问 `http://localhost:5174`
 
-%% #### 5. 测试账户
+<!-- #### 5. 测试账户
 - 管理员：`admin@example.com` / `admin123`
 - 普通用户：`user@example.com` / `user123` %%
-%% 
+-->
 ### Docker 部署
 
 项目根目录目前仅包含后端的Dockerfile。
@@ -145,7 +145,7 @@ docker-compose up -d --build
 docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.sql
 ```
 
---- %%
+--- 
 
 ## 配置说明
 
@@ -161,17 +161,17 @@ docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.
 |`aliyun.oss.bucketName`|OSS Bucket 名称|`javaweb-ayeez`|✅|
 |`aliyun.oss.region`|OSS 地域|`cn-beijing`|✅|
 
-%% ### 前端配置 (.env)
+<!-- ### 前端配置 (.env)
 | 变量名                  | 说明                     | 示例值                |
 |-------------------------|--------------------------|-----------------------|
 | `VITE_API_BASE_URL`     | API 基础路径             | `/api`                |
 | `VITE_APP_TITLE`        | 站点标题                 | `我的博客`            |
-| `VITE_APP_ICP`          | 备案号                   | `京ICP备12345678号`   | %%
+| `VITE_APP_ICP`          | 备案号                   | `京ICP备12345678号`   | -->
 
-%% ### Nginx 配置要点
+<!-- ### Nginx 配置要点
 - 反向代理 `/api` 到后端容器（`http://backend:8080`）。
 - 静态文件缓存：对 js、css、图片设置 `expires`。
-- SSL 配置：推荐使用 Let's Encrypt 自动续签。 %%
+- SSL 配置：推荐使用 Let's Encrypt 自动续签。 -->
 
 ---
 
