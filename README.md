@@ -265,12 +265,12 @@ GitHub的commit记录：[Commits · Ayeez757/AyeezBlog](https://github.com/Ayeez
 
 ---
 
-%% ## 许可证
+## 许可证
 
-本项目基于 [MIT 许可证](LICENSE) 开源，这意味着您可以自由使用、修改和分发，但需保留原版权声明。
+本项目基于 [Apache License 2.0 许可证](LICENSE) 开源，这意味着您可以自由使用、修改和分发，但需保留原版权声明。
 
 ---
- %%
+ 
 
 ## 联系方式
 
