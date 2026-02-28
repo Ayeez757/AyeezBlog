@@ -27,6 +27,12 @@ export default {
     return {
       logs: [
                 {
+          date: '2026-02-28',
+          version: 'v0.8.1',
+          changes: [
+            '管理端：修复了不能解析文章日期的问题'
+          ]
+        },{
           date: '2026-02-27',
           version: 'v0.8.0',
           changes: [

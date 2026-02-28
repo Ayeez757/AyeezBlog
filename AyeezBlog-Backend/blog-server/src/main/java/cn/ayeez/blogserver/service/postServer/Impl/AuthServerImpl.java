@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServerImpl implements AuthServer {
 
-    //TODO 登录写死的，待完成（不急，反正不打算部署服务端上线）
+    //TODO 登录要重写或者其他方法，因为后端是部署上线的，接口开放不行
     @Override
     public LoginInfo login(String username, String password) {
         if(username.equals("Ayeez")&&password.equals("123456")){
@@ -15,5 +15,6 @@ public class AuthServerImpl implements AuthServer {
         }else{
             return null;
         }
+
     }
 }

@@ -28,6 +28,24 @@
         <el-form-item label="短链接">
           <el-input v-model="form.abbrlink" placeholder="请输入短链接（abbrlink）" />
         </el-form-item>
+        <el-form-item label="创建时间">
+  <el-date-picker
+    v-model="form.date"
+    type="date"
+    placeholder="请选择创建时间"
+    format="YYYY-MM-DD"
+    value-format="YYYY-MM-DD"
+  />
+</el-form-item>
+<el-form-item label="更新时间">
+  <el-date-picker
+    v-model="form.updated"
+    type="date"
+    placeholder="请选择更新时间"
+    format="YYYY-MM-DD"
+    value-format="YYYY-MM-DD"
+  />
+</el-form-item>
       </el-form>
     </div>
 
@@ -58,6 +76,7 @@ import MarkdownIt from 'markdown-it';
 import fm from 'front-matter';
 
 export default {
+  
   data() {
     return {
       form: {
@@ -66,7 +85,9 @@ export default {
         category: '',
         description: '',
         cover: '',
-        abbrlink: ''
+        abbrlink: '',
+        date: '', // 创建时间
+        updated: '' // 更新时间
       },
       markdownContent: '',
       renderedHtml: ''
@@ -76,23 +97,47 @@ export default {
     this.md = new MarkdownIt();
   },
   methods: {
-    parseFrontMatter() {
-      try {
-        const { attributes, body } = fm(this.markdownContent);
+     parseFrontMatter() {
+    try {
+      const { attributes, body } = fm(this.markdownContent);
 
-        this.form.title = attributes.title || '';
-        this.form.tags = attributes.tags ? attributes.tags.join(',') : '';
-        this.form.category = attributes.categories ? attributes.categories.join(',') : '';
-        this.form.description = attributes.description || '';
-        this.form.cover = attributes.cover || '';
-        this.form.abbrlink = attributes.abbrlink || '';
+      // 解析基础字段
+      this.form.title = attributes.title || '';
+      this.form.tags = attributes.tags ? attributes.tags.join(',') : '';
+      this.form.category = attributes.categories ? attributes.categories.join(',') : '';
+      this.form.description = attributes.description || '';
+      this.form.cover = attributes.cover || '';
+      this.form.abbrlink = attributes.abbrlink || '';
 
-        this.renderedHtml = this.md.render(body);
-      } catch (error) {
-        console.error('Front-Matter 解析失败:', error);
-        this.$message.error('Front-Matter 格式错误，请检查内容');
-      }
-    },
+      // 解析 date 和 updated 字段，支持 YYYY-MM-DD 格式
+      this.form.date = this.parseDate(attributes.date);
+      this.form.updated = this.parseDate(attributes.updated);
+
+      // 渲染 Markdown 内容
+      this.renderedHtml = this.md.render(body);
+    } catch (error) {
+      console.error('Front-Matter 解析失败:', error);
+      this.$message.error('Front-Matter 格式错误，请检查内容');
+    }
+  },
+  //解析日期字段
+  parseDate(dateString) {
+    if (!dateString) return ''; // 如果为空，返回空字符串
+
+    // 支持 YYYY-MM-DD 格式
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateRegex.test(dateString)) {
+      return dateString; // 直接返回原始字符串
+    }
+
+    // 其他情况尝试转换为标准格式
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0]; // 返回 YYYY-MM-DD 格式
+    }
+
+    return ''; // 不合法则返回空字符串
+  },
     submitArticle() {
       if (!this.form.title || !this.markdownContent.trim()) {
         this.$message.warning('请填写完整信息');
@@ -106,6 +151,8 @@ export default {
         description: this.form.description,
         cover: this.form.cover,
         abbrlink: this.form.abbrlink,
+        date: this.form.date,
+        updated: this.form.updated,
         content: this.markdownContent
       };
 
@@ -122,13 +169,16 @@ export default {
         category: '',
         description: '',
         cover: '',
-        abbrlink: ''
+        abbrlink: '',
+        date: '',
+        updated: ''
       };
       this.markdownContent = '';
       this.renderedHtml = '';
     }
   }
 };
+
 </script>
 
 <style scoped>
