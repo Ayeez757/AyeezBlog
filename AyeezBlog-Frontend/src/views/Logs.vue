@@ -30,7 +30,8 @@ export default {
           date: '2026-02-28',
           version: 'v0.8.1',
           changes: [
-            '管理端：修复了不能解析文章日期的问题'
+            '管理端：修复了不能解析文章日期的问题',
+            '编写了README.md，添加了LICENSE文件,使用的是Apache License 2.0协议',
           ]
         },{
           date: '2026-02-27',
