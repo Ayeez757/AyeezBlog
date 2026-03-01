@@ -3,18 +3,28 @@
 
 # 阿叶Ayeez的博客
 
+<p align="center">
+
+  <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
+    <img alt="项目版本" src="https://img.shields.io/github/package-json/v/ayeez757/AyeezBlog?filename=AyeezBlog-Frontend%2Fpackage.json&label=AyeezBlog%20version">
+  </a>
+  
+  <a href="https://github.com/ayeez757/AyeezBlog/blob/master/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ayeez757/AyeezBlog"></a>
+
+  <!-- Spring Boot 版本（从 parent.version 手动获取） -->
+  <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-3.2.0-6DB33F?logo=spring">
+
+  <!-- Java 版本（从 properties.java.version 手动获取） -->
+  <img alt="Java" src="https://img.shields.io/badge/Java-21-007396?logo=java">
+
+
+</p>
+
 项目demo：https://dev-blog.ayeez.cn/
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
-<!--
-<p align="center">
-  <a href="https://github.com/ayeez757/AyeezBlog"><img alt="GitHub 版本" src="https://img.shields.io/github/v/release/ayeez757/AyeezBlog"></a>
-  <a href="https://github.com/ayeez757/AyeezBlog/blob/main/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ayeez757/AyeezBlog"></a>
-  <a href="https://github.comayeez757/AyeezBlog/actions/workflows/ci.yml"><img alt="构建状态" src="https://img.shields.io/github/actions/workflow/status/ayeez757/AyeezBlog/ci.yml?branch=main"></a>
-  <a href="https://codecov.io/gh/ayeez757/AyeezBlog">
-  <img alt="代码覆盖率" src="https://img.shields.io/codecov/c/github/your-username/your-blog-project"></a>-->
-</p>
+
 
 ## 项目简介
 
@@ -261,7 +271,7 @@ Apifox：
 
 请参阅
 博客内日志： https://dev-blog.ayeez.cn/logs/
-GitHub的commit记录：[Commits · Ayeez757/AyeezBlog](https://github.com/Ayeez757/AyeezBlog/commits/master/)
+GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ayeez757/AyeezBlog/activity)
 
 ---
 
