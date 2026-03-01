@@ -4,20 +4,14 @@
 # 阿叶Ayeez的博客
 
 <p align="center">
-
-  <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
+    <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
     <img alt="项目版本" src="https://img.shields.io/github/package-json/v/ayeez757/AyeezBlog?filename=AyeezBlog-Frontend%2Fpackage.json&label=AyeezBlog%20version">
   </a>
-  
   <a href="https://github.com/ayeez757/AyeezBlog/blob/master/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ayeez757/AyeezBlog"></a>
-
   <!-- Spring Boot 版本（从 parent.version 手动获取） -->
   <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-3.2.0-6DB33F?logo=spring">
-
   <!-- Java 版本（从 properties.java.version 手动获取） -->
   <img alt="Java" src="https://img.shields.io/badge/Java-21-007396?logo=java">
-
-
 </p>
 
 项目demo：https://dev-blog.ayeez.cn/
