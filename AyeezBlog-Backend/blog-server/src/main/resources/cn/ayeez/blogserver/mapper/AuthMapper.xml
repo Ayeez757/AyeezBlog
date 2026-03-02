@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.AuthMapper">
+
+
+    <select id="loginByUsernameAndPassword" resultType="cn.ayeez.blogpojo.po.Auth">
+        SELECT *
+        from user
+        where username = #{username}
+          and password = #{password};
+    </select>
+</mapper>

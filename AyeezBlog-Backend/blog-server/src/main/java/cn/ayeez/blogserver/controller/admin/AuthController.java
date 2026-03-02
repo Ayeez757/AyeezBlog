@@ -1,6 +1,7 @@
 package cn.ayeez.blogserver.controller.admin;
 
 import cn.ayeez.blogcommon.util.Result;
+import cn.ayeez.blogpojo.bo.Auth;
 import cn.ayeez.blogpojo.dto.response.LoginInfo;
 import cn.ayeez.blogserver.service.postServer.AuthServer;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +25,12 @@ public class AuthController {
      * 我登录
      */
     @RequestMapping("/login")
-    public Result login(@RequestBody String username,String password) {
+    public Result login(@RequestBody Auth auth) {
+        String username = auth.getUsername();
+        String password = auth.getPassword();
         log.info("用户登录，账号：{}，密码{}",username,password);
-        LoginInfo loginInfo = authServer.login(username,password);
+        LoginInfo loginInfo = authServer.login(auth);
         if(loginInfo!=null){
-
         return Result.success(loginInfo);
         }else{
             return Result.error(403,"账号密码错误");
