@@ -1,0 +1,62 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'AyeezBlog-Backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Build with Maven
+      working-directory: ./AyeezBlog-Backend
+      run: |
+        mvn clean package -DskipTests
+        
+    - name: Deploy to server
+      env:
+        SSH_HOST: ${{ secrets.SERVER_HOST }}
+        SSH_USER: ${{ secrets.SERVER_USER }}
+        SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      run: |
+        # 安装 SSH 客户端
+        sudo apt-get install -y openssh-client
+        
+        # 创建 SSH 密钥文件
+        mkdir -p ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        
+        # 添加服务器到 known_hosts
+        ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts 2>/dev/null
+        
+        echo "📦 开始部署后端服务..."
+        
+        # 删除旧的 jar包
+        echo "🗑️  删除旧的 jar 包..."
+        ssh ${SSH_USER}@${SSH_HOST} "rm -f /var/lib/docker/volumes/jar/_data/*.jar"
+        
+        # 上传新的jar包并重命名
+        echo "⬆️  上传新的jar 包..."
+        scp AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar \
+            ${SSH_USER}@${SSH_HOST}:/var/lib/docker/volumes/jar/_data/app.jar
+            
+        # 重启 Docker 容器
+        echo "🔄 重启 Docker 容器..."
+        ssh ${SSH_USER}@${SSH_HOST} "docker restart ayeezblog-backend"
+        
+        echo "✅ 后端部署完成！"
+        echo "🌐 服务地址：http://${SSH_HOST}:8080"

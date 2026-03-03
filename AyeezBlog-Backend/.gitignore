@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 配置文件，含隐私 ###
+blog-server/src/main/resources/application-local.yml
