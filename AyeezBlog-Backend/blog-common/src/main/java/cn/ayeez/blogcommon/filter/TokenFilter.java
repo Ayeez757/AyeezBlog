@@ -35,10 +35,10 @@ public class TokenFilter implements Filter {
         }
 
 
-        String token = request.getHeader("token");      
+        String token = request.getHeader("token");
         if (token == null || token.isEmpty()) {
             log.info("未登录，请先登录");
-            response.setStatus(401);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
@@ -46,7 +46,7 @@ public class TokenFilter implements Filter {
             JwtUtil.parseToken(token);
         } catch (Exception e) {
             log.info("token解析失败，请重新登录");
-            response.setStatus(401);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
         log.info("token解析成功，放行");
