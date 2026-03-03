@@ -28,7 +28,7 @@ jobs:
         
     - name: Deploy to server
       env:
-        SSH_HOST: ${{ secrets.SERVER_HOST }}
+        SSH_HOST: mysql
         SSH_USER: ${{ secrets.SERVER_USER }}
         SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
       run: |
