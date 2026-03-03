@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://111.228.53.6:8080', // 后端基础地址
+  // baseURL: 'http://111.228.53.6:8080', // 后端基础地址
+    baseURL: 'http://localhost:8080', // 后端基础地址
   timeout: 5000 // 请求超时时间
 });
 
@@ -37,7 +38,7 @@ request.interceptors.response.use(
 
 // 接口定义
 export const getPostList = (params) => {
-  return request.get('/post/list', { params });
+  return request.get('/admin/post/list', { params });
 };
 
 

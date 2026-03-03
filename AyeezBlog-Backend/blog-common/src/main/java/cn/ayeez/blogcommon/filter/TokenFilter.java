@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 
 @Slf4j
-@WebFilter(urlPatterns = "/admin")
+@WebFilter(urlPatterns = "/admin/*")
 public class TokenFilter implements Filter {
 
 
@@ -35,7 +35,7 @@ public class TokenFilter implements Filter {
         }
 
 
-        String token = request.getHeader("token");
+        String token = request.getHeader("token");      
         if (token == null || token.isEmpty()) {
             log.info("未登录，请先登录");
             response.setStatus(401);

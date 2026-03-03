@@ -1,4 +1,4 @@
 hm:
   db:
-    host: localhost
-    password: 1234
+    host: 111.228.53.6
+    password: 123

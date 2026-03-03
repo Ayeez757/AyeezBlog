@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/admin")
-public class AuthController {
+public class AdminAuthController {
 
     @Autowired
     private AuthServer authServer;
