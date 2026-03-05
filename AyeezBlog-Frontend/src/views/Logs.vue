@@ -23,10 +23,18 @@
 <script>
 export default {
   name: 'Logs',
+
+
   data() {
     return {
       logs: [
                 {
+          date: '2026-03-05',
+          changes: [
+            '运维：设置了GitHub Actions工作流自动部署后端服务，每次push到master分支如果后端文件有变化就会自动构建并部署到服务器上',
+            '管理端: 加了登录页面，完成了用户登录功能以及401页面跳转，修改了管理前端的api/index.js文件以及utils/request.js文件，允许了跨域请求',
+          ]
+        },{
           date: '2026-02-28',
           version: 'v0.8.1',
           changes: [

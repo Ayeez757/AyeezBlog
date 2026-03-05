@@ -10,5 +10,15 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+   server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',  // 后端地址
+        changeOrigin: true,  // 允许跨域
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
   }
 })

@@ -5,21 +5,32 @@ import Category from '@/views/Category.vue'
 import Tag from '@/views/Tag.vue'
 import AddArticle from '@/views/AddArticle.vue'
 import Contact from '@/views/Contact.vue'
-
+import Login from '@/views/Login.vue'
 
 const routers = [
-  { path: '/', name: 'Home', component: Home },
-  { path: '/article', name: 'Article', component: Article },
-  { path: '/category', name: 'Category', component: Category },
-  { path: '/tag', name: 'Tag', component: Tag },
-   { path: '/add-article', name: 'AddArticle', component: AddArticle },
-  // { path: '/contact', name: 'Contact', component: Contact },
-
+  { path: '/login', name: 'Login', component: Login, meta: { requiresAuth: false } },
+  { path: '/', name: 'Home', component: Home, meta: { requiresAuth: true } },
+  { path: '/article', name: 'Article', component: Article, meta: { requiresAuth: true } },
+  { path: '/category', name: 'Category', component: Category, meta: { requiresAuth: true } },
+  { path: '/tag', name: 'Tag', component: Tag, meta: { requiresAuth: true } },
+  { path: '/add-article', name: 'AddArticle', component: AddArticle, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes: routers
+})
+
+// 路由守卫 - 未登录拦截
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  
+  if (to.meta.requiresAuth && !token) {
+    // 需要登录但未登录，跳转登录页
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router
