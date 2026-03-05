@@ -1,4 +1,4 @@
 hm:
   db:
     host: mysql
-    password: ${HM_DB_PASSWORD:default_password}
+    password: ${HM_DB_PASSWORD}
