@@ -1,5 +1,6 @@
 package cn.ayeez.blogserver.service.postServer;
 
+import cn.ayeez.blogpojo.dto.request.PostBody;
 import cn.ayeez.blogpojo.dto.request.PostQueryParam;
 import cn.ayeez.blogpojo.dto.response.PageResult;
 import cn.ayeez.blogpojo.entity.Post;
@@ -16,4 +17,10 @@ public interface PostServer {
      * 根据ID获取文章
      */
     Post get(String id);
+
+    /**
+     * 添加文章
+     * @param postBody
+     */
+    void add(PostBody postBody);
 }

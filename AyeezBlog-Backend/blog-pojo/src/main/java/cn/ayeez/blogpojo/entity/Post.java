@@ -13,6 +13,9 @@ public class Post {
     /**
      * 文章ID（字符串，如UUID或雪花ID）
      * 数据库字段：id VARCHAR(64)
+     *
+     * 文章短链接abbrlink
+     *
      */
     private String id;
 
@@ -51,4 +54,20 @@ public class Post {
      * 数据库字段：description VARCHAR(255)
      */
     private String description;
+
+
+    /**
+     * 分类名称
+     * 数据库字段：category VARCHAR(255)
+     */
+    private String category;
+
+    /**
+     * 标签名称，多个标签用逗号分隔
+     * 数据库字段：tags VARCHAR(255)
+     */
+    private String tags;
+
+
+
 }

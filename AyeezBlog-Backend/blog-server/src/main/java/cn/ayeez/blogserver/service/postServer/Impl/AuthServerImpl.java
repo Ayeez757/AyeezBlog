@@ -18,7 +18,7 @@ public class AuthServerImpl implements AuthServer {
     @Autowired
     private AuthMapper authMapper;
 
-    //TODO 登录接口已经重写，能正常登录返回token，但是需要加一个加密功能，现在数据库里存的还是未加密临时密码
+
     @Override
     public LoginInfo login(Auth auth) {
         cn.ayeez.blogpojo.po.Auth a = authMapper.loginByUsernameAndPassword(auth);

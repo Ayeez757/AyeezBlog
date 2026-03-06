@@ -24,6 +24,7 @@ public class AdminAuthController {
     /**
      * 我登录
      */
+    //TODO 登录接口已经重写，能正常登录返回token，但是需要加一个加密功能，现在数据库里存的还是未加密临时密码
     @RequestMapping("/login")
     public Result login(@RequestBody Auth auth) {
         String username = auth.getUsername();
