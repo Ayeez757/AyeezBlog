@@ -7,6 +7,9 @@
         INSERT INTO blog_post(id, title, content, cover, description, create_time, update_time)
         VALUES (#{id}, #{title}, #{content}, #{cover}, #{description}, #{createTime}, #{updateTime})
     </insert>
+    <delete id="delete">
+        DELETE FROM blog_post WHERE id = #{id}
+    </delete>
 
     <select id="pages" resultType="cn.ayeez.blogpojo.entity.Post">
         SELECT

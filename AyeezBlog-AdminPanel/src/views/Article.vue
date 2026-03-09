@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { getPostList } from '@/api'; // 引入接口
+import { getPostList,deletePost } from '@/api'; // 引入接口
 
 export default {
   data() {
@@ -78,27 +78,25 @@ export default {
       // 可以跳转到编辑页面或弹出对话框
     },
     deleteArticle(row) {
-      // 删除文章逻辑
-      this.$confirm(`确定删除文章 "${row.title}" 吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-        .then(async () => {
-          try {
-            // 调用删除接口（假设存在）
-            // await deletePost(row.id);
-            this.$message.success('删除成功');
-            this.fetchArticles(); // 重新加载数据
-          } catch (error) {
-            console.error('删除失败:', error);
-            this.$message.error('删除失败，请稍后再试');
-          }
-        })
-        .catch(() => {
-          this.$message.info('已取消删除');
-        });
-    }, goToAddArticle() {
+  this.$confirm(`确定删除文章 "${row.title}" 吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(async () => {
+      try {
+        await deletePost({ id: row.id });
+        this.$message.success('删除成功');
+        this.fetchArticles();
+      } catch (error) {
+        console.error('删除失败:', error);
+        this.$message.error('删除失败，请稍后再试');
+      }
+    })
+    .catch(() => {
+      this.$message.info('已取消删除');
+    });
+}, goToAddArticle() {
       this.$router.push('/add-article'); // 跳转到添加文章页面
     }
 

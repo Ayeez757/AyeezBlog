@@ -50,10 +50,17 @@ public class AdminPostController {
 
 
     //TODO 管理端删除文章接口待开发
+    @DeleteMapping("/delete")
+    public Result delete(String id){
+        log.info("删除文章，id：{}",id);
+        postServer.delete(id);
+        return Result.success();
+    }
+
 
     //TODO 管理端修改文章接口待开发
 
-    //TODO 管理端查询文章列表接口待开发
+
     /**
      * 获取文章列表（详细）
      * 包括：文章标题、作者、发布时间、更新时间、分类、标签、阅读数、点赞数、评论数、封面

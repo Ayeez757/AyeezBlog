@@ -74,6 +74,7 @@
 <script>
 import MarkdownIt from 'markdown-it';
 import fm from 'front-matter';
+import { addPost } from '../api/index';
 
 export default {
   
@@ -158,6 +159,14 @@ export default {
 
       // 以 JSON 形式输出提交数据
       console.log(JSON.stringify(postData, null, 2));
+
+      addPost(postData)
+        .then(() => {
+        })
+        .catch(error => {
+          console.error('添加文章失败:', error);
+          this.$message.error('添加文章失败，请稍后再试');
+        });
 
       this.$message.success('文章提交成功');
       this.$router.push('/article');

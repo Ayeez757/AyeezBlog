@@ -28,4 +28,9 @@ public interface PostMapper {
      * 添加文章
      */
     void add(PostBody postBody);
+
+    /**
+     * 删除文章
+     */
+    void delete(String id);
 }

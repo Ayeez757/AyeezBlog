@@ -77,6 +77,11 @@ public class PostServerImpl implements PostServer {
             postMapper.add(postBody);
         }
     }
+
+    @Override
+    public void delete(String id) {
+        postMapper.delete(id);
+    }
 }
 
 

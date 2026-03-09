@@ -7,7 +7,12 @@ export const getPostList = (params) => {
 
 // 添加文章接口
 export const addPost = (data) => {
-  return request.post('/post/add', data)
+  return request.post('/admin/post/add', data)
+}
+
+// 删除文章接口
+export const deletePost = (params) => {
+  return request.delete('/admin/post/delete', { params })
 }
 
 // 登录接口

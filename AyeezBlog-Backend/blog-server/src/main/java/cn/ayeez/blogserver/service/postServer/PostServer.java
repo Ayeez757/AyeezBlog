@@ -23,4 +23,10 @@ public interface PostServer {
      * @param postBody
      */
     void add(PostBody postBody);
+
+    /**
+     * 删除文章
+     * @param id
+     */
+    void delete(String id);
 }
