@@ -598,7 +598,7 @@ export default {
   display: flex;
   justify-content: center;
   /* 水平居中 */
-  margin-top: 95vh;
+  /* margin-top: 95vh; */
   /*露出来一点在第一面*/
 }
 
@@ -935,7 +935,7 @@ export default {
 
   /* 个人卡片在手机上更小一些 */
   .card-container {
-    margin-top: 90vh;
+    /* margin-top: 90vh; */
     /* 在手机端把卡片整体再往下移一点，让首屏只露出卡片顶部，引导下滑 */
   }
 
