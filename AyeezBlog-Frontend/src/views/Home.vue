@@ -76,7 +76,17 @@
 
     <!-- 文章卡片展示区域 -->
     <div class="posts-container">
-      <div v-for="post in posts" :key="post.id" class="post-card" :class="{ 'scan-active': hoveredCardId === post.id }"
+      <div
+        v-for="post in posts"
+        :key="post.id"
+        class="post-card"
+        :data-post-id="post.id"
+        :class="[
+          {
+            'scan-active': isActive(post.id) || hoveredCardId === post.id,
+            'active-post': isActive(post.id)
+          }
+        ]"
         @mouseenter="hoveredCardId = post.id" @mouseleave="hoveredCardId = null" @click="goToPost(post.id)">
         <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
         <div class="post-info">
@@ -120,6 +130,9 @@ export default {
       // 悬停卡片 ID
       hoveredCardId: null,
 
+      // 手机端滚动时处于视口中间区域的文章卡片 ID 列表
+      activePostIds: [],
+
       // 加载状态
       isLoading: true
     };
@@ -141,7 +154,12 @@ export default {
     } finally {
       this.isLoading = false; // 隐藏加载动画
       this.animateText(); // 触发文本动画
+      // 绑定滚动事件，用于手机端文章卡片自动高亮
+      window.addEventListener('scroll', this.updateActivePosts, { passive: true });
     }
+  },
+  beforeDestroy() {
+    window.removeEventListener('scroll', this.updateActivePosts);
   },
   methods: {
 
@@ -155,6 +173,10 @@ export default {
         const response = await fetchPosts(this.currentPage, this.pageSize);
         this.posts = response.data.rows; // 文章列表
         this.total = response.data.total; // 总条数
+        // 等文章渲染完后，初始化一次滚动高亮状态（主要用于手机端）
+        this.$nextTick(() => {
+          this.updateActivePosts();
+        });
       } catch (error) {
         console.error('加载文章失败:', error);
       }
@@ -188,10 +210,77 @@ export default {
       return description.length > 100 ? description.substring(0, 100) + '...' : description;
     },
 
+    // 判断当前是否为手机端
+    isMobileView() {
+      return window.innerWidth <= 768;
+    },
+
+    // 手机端：根据滚动位置，高亮接近屏幕中线的两篇文章
+    updateActivePosts() {
+      if (!this.isMobileView()) {
+        this.activePostIds = [];
+        return;
+      }
+
+      const scrollY = window.scrollY;
+      const viewportHeight = window.innerHeight;
+
+      // 没有真正往下滑动到文章区域之前，不高亮任何文章
+      // 这里用滚动距离做一个简单阈值判断：超过 0.7 个视口高度再开始计算
+      if (scrollY < viewportHeight * 0.7) {
+        this.activePostIds = [];
+        return;
+      }
+
+      const cards = document.querySelectorAll('.posts-container .post-card');
+      if (!cards.length) {
+        this.activePostIds = [];
+        return;
+      }
+
+      const viewportCenterY = window.innerHeight / 2;
+      const distances = [];
+
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const cardCenterY = rect.top + rect.height / 2;
+        const distance = Math.abs(cardCenterY - viewportCenterY);
+        const idAttr = card.getAttribute('data-post-id');
+        if (idAttr) {
+          distances.push({ id: idAttr, distance });
+        }
+      });
+
+      // 按距离从小到大排序，取最接近中线的两篇
+      distances.sort((a, b) => a.distance - b.distance);
+      const nearestIds = distances.map(item => item.id);
+
+      // 第二篇文章的出现阈值比第一篇更高：
+      // - 超过 0.7 * 视口高度：只激活一篇（最接近中线的）
+      // - 超过 1.0 * 视口高度：再激活第二篇
+      let active = [];
+      if (nearestIds.length > 0) {
+        active.push(nearestIds[0]);
+      }
+      if (scrollY >= viewportHeight * 1.0 && nearestIds.length > 1) {
+        active.push(nearestIds[1]);
+      }
+
+      this.activePostIds = active;
+    },
+
+    // 是否为当前滚动激活的文章
+    isActive(postId) {
+      return this.activePostIds.includes(String(postId));
+    },
+
     // 触发文本动画
     animateText() {
-      const line1Text = 'WELCOME\u00A0TO';
-      const line2Text = 'AYEEZ BLOG！';
+      const isMobile = window.innerWidth <= 768;
+
+      // 电脑端保持原来的两行样式，手机端拆成三行：WELCOME / TO / AYEEZ BLOG！
+      const line1Text = isMobile ? 'WELCOME' : 'WELCOME\u00A0TO';
+      const line2Text = isMobile ? '' : 'AYEEZ BLOG！';
 
       if (!this.$refs.line1 || !this.$refs.line2) {
         console.error('DOM elements not found');
@@ -201,10 +290,26 @@ export default {
       const line1HTML = this.wrapCharacters(line1Text);
       this.$refs.line1.innerHTML = line1HTML;
 
-      this.$refs.line2.textContent = line2Text;
+      if (isMobile) {
+        // 手机端：三行依次出现
+        // 第一行 WELCOME：逐字浮现（已有 triggerAnimation 处理）
+        // 第二行 TO：逐字浮现，并整体延后一点出现
+        const toHTML = 'TO'
+          .split('')
+          .map((char, index) => `<span class="char mobile-to-char" style="animation-delay: ${0.5 + index * 0.1}s">${char}</span>`)
+          .join('');
+        // 第三、第四行：AYEEZ / BLOG（两行，带绿色渐变）
+        this.$refs.line2.innerHTML =
+          `<div class="mobile-line-to">${toHTML}</div>` +
+          `<div class="mobile-line-ayeez">AYEEZ\nBLOG</div>`;
 
-      this.triggerAnimation(this.$refs.line1);
-      this.triggerAnimation(this.$refs.line2);
+        // 第一行按原逻辑逐字浮现
+        this.triggerAnimation(this.$refs.line1);
+      } else {
+        this.$refs.line2.textContent = line2Text;
+        this.triggerAnimation(this.$refs.line1);
+        this.triggerAnimation(this.$refs.line2);
+      }
     },
 
     // 将文本拆分为字符并包装
@@ -276,8 +381,6 @@ export default {
 }
 
 .home {
-  position: absolute;
-  top: 68px;
   padding: 20px;
   color: white;
   display: flex;
@@ -323,6 +426,7 @@ export default {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  white-space: pre-line;
   display: inline-block;
   overflow: hidden;
   opacity: 0;
@@ -684,6 +788,11 @@ export default {
 
 }
 
+/* 滚动激活的文章卡片在手机端自动变彩色 */
+.active-post .post-cover {
+  filter: grayscale(0%);
+}
+
 .post-info {
   padding: 15px;
 }
@@ -736,5 +845,169 @@ export default {
 .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* =========================
+   移动端适配（手机端样式）
+   ========================= */
+@media (max-width: 768px) {
+  .home {
+    padding: 16px;
+  }
+
+  /* 顶部欢迎标题区域 */
+  .welcome-banner {
+    padding: 72px 20px 20px;
+    /* 整体往下移动一点，让标题更靠下 */
+    text-align: left;
+  }
+
+  .line1 {
+    font-size: 18vw;
+    font-weight: 550;
+  }
+
+  .line2 {
+    font-size: 26vw;
+    font-weight: 550;
+    /* 覆盖 PC 端的滑入动画，让手机端按行顺序出现 */
+    color: #fff;
+    white-space: normal;
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  /* 手机端：TO 行整体样式（和 WELCOME 类似） */
+  .line2 .mobile-line-to {
+    display: block;
+  }
+
+  .line2 .mobile-line-to .mobile-to-char {
+    display: inline-block;
+    opacity: 0;
+    color: #fff;
+    animation: fadeIn 0.5s forwards;
+  }
+
+  /* 第三行 AYEEZ BLOG：整行延后出现 */
+  .line2 .mobile-line-ayeez {
+    opacity: 0;
+    display: block;
+    white-space: pre-line;
+    background-image: linear-gradient(to right, #abe6a8, #00b828);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: fadeIn 0.6s forwards;
+    animation-delay: 1.1s;
+  }
+
+  /* 装饰条：仅保留一根竖线在标题左边 */
+  .left-top-line2 {
+    top: 110px;
+    left: 10px;
+    width: 4px;
+    height: 50px;
+  }
+
+  .left-top-line,
+  .left-top-line3,
+  .left-top-line4,
+  .left-top-line5 {
+    display: none;
+  }
+
+  .left-bottom-line6 {
+    display: none;
+  }
+
+  /* 文本内容区域 */
+  .content {
+    padding: 0 16px 16px;
+    font-size: 14px;
+  }
+
+  /* 向下引导箭头稍微抬高 */
+  .arrow-container {
+    bottom: 80px;
+  }
+
+  /* 个人卡片在手机上更小一些 */
+  .card-container {
+    margin-top: 90vh;
+    /* 在手机端把卡片整体再往下移一点，让首屏只露出卡片顶部，引导下滑 */
+  }
+
+  .card {
+    width: 86%;
+    flex-direction: column;
+    /* 头像在上，文字在下，垂直排布 */
+    align-items: center;
+    gap: 8px;
+    padding: 12px 10px 10px;
+  }
+
+  #home-card-avatar {
+    width: 110px;
+    height: 110px;
+    margin: 2px 0 6px 0;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .card-content text {
+    font-size: 14px;
+    display: block;
+    line-height: 1.5;
+    margin-bottom: 2px;
+  }
+
+  .card-content text:first-child {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .social-icons {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* 文章卡片布局改为单列，方便阅读 */
+  .posts-container {
+    width: 92%;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* 手机端文章封面缩小一些 */
+  .post-cover {
+    height: 130px;
+  }
+
+  .post-title {
+    font-size: 16px;
+  }
+
+  .post-description {
+    font-size: 12px;
+  }
+
+  .post-date {
+    font-size: 11px;
+  }
+
+  .pagination {
+    margin-top: 20px;
+  }
 }
 </style>

@@ -29,7 +29,18 @@ export default {
     return {
       logs: [
                 {
-          date: '2026-03-05',
+          date: '2026-03-15',
+          version: 'v0.11.0',
+          changes: [
+            '前端：写了友链页面',
+            '前端：添加了页脚',
+            '前端：页头做了手机适配',
+            '前端：首页做了手机适配',
+            '前端：修复了文章目录的一系列问题',
+            '管理端：修复了发布文章的一系列问题'
+          ]
+        },{
+          date: '2026-03-09',
           version: 'v0.10.0',
           changes: [
             '管理端：完成了删除文章的功能'
@@ -131,15 +142,12 @@ export default {
 <style scoped>
 /* 页面整体样式 */
 .logs {
-  position: absolute;
   width: 100%;
-  top: 68px;
   padding: 20px;
   color: white;
   font-family: 'Arial', sans-serif;
   background: rgba(0, 0, 0, 0.7);
   /* 半透明黑色背景 */
-  min-height: calc(100vh - 68px);
   box-sizing: border-box;
 }
 

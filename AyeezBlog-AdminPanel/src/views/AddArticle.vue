@@ -105,7 +105,7 @@ export default {
       // 解析基础字段
       this.form.title = attributes.title || '';
       this.form.tags = attributes.tags ? attributes.tags.join(',') : '';
-      this.form.category = attributes.categories ? attributes.categories.join(',') : '';
+      this.form.category = attributes.category ? attributes.category.join(',') : '';
       this.form.description = attributes.description || '';
       this.form.cover = attributes.cover || '';
       this.form.abbrlink = attributes.abbrlink || '';
@@ -152,8 +152,9 @@ export default {
         description: this.form.description,
         cover: this.form.cover,
         abbrlink: this.form.abbrlink,
-        date: this.form.date,
-        updated: this.form.updated,
+        // 后端支持多种日期格式，但不接受空字符串，这里改为在为空时传 null
+        date: this.form.date || null,
+        updated: this.form.updated || null,
         content: this.markdownContent
       };
 

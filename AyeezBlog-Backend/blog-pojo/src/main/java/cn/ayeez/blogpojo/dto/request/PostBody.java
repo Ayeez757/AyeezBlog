@@ -127,7 +127,13 @@ public class PostBody {
     @JsonProperty("updated")
     public void setUpdated(Object value) {
         if (value == null) {
-            this.updateTime = null;
+            // 如果前端没有传 updated，则默认使用 createTime，
+            // 如果 createTime 也为空，则使用当前时间，避免数据库 NOT NULL 约束报错
+            if (this.createTime != null) {
+                this.updateTime = this.createTime;
+            } else {
+                this.updateTime = LocalDateTime.now();
+            }
             return;
         }
 

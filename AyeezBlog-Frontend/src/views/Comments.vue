@@ -24,12 +24,9 @@ export default {
 
 <style scoped>
 .comments {
-  position: absolute;
-  top: 68px;
   padding: 20px;
   color: white;
   width: 100%; /* 占满屏幕宽度 */
-  height: calc(100vh - 68px); /* 占满剩余屏幕高度 */
   display: flex; /* 启用 Flexbox */
   flex-direction: column; /* 子元素垂直排列 */
   align-items: center; /* 水平居中 */

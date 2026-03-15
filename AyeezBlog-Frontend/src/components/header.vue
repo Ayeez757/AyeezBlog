@@ -1,8 +1,8 @@
 <template>
     <header class="blog-header">
 
-        <!-- 这个div是套着竖线和标题的，保障粘一块 -->
-        <div style="display: flex;flex-direction: row;gap: 2vw;">
+        <!-- 左侧：炫光竖线 + 标题 -->
+        <div class="header-left">
             <!-- 炫光竖线 -->
             <div class="glow-line"></div>
 
@@ -12,15 +12,61 @@
             </div>
         </div>
 
-        <!-- 导航栏的导航项 -->
-        <nav class="header-nav">
-            <ul>
-                <li v-for="(item, index) in navItems" :key="index" class="nav-item">
-                    <a @click.prevent="navigate(item.section)" href="#">{{ item.name }}</a>
-                    <div class="fluorescent-bar"></div>
-                </li>
-            </ul>
-        </nav>
+        <!-- 右侧：PC 导航 + 汉堡按钮 -->
+        <div class="header-right">
+            <!-- 导航栏的导航项（大屏显示） -->
+            <nav class="header-nav">
+                <ul>
+                    <li
+                        v-for="(item, index) in navItems"
+                        :key="index"
+                        class="nav-item"
+                    >
+                        <a @click.prevent="navigate(item.section)" href="#">{{ item.name }}</a>
+                        <div class="fluorescent-bar"></div>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- 汉堡按钮（小屏显示） -->
+            <button
+                class="hamburger-btn"
+                :class="{ 'is-open': isMenuOpen }"
+                @click="toggleMenu"
+                aria-label="切换导航菜单"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+
+        <!-- 侧边抽屉导航 -->
+        <transition name="side-drawer">
+            <aside
+                v-if="isMenuOpen"
+                class="side-drawer"
+                @click.self="closeMenu"
+            >
+                <div class="side-drawer-panel">
+                    <div class="side-drawer-header">
+                        <div class="glow-line small"></div>
+                        <span class="side-drawer-title">导航菜单</span>
+                    </div>
+                    <ul class="side-drawer-list">
+                        <li
+                            v-for="(item, index) in navItems"
+                            :key="'side-' + index"
+                            class="side-drawer-item"
+                            @click="handleMenuClick(item.section)"
+                        >
+                            <span>{{ item.name }}</span>
+                            <div class="side-drawer-bar"></div>
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+        </transition>
 
         <!-- 页头下面的分割细绿线 -->
         <div class="header-divider"></div>
@@ -42,7 +88,8 @@ export default {
                 { name: "留言", section: "comments" },
                 { name: "日志", section: "logs" },
                 // { name: "联系", section: "contact" }
-            ]
+            ],
+            isMenuOpen: false
         };
     },
     mounted() {
@@ -52,6 +99,10 @@ export default {
             this.animateNavItems(); // 执行导航项动画
         });
 
+        window.addEventListener("resize", this.handleResize);
+    },
+    beforeDestroy() {
+        window.removeEventListener("resize", this.handleResize);
     },
     methods: {
         animateTitle() {
@@ -106,6 +157,22 @@ export default {
         },
         navigate(section) {
             this.$router.push(`/${section}`);
+        },
+        toggleMenu() {
+            this.isMenuOpen = !this.isMenuOpen;
+        },
+        closeMenu() {
+            this.isMenuOpen = false;
+        },
+        handleMenuClick(section) {
+            this.navigate(section);
+            this.closeMenu();
+        },
+        handleResize() {
+            // 大屏时强制关闭抽屉，防止布局错乱
+            if (window.innerWidth > 768 && this.isMenuOpen) {
+                this.isMenuOpen = false;
+            }
         }
     }
 };
@@ -158,6 +225,19 @@ export default {
     z-index: 1000;
     box-sizing: border-box;
     /* 确保页头在最上层 */
+}
+
+.header-left {
+    display: flex;
+    flex-direction: row;
+    gap: 2vw;
+    align-items: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 /* 标题样式 */
@@ -287,5 +367,181 @@ export default {
 .header-nav a:hover {
     color: #6bff7a;
     /* 悬停时文字变色 */
+}
+
+/* 汉堡按钮 */
+.hamburger-btn {
+    position: relative;
+    width: 32px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    display: none; /* 默认在大屏隐藏，媒体查询中显示 */
+}
+
+.hamburger-btn span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #06cc1a, #25fc91, #06cc1a);
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(6, 204, 26, 0.8);
+    transition: transform 0.25s ease, opacity 0.2s ease, top 0.25s ease, background 0.25s ease;
+}
+
+.hamburger-btn span:nth-child(1) {
+    top: 0;
+}
+
+.hamburger-btn span:nth-child(2) {
+    top: 10px;
+}
+
+.hamburger-btn span:nth-child(3) {
+    top: 20px;
+}
+
+.hamburger-btn.is-open span:nth-child(1) {
+    top: 10px;
+    transform: rotate(45deg);
+}
+
+.hamburger-btn.is-open span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.is-open span:nth-child(3) {
+    top: 10px;
+    transform: rotate(-45deg);
+}
+
+/* 侧边抽屉基础样式 */
+.side-drawer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1200;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.side-drawer-panel {
+    width: 70%;
+    max-width: 320px;
+    height: 100%;
+    background: radial-gradient(circle at top left, rgba(11, 184, 47, 0.25), rgba(0, 0, 0, 0.92));
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.8);
+    border-left: 1px solid rgba(37, 252, 145, 0.3);
+    display: flex;
+    flex-direction: column;
+    padding: 18px 18px 28px;
+}
+
+.side-drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.glow-line.small {
+    height: 26px;
+    width: 3px;
+    box-shadow: 3px 0px 8px #6bff7a, 10px 0px 16px #00ff80;
+}
+
+.side-drawer-title {
+    font-size: 18px;
+    color: #e9ffe9;
+    letter-spacing: 0.08em;
+}
+
+.side-drawer-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.side-drawer-item {
+    position: relative;
+    padding: 10px 4px;
+    color: #f1fff1;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.side-drawer-item span {
+    z-index: 1;
+}
+
+.side-drawer-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #06cc1a, #25fc91, #06cc1a);
+    box-shadow: 0 -10px 24px rgba(6, 204, 26, 0.9);
+    transition: width 0.3s ease;
+}
+
+.side-drawer-item:hover {
+    color: #6bff7a;
+}
+
+.side-drawer-item:hover .side-drawer-bar {
+    width: 100%;
+}
+
+/* 侧边抽屉过渡动画 */
+.side-drawer-enter-active,
+.side-drawer-leave-active {
+    transition: opacity 0.25s ease;
+}
+
+.side-drawer-enter,
+.side-drawer-leave-to {
+    opacity: 0;
+}
+
+.side-drawer-panel {
+    transform: translateX(0);
+    transition: transform 0.25s ease;
+}
+
+.side-drawer-enter .side-drawer-panel,
+.side-drawer-leave-to .side-drawer-panel {
+    transform: translateX(100%);
+}
+
+/* 响应式：小屏使用汉堡菜单，大屏保持原布局 */
+@media (max-width: 768px) {
+    .blog-header {
+        padding: 5px 18px;
+        /* 减小左右内边距，让左侧炫光灯和标题更贴近屏幕左边 */
+    }
+
+    .header-left {
+        gap: 10px;
+        /* 收紧炫光灯与标题之间的间距 */
+    }
+
+    .header-nav {
+        display: none;
+    }
+
+    .hamburger-btn {
+        display: block;
+    }
 }
 </style>
