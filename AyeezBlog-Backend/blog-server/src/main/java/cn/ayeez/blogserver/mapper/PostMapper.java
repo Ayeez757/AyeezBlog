@@ -30,6 +30,11 @@ public interface PostMapper {
     void add(PostBody postBody);
 
     /**
+     * 更新文章
+     */
+    void update(PostBody postBody);
+
+    /**
      * 删除文章
      */
     void delete(String id);

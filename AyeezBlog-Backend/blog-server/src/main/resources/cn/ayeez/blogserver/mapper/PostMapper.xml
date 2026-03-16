@@ -4,9 +4,21 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cn.ayeez.blogserver.mapper.PostMapper">
     <insert id="add">
-        INSERT INTO blog_post(id, title, content, cover, description, create_time, update_time)
-        VALUES (#{id}, #{title}, #{content}, #{cover}, #{description}, #{createTime}, #{updateTime})
+        INSERT INTO blog_post(id, title, content, cover, description, create_time, update_time, category_id)
+        VALUES (#{id}, #{title}, #{content}, #{cover}, #{description}, #{createTime}, #{updateTime}, #{categoryId})
     </insert>
+    <update id="update">
+        UPDATE blog_post
+        SET
+            title = #{title},
+            content = #{content},
+            cover = #{cover},
+            description = #{description},
+            create_time = #{createTime},
+            update_time = #{updateTime},
+            category_id = #{categoryId}
+        WHERE id = #{id}
+    </update>
     <delete id="delete">
         DELETE FROM blog_post WHERE id = #{id}
     </delete>

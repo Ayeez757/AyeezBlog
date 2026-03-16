@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.BlogPostTagMapper">
+
+    <insert id="deleteByPostId">
+        DELETE FROM blog_post_tag WHERE post_id = #{postId}
+    </insert>
+
+    <insert id="insertBatch">
+        INSERT INTO blog_post_tag (post_id, tag_id)
+        VALUES
+        <foreach collection="tagIds" item="tid" separator=",">
+            (#{postId}, #{tid})
+        </foreach>
+    </insert>
+
+</mapper>
+

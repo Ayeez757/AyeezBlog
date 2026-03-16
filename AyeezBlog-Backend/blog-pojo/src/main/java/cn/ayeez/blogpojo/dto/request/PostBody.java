@@ -2,16 +2,19 @@ package cn.ayeez.blogpojo.dto.request;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 博客文章实体类
@@ -69,18 +72,23 @@ public class PostBody {
      */
     private String description;
 
+    /**
+     * 解析后的最终分类ID（服务层解析 categories 后填充，用于持久化到 blog_post.category_id）
+     */
+    private Long categoryId;
 
     /**
-     * 分类名称
-     * 数据库字段：category VARCHAR(255)
+     * 分类路径（层级数组，从父到子）
+     * 示例：["学习","博客"]
      */
-    private String category;
+    @JsonAlias({"category"})
+    private List<String> categories;
 
     /**
-     * 标签名称，多个标签用逗号分隔
-     * 数据库字段：tags VARCHAR(255)
+     * 标签数组
+     * 示例：["笔记","图床"]
      */
-    private String tags;
+    private List<String> tags;
 
     /**
      * 设置 createTime，支持多种日期格式，兼容前端的 date 字段
@@ -88,36 +96,7 @@ public class PostBody {
      */
     @JsonProperty("date")
     public void setDate(Object value) {
-        if (value == null) {
-            this.createTime = null;
-            return;
-        }
-
-        if (value instanceof LocalDateTime) {
-            this.createTime = (LocalDateTime) value;
-            return;
-        }
-
-        String dateStr = String.valueOf(value);
-
-        // 尝试多种格式
-        try {
-            // 格式 1: yyyy-MM-dd HH:mm:ss
-            this.createTime = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        } catch (DateTimeParseException e1) {
-            try {
-                // 格式 2: yyyy-MM-dd (只有日期，时间默认为 00:00:00)
-                LocalDate localDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                this.createTime = localDate.atStartOfDay();
-            } catch (DateTimeParseException e2) {
-                try {
-                    // 格式 3: ISO-8601 格式 (带 T 和时区)
-                    this.createTime = LocalDateTime.parse(dateStr);
-                } catch (DateTimeParseException e3) {
-                    throw new RuntimeException("日期格式错误，支持的格式：yyyy-MM-dd 或 yyyy-MM-dd HH:mm:ss", e3);
-                }
-            }
-        }
+        this.createTime = parseToLocalDateTime(value, true);
     }
 
     /**
@@ -126,89 +105,105 @@ public class PostBody {
      */
     @JsonProperty("updated")
     public void setUpdated(Object value) {
-        if (value == null) {
-            // 如果前端没有传 updated，则默认使用 createTime，
-            // 如果 createTime 也为空，则使用当前时间，避免数据库 NOT NULL 约束报错
-            if (this.createTime != null) {
-                this.updateTime = this.createTime;
-            } else {
-                this.updateTime = LocalDateTime.now();
-            }
+        LocalDateTime parsed = parseToLocalDateTime(value, false);
+        if (parsed == null) {
+            // 没传 updated：默认等于 createTime；若 createTime 也没有则取当前时间
+            this.updateTime = (this.createTime != null) ? this.createTime : LocalDateTime.now();
             return;
         }
-
-        if (value instanceof LocalDateTime) {
-            this.updateTime = (LocalDateTime) value;
-            return;
-        }
-
-        String dateStr = String.valueOf(value);
-
-        // 尝试多种格式
-        try {
-            // 格式 1: yyyy-MM-dd HH:mm:ss
-            this.updateTime = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        } catch (DateTimeParseException e1) {
-            try {
-                // 格式 2: yyyy-MM-dd (只有日期，时间默认为 00:00:00)
-                LocalDate localDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                this.updateTime = localDate.atStartOfDay();
-            } catch (DateTimeParseException e2) {
-                try {
-                    // 格式 3: ISO-8601 格式 (带 T 和时区)
-                    this.updateTime = LocalDateTime.parse(dateStr);
-                } catch (DateTimeParseException e3) {
-                    throw new RuntimeException("日期格式错误，支持的格式：yyyy-MM-dd 或 yyyy-MM-dd HH:mm:ss", e3);
-                }
-            }
-        }
+        this.updateTime = parsed;
     }
 
     /**
-     * 设置 tags，支持数组和字符串两种格式
-     * @param value 前端传递的 tags，可以是数组也可以是逗号分隔的字符串
+     * 兼容历史：tags 可能由前端传数组/字符串，统一转为 List<String>
      */
     @JsonProperty("tags")
     public void setTagsFromObject(Object value) {
-        if (value == null) {
-            this.tags = null;
-        } else if (value instanceof String) {
-            this.tags = (String) value;
-        } else if (value instanceof java.util.List) {
-            this.tags = ((java.util.List<?>) value).stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));
-        } else if (value instanceof Object[]) {
-            this.tags = Stream.of((Object[]) value)
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));
-        } else {
-            this.tags = String.valueOf(value);
-        }
+        this.tags = normalizeToStringList(value);
     }
 
     /**
-     * 设置 category，支持数组和字符串两种格式
-     * @param value 前端传递的 category，可以是数组也可以是逗号分隔的字符串
+     * 兼容历史：categories/category 可能由前端传数组/字符串，统一转为 List<String>
      */
-    @JsonProperty("category")
-    public void setCategoryFromObject(Object value) {
-        if (value == null) {
-            this.category = null;
-        } else if (value instanceof String) {
-            this.category = (String) value;
-        } else if (value instanceof java.util.List) {
-            this.category = ((java.util.List<?>) value).stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));
-        } else if (value instanceof Object[]) {
-            this.category = Stream.of((Object[]) value)
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));
-        } else {
-            this.category = String.valueOf(value);
+    @JsonProperty("categories")
+    public void setCategoriesFromObject(Object value) {
+        this.categories = normalizeToStringList(value);
+    }
+
+    private static final DateTimeFormatter FLEX_DATE_TIME = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .optionalStart()
+            .appendPattern(" HH:mm:ss")
+            .optionalEnd()
+            .toFormatter();
+
+    private LocalDateTime parseToLocalDateTime(Object value, boolean allowNull) {
+        if (value == null) return allowNull ? null : null;
+
+        if (value instanceof LocalDateTime) return (LocalDateTime) value;
+        if (value instanceof LocalDate) return ((LocalDate) value).atStartOfDay();
+        if (value instanceof java.util.Date) {
+            return LocalDateTime.ofInstant(((java.util.Date) value).toInstant(), ZoneId.systemDefault());
+        }
+        if (value instanceof Number) {
+            // 兼容时间戳（毫秒）
+            long epochMillis = ((Number) value).longValue();
+            return LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(epochMillis), ZoneId.systemDefault());
+        }
+
+        String dateStr = String.valueOf(value).trim();
+        if (dateStr.isEmpty()) return null;
+
+        // 1) yyyy-MM-dd 或 yyyy-MM-dd HH:mm:ss（你的管理端 date-picker + 你 front-matter 的时间）
+        try {
+            if (dateStr.length() <= 10) {
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay();
+            }
+            return LocalDateTime.parse(dateStr, FLEX_DATE_TIME);
+        } catch (DateTimeParseException ignore) {
+            // fallthrough
+        }
+
+        // 2) ISO-8601（2026-02-13T15:56:00 / 带时区的情况）
+        try {
+            return LocalDateTime.parse(dateStr);
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("日期格式错误，支持：yyyy-MM-dd、yyyy-MM-dd HH:mm:ss 或 ISO-8601", e);
         }
     }
 
+    private List<String> normalizeToStringList(Object value) {
+        if (value == null) return null;
+        List<String> result = new ArrayList<>();
+        if (value instanceof List) {
+            for (Object o : (List<?>) value) {
+                if (o == null) continue;
+                String s = String.valueOf(o).trim();
+                if (!s.isEmpty()) result.add(s);
+            }
+            return result;
+        }
+        if (value instanceof Object[]) {
+            for (Object o : (Object[]) value) {
+                if (o == null) continue;
+                String s = String.valueOf(o).trim();
+                if (!s.isEmpty()) result.add(s);
+            }
+            return result;
+        }
+        if (value instanceof String) {
+            // 兼容旧：逗号分隔
+            String s = ((String) value).trim();
+            if (s.isEmpty()) return result;
+            for (String part : s.split(",")) {
+                String p = part.trim();
+                if (!p.isEmpty()) result.add(p);
+            }
+            return result;
+        }
+        String s = String.valueOf(value).trim();
+        if (!s.isEmpty()) result.add(s);
+        return result;
+    }
 
 }

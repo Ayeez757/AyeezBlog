@@ -5,11 +5,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class FriendLinkClass {
+public class BlogTag {
     private Long id;
-    private String className;
-    private String classDesc;
-    private Integer sort;
+    private String name;
+    private String slug;
+    private String description;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+

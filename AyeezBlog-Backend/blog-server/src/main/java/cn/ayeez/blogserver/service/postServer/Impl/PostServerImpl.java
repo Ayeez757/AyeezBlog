@@ -5,6 +5,11 @@ import cn.ayeez.blogpojo.dto.request.PostBody;
 import cn.ayeez.blogpojo.dto.request.PostQueryParam;
 import cn.ayeez.blogpojo.dto.response.PageResult;
 import cn.ayeez.blogpojo.entity.Post;
+import cn.ayeez.blogpojo.entity.BlogCategory;
+import cn.ayeez.blogpojo.entity.BlogTag;
+import cn.ayeez.blogserver.mapper.BlogCategoryMapper;
+import cn.ayeez.blogserver.mapper.BlogPostTagMapper;
+import cn.ayeez.blogserver.mapper.BlogTagMapper;
 import cn.ayeez.blogserver.mapper.PostMapper;
 import cn.ayeez.blogserver.service.postServer.PostServer;
 import com.github.pagehelper.Page;
@@ -12,6 +17,7 @@ import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +27,15 @@ public class PostServerImpl implements PostServer {
 
     @Autowired
     private PostMapper postMapper;
+
+    @Autowired
+    private BlogCategoryMapper blogCategoryMapper;
+
+    @Autowired
+    private BlogTagMapper blogTagMapper;
+
+    @Autowired
+    private BlogPostTagMapper blogPostTagMapper;
 
     /**
      * 获取文章列表（详细）
@@ -57,11 +72,16 @@ public class PostServerImpl implements PostServer {
      * @param postBody
      */
     @Override
+    @Transactional
     public void add(PostBody postBody) {
         log.info("添加文章前查询id(abbrlink)是否存在，参数：{}",postBody);
+        // 1. 解析并落库分类，得到最终 categoryId
+        Long categoryId = resolveCategoryId(postBody.getCategories());
+        postBody.setCategoryId(categoryId);
+
+        // 2. 生成或复用文章ID
         if(postMapper.get(postBody.getId())!=null && !postBody.getId().isEmpty()){
             postMapper.add(postBody);
-            return;
         }else{
             //TODO 反复查数据库性能低下，后续可用redis优化（不过优先度不高，因为uuid一般不撞）
             int retryCount = 0;
@@ -76,12 +96,119 @@ public class PostServerImpl implements PostServer {
             postBody.setId(id);
             postMapper.add(postBody);
         }
+
+        // 3. 处理标签：创建不存在的标签，并写入 blog_post_tag 关联表
+        syncPostTags(postBody.getId(), postBody.getTags());
+    }
+
+    @Override
+    @Transactional
+    public void update(PostBody postBody) {
+        log.info("更新文章，参数：{}", postBody);
+        if (postBody.getId() == null || postBody.getId().isEmpty()) {
+            throw new IllegalArgumentException("更新文章时，id 不能为空");
+        }
+
+        // 1. 更新分类
+        Long categoryId = resolveCategoryId(postBody.getCategories());
+        postBody.setCategoryId(categoryId);
+
+        // 2. 更新文章主体
+        postMapper.update(postBody);
+
+        // 3. 同步标签关联
+        syncPostTags(postBody.getId(), postBody.getTags());
     }
 
     @Override
     public void delete(String id) {
+        // 先删除标签关联，再删除文章
+        blogPostTagMapper.deleteByPostId(id);
         postMapper.delete(id);
     }
+
+    /**
+     * 解析分类路径（categories）为最终的分类ID：
+     *  - 按顺序依次解析/创建 parent_id + name
+     *  - 返回最后一个（叶子节点）的 ID
+     */
+    private Long resolveCategoryId(java.util.List<String> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return null;
+        }
+        Long parentId = null;
+        Long currentId = null;
+        for (String rawName : categories) {
+            if (rawName == null) continue;
+            String name = rawName.trim();
+            if (name.isEmpty()) continue;
+
+            BlogCategory existing = blogCategoryMapper.findByParentAndName(parentId, name);
+            if (existing == null) {
+                BlogCategory cat = new BlogCategory();
+                cat.setParentId(parentId);
+                cat.setName(name);
+                cat.setSort(0);
+                blogCategoryMapper.insert(cat);
+                currentId = cat.getId();
+            } else {
+                currentId = existing.getId();
+            }
+            parentId = currentId;
+        }
+        return currentId;
+    }
+
+    /**
+     * 同步文章标签：
+     *  - 根据名称查找/创建 blog_tag
+     *  - 清空原有关联
+     *  - 重新插入 blog_post_tag
+     */
+    private void syncPostTags(String postId, java.util.List<String> tagNames) {
+        if (postId == null || postId.isEmpty()) {
+            return;
+        }
+
+        // 删除旧关联
+        blogPostTagMapper.deleteByPostId(postId);
+
+        if (tagNames == null || tagNames.isEmpty()) {
+            return;
+        }
+
+        java.util.List<Long> tagIds = new java.util.ArrayList<>();
+        for (String rawName : tagNames) {
+            if (rawName == null) continue;
+            String name = rawName.trim();
+            if (name.isEmpty()) continue;
+
+            BlogTag tag = blogTagMapper.findByName(name);
+            if (tag == null) {
+                tag = new BlogTag();
+                tag.setName(name);
+                blogTagMapper.insert(tag);
+            }
+            if (tag.getId() != null) {
+                tagIds.add(tag.getId());
+            }
+        }
+
+        if (!tagIds.isEmpty()) {
+            blogPostTagMapper.insertBatch(postId, tagIds);
+        }
+    }
+
+//    @Override
+//    public void update(PostBody postBody) {
+//        if (postBody == null || postBody.getId() == null || postBody.getId().isEmpty()) {
+//            throw new RuntimeException("文章ID不能为空");
+//        }
+//        if (postMapper.get(postBody.getId()) == null) {
+//            throw new RuntimeException("文章不存在，无法更新");
+//        }
+//        postMapper.update(postBody);
+//    }
 }
 
 

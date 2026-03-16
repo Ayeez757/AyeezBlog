@@ -72,6 +72,24 @@ public class AdminPostController {
         return Result.success(result);
     }
 
-    //TODO 管理端查询文章详情接口待开发
+    /**
+     * 管理端查询文章详情（用于编辑回显）
+     */
+    @GetMapping("/get")
+    public Result get(String id) {
+        log.info("获取文章详情，id：{}", id);
+        Post post = postServer.get(id);
+        return Result.success(post);
+    }
+
+    /**
+     * 管理端修改文章（用于编辑保存）
+     */
+    @PutMapping("/update")
+    public Result update(@RequestBody PostBody postBody) {
+        log.info("更新文章，参数：{}", postBody);
+        postServer.update(postBody);
+        return Result.success();
+    }
 
 }

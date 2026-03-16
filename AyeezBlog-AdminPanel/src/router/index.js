@@ -14,6 +14,7 @@ const routers = [
   { path: '/category', name: 'Category', component: Category, meta: { requiresAuth: true } },
   { path: '/tag', name: 'Tag', component: Tag, meta: { requiresAuth: true } },
   { path: '/add-article', name: 'AddArticle', component: AddArticle, meta: { requiresAuth: true } },
+  { path: '/edit-article/:id', name: 'EditArticle', component: AddArticle, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

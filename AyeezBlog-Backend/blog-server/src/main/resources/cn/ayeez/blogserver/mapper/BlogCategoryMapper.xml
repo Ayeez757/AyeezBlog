@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.BlogCategoryMapper">
+
+    <!-- 分类结果映射 -->
+    <resultMap id="BlogCategoryResult" type="cn.ayeez.blogpojo.entity.BlogCategory">
+        <id property="id" column="id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="sort" column="sort"/>
+        <!-- 这里对上 created_at / updated_at -->
+        <result property="createdTime" column="created_at"/>
+        <result property="updatedTime" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByParentAndName" resultMap="BlogCategoryResult">
+        SELECT
+        id,
+        parent_id,
+        name,
+        description,
+        sort,
+        created_at,
+        updated_at
+        FROM blog_category
+        WHERE
+        <if test="parentId == null">
+            parent_id IS NULL
+        </if>
+        <if test="parentId != null">
+            parent_id = #{parentId}
+        </if>
+        AND name = #{name}
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="cn.ayeez.blogpojo.entity.BlogCategory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_category (parent_id, name, description, sort)
+        VALUES (#{parentId}, #{name}, #{description}, #{sort})
+    </insert>
+
+</mapper>

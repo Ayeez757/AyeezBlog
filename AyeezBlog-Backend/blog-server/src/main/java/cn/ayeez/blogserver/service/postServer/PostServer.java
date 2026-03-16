@@ -25,6 +25,12 @@ public interface PostServer {
     void add(PostBody postBody);
 
     /**
+     * 更新文章
+     * @param postBody
+     */
+    void update(PostBody postBody);
+
+    /**
      * 删除文章
      * @param id
      */

@@ -1,6 +1,6 @@
 <template>
   <div class="add-article">
-    <h2>添加文章</h2>
+    <h2>{{ isEdit ? '编辑文章' : '添加文章' }}</h2>
 
     <!-- 表单区域 -->
     <div class="form-section">
@@ -26,7 +26,7 @@
           <el-input v-model="form.cover" placeholder="请输入封面图片链接" />
         </el-form-item>
         <el-form-item label="短链接">
-          <el-input v-model="form.abbrlink" placeholder="请输入短链接（abbrlink）" />
+          <el-input v-model="form.abbrlink" placeholder="请输入短链接（abbrlink）" :disabled="isEdit" />
         </el-form-item>
         <el-form-item label="创建时间">
   <el-date-picker
@@ -65,7 +65,7 @@
 
     <!-- 提交按钮 -->
     <div class="submit-section">
-      <el-button type="primary" @click="submitArticle">提交文章</el-button>
+      <el-button type="primary" @click="submitArticle">{{ isEdit ? '保存修改' : '提交文章' }}</el-button>
       <el-button @click="resetForm">重置</el-button>
     </div>
   </div>
@@ -74,12 +74,13 @@
 <script>
 import MarkdownIt from 'markdown-it';
 import fm from 'front-matter';
-import { addPost } from '../api/index';
+import { addPost, getPostDetail, updatePost } from '../api/index';
 
 export default {
   
   data() {
     return {
+      loading: false,
       form: {
         title: '',
         tags: '',
@@ -90,23 +91,94 @@ export default {
         date: '', // 创建时间
         updated: '' // 更新时间
       },
+      // 保存从 front-matter 解析出来的原始结构，提交时优先用它
+      parsedFrontMatter: {
+        tags: [],
+        categories: []
+      },
       markdownContent: '',
       renderedHtml: ''
     };
   },
-  created() {
+  computed: {
+    isEdit() {
+      return Boolean(this.$route.params && this.$route.params.id);
+    },
+    articleId() {
+      return (this.$route.params && this.$route.params.id) || '';
+    }
+  },
+  async created() {
     this.md = new MarkdownIt();
+    if (this.isEdit) {
+      await this.loadArticle();
+    }
   },
   methods: {
+    normalizeToArray(value) {
+      if (value == null) return [];
+      if (Array.isArray(value)) return value.map(v => String(v)).filter(Boolean);
+      if (typeof value === 'string') {
+        // 兼容用户手动在输入框里用逗号分隔
+        return value.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      return [String(value)];
+    },
+    formatToYmd(value) {
+      if (!value) return '';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '';
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    },
+    async loadArticle() {
+      this.loading = true;
+      try {
+        const post = await getPostDetail({ id: this.articleId });
+        if (!post) {
+          this.$message.error('文章不存在或已被删除');
+          this.$router.push('/article');
+          return;
+        }
+        this.form.title = post.title || '';
+        this.form.description = post.description || '';
+        this.form.cover = post.cover || '';
+        this.form.abbrlink = post.id || this.articleId;
+        this.form.date = this.formatToYmd(post.createTime);
+        this.form.updated = this.formatToYmd(post.updateTime);
+        this.markdownContent = post.content || '';
+
+        // 触发一次解析/渲染（如果无 Front-Matter 也不会影响）
+        this.parseFrontMatter();
+        if (!this.renderedHtml) {
+          this.renderedHtml = this.md.render(this.markdownContent || '');
+        }
+      } catch (error) {
+        console.error('获取文章详情失败:', error);
+        this.$message.error('获取文章详情失败，请稍后再试');
+      } finally {
+        this.loading = false;
+      }
+    },
      parseFrontMatter() {
     try {
       const { attributes, body } = fm(this.markdownContent);
 
       // 解析基础字段
       this.form.title = attributes.title || '';
-      this.form.tags = attributes.tags ? attributes.tags.join(',') : '';
-      this.form.category = attributes.category ? attributes.category.join(',') : '';
-      this.form.description = attributes.description || '';
+      const tagsArr = this.normalizeToArray(attributes.tags);
+      // 注意：你的 front-matter 用的是 categories（不是 category）
+      const categoriesRaw = attributes.categories != null ? attributes.categories : attributes.category;
+      const categoriesArr = this.normalizeToArray(categoriesRaw);
+
+      this.parsedFrontMatter.tags = tagsArr;
+      this.parsedFrontMatter.categories = categoriesArr;
+
+      this.form.tags = tagsArr.join(',');
+      this.form.category = categoriesArr.join(',');
+      this.form.description = (attributes.description != null) ? String(attributes.description) : '';
       this.form.cover = attributes.cover || '';
       this.form.abbrlink = attributes.abbrlink || '';
 
@@ -139,19 +211,25 @@ export default {
 
     return ''; // 不合法则返回空字符串
   },
-    submitArticle() {
+    async submitArticle() {
       if (!this.form.title || !this.markdownContent.trim()) {
         this.$message.warning('请填写完整信息');
         return;
       }
 
       const postData = {
+        id: this.isEdit ? this.articleId : (this.form.abbrlink || undefined),
         title: this.form.title,
-        tags: this.form.tags.split(',').map(tag => tag.trim()),
-        category: this.form.category,
+        tags: (this.parsedFrontMatter.tags && this.parsedFrontMatter.tags.length > 0)
+          ? this.parsedFrontMatter.tags
+          : (this.form.tags ? this.form.tags.split(',').map(tag => tag.trim()).filter(Boolean) : []),
+        // 后端当前接收字段名是 category（PostBody#setCategoryFromObject），这里继续发 category
+        // 但来源优先用 front-matter 的 categories 数组（即你写的格式）
+        category: (this.parsedFrontMatter.categories && this.parsedFrontMatter.categories.length > 0)
+          ? this.parsedFrontMatter.categories
+          : (this.form.category || null),
         description: this.form.description,
         cover: this.form.cover,
-        abbrlink: this.form.abbrlink,
         // 后端支持多种日期格式，但不接受空字符串，这里改为在为空时传 null
         date: this.form.date || null,
         updated: this.form.updated || null,
@@ -161,16 +239,19 @@ export default {
       // 以 JSON 形式输出提交数据
       console.log(JSON.stringify(postData, null, 2));
 
-      addPost(postData)
-        .then(() => {
-        })
-        .catch(error => {
-          console.error('添加文章失败:', error);
-          this.$message.error('添加文章失败，请稍后再试');
-        });
-
-      this.$message.success('文章提交成功');
-      this.$router.push('/article');
+      try {
+        if (this.isEdit) {
+          await updatePost(postData);
+          this.$message.success('文章更新成功');
+        } else {
+          await addPost(postData);
+          this.$message.success('文章提交成功');
+        }
+        this.$router.push('/article');
+      } catch (error) {
+        console.error(this.isEdit ? '更新文章失败:' : '添加文章失败:', error);
+        this.$message.error(this.isEdit ? '更新文章失败，请稍后再试' : '添加文章失败，请稍后再试');
+      }
     },
     resetForm() {
       this.form = {

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.BlogTagMapper">
+
+    <resultMap id="BlogTagResult" type="cn.ayeez.blogpojo.entity.BlogTag">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="slug" column="slug"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByName" resultMap="BlogTagResult">
+        SELECT id, name, slug, description, created_at, updated_at
+        FROM blog_tag
+        WHERE name = #{name}
+        LIMIT 1
+    </select>
+
+    <select id="findByNames" resultMap="BlogTagResult">
+        SELECT id, name, slug, description, created_at, updated_at
+        FROM blog_tag
+        WHERE name IN
+        <foreach collection="names" item="n" open="(" separator="," close=")">
+            #{n}
+        </foreach>
+    </select>
+
+    <insert id="insert" parameterType="cn.ayeez.blogpojo.entity.BlogTag" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_tag (name, slug, description)
+        VALUES (#{name}, #{slug}, #{description})
+    </insert>
+
+</mapper>
+

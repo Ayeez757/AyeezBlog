@@ -72,10 +72,7 @@ export default {
       this.fetchArticles(); // 切换页码重新加载数据
     },
     editArticle(row) {
-      // 编辑文章逻辑
-      console.log('编辑文章:', row);
-      this.$message.info(`正在编辑文章：${row.title}`);
-      // 可以跳转到编辑页面或弹出对话框
+      this.$router.push(`/edit-article/${row.id}`)
     },
     deleteArticle(row) {
   this.$confirm(`确定删除文章 "${row.title}" 吗？`, '提示', {
