@@ -651,6 +651,43 @@ export default {
   text-align: left;
 }
 
+/* =========================
+   桌面端：首页整体下移一点
+   ========================= */
+@media (min-width: 769px) {
+  .home {
+    padding-top: 32px;
+  }
+
+  .left-top-line {
+    top: 122px;
+  }
+
+  .left-top-line2 {
+    top: 132px;
+  }
+
+  .left-top-line3 {
+    top: 152px;
+  }
+
+  .left-top-line4 {
+    top: 122px;
+  }
+
+  .left-top-line5 {
+    top: 122px;
+  }
+
+  .arrow-container {
+    transform: translateX(-50%) translateY(12px);
+  }
+
+  .card-container {
+    margin-top: 12px;
+  }
+}
+
 .social-icons {
   display: flex;
   gap: 15px;
@@ -934,10 +971,7 @@ export default {
   }
 
   /* 个人卡片在手机上更小一些 */
-  .card-container {
-    /* margin-top: 90vh; */
-    /* 在手机端把卡片整体再往下移一点，让首屏只露出卡片顶部，引导下滑 */
-  }
+  /* .card-container { } */
 
   .card {
     width: 86%;
