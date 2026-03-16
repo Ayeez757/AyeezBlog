@@ -686,26 +686,31 @@ export default {
     padding: 16px;
   }
 
-  /* 手机端：目录默认隐藏，点击右下角“目”按钮后，从右侧悬浮展开 */
+  /* 手机端：目录默认隐藏，点击右下角“目”按钮后，从右侧悬浮展开，带动画 */
   .toc-sidebar {
-    display: none;
+    position: fixed;
+    right: 16px;
+    bottom: 70px;
+    width: 70vw;
+    max-width: 320px;
+    max-height: 82vh;
+    margin-top: 0;
+    z-index: 1100;
+    border: 1px solid #ffffff;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
   .toc-sidebar.toc-sidebar--mobile-open {
-    position: fixed;
-    right: 16px;
-    bottom: 90px;
-    width: 70vw;
-    max-width: 320px;
-    max-height: 60vh;
-    margin-top: 0;
-    z-index: 1100;
-    display: block;
-    border: 1px solid #ffffff;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
-  .toc-sidebar.toc-sidebar--mobile-open .toc-list {
-    max-height: 50vh;
+  .toc-sidebar .toc-list {
+    max-height: 72vh;
     overflow-y: auto;
   }
 
