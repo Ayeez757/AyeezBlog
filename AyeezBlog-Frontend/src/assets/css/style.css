@@ -1,3 +1,9 @@
+html,
+body {
+  width: 100%;
+  overflow-x: hidden; /* 禁用横向滚动条 */
+}
+
 body {
   background-image: url('https://qiniu.ayeez.cn/20260220211049919.jpg');
   background-size: cover;
@@ -5,7 +11,7 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   overflow-y: scroll; /* 强制显示垂直滚动条 */
-  color:white;
+  color: white;
 }
 
 /* 自定义滚动条样式 */
