@@ -684,7 +684,7 @@ export default {
   }
 
   .card-container {
-    margin-top: 12px;
+    margin-top: 40px;
   }
 }
 
@@ -971,7 +971,9 @@ export default {
   }
 
   /* 个人卡片在手机上更小一些 */
-  /* .card-container { } */
+  .card-container {
+    margin-top: 24px;
+  }
 
   .card {
     width: 86%;
