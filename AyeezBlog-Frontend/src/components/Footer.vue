@@ -55,8 +55,8 @@ onUnmounted(() => {
 <style scoped>
 .site-footer {
   width: 100%;
-  margin-top: 40px;
-  padding: 26px 16px 26px;
+  margin-top: 60px;
+  padding: 50px 16px 26px;
   background-color: rgba(0, 0, 0, 0.78);
   color: #f5f5f5;
   font-size: 13px;

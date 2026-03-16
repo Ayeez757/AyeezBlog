@@ -23,11 +23,23 @@
 
         <!-- 正文 -->
         <div class="post-content" v-html="renderedMarkdown"></div>
+
+        <!-- 文章评论区域（Twikoo） -->
+        <section id="comments" class="post-comments">
+          <h2 class="post-comments-title">评论</h2>
+          <div class="post-comment-card">
+            <div id="tcomment-post"></div>
+          </div>
+        </section>
       </div>
     </main>
 
     <!-- 目录（右侧，可折叠） -->
-    <aside class="toc-sidebar" v-if="headings.length">
+    <aside
+      class="toc-sidebar"
+      :class="{ 'toc-sidebar--mobile-open': isMobileTocOpen }"
+      v-if="headings.length"
+    >
       <div class="toc-title">目录</div>
       <ul class="toc-list">
         <li
@@ -55,6 +67,19 @@
         </li>
       </ul>
     </aside>
+
+    <!-- 桌面端右下角悬浮球 -->
+    <div class="float-buttons">
+      <button class="float-btn" @click="scrollToComments">
+        评
+      </button>
+      <button class="float-btn" @click="scrollToTop">
+        顶
+      </button>
+      <button class="float-btn" @click="toggleMobileToc">
+        目
+      </button>
+    </div>
   </div>
 </template>
 
@@ -73,7 +98,8 @@ export default {
       post: {},
       frontMatter: {},
       headings: [],     // { level, title, anchor }
-      collapsedMap: {}  // { [anchor]: boolean }
+      collapsedMap: {}, // { [anchor]: boolean }
+      isMobileTocOpen: false
     };
   },
   computed: {
@@ -85,9 +111,41 @@ export default {
               return hljs.highlight(str, { language: lang }).value;
             } catch (_) {}
           }
-          return '';
+          return ''; // 不高亮时走默认转义
         }
       });
+
+      // 自定义代码块渲染：增加头部信息 & 复制按钮
+      const defaultFence =
+        md.renderer.rules.fence ||
+        function (tokens, idx, options, env, self) {
+          return self.renderToken(tokens, idx, options);
+        };
+
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const token = tokens[idx];
+        const info = token.info ? token.info.trim() : '';
+        const lang = info.split(/\s+/g)[0] || '';
+        const rawCode = token.content;
+
+        let highlighted = '';
+        if (options.highlight) {
+          highlighted = options.highlight(rawCode, lang) || '';
+        }
+
+        const finalCode =
+          highlighted || md.utils.escapeHtml(rawCode || '');
+        const langLabel = lang || 'Text';
+
+        return `
+<div class="code-block">
+  <div class="code-block__header">
+    <span class="code-block__lang">${langLabel}</span>
+    <button class="code-block__copy" type="button">复制</button>
+  </div>
+  <pre class="code-block__body"><code class="hljs language-${langLabel.toLowerCase()}">${finalCode}</code></pre>
+</div>`;
+      };
 
       // 自定义图片渲染规则
       md.renderer.rules.image = function (tokens, idx) {
@@ -121,6 +179,13 @@ export default {
       return md.render(body);
     }
   },
+  watch: {
+    renderedMarkdown() {
+      this.$nextTick(() => {
+        this.enhanceCodeBlocks();
+      });
+    }
+  },
   methods: {
     // 平滑滚动到锚点（整行点击）
     scrollToAnchor(anchor) {
@@ -134,6 +199,11 @@ export default {
         top,
         behavior: 'smooth'
       });
+
+      // 手机端点击目录项后自动收起目录
+      if (window.innerWidth <= 768) {
+        this.isMobileTocOpen = false;
+      }
     },
 
     // 提取标题：按 # 的真实数量作为层级（H1~H6），排除代码块中的 #
@@ -213,6 +283,78 @@ export default {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return '无效日期';
       return date.toLocaleDateString('zh-CN');
+    },
+
+    // 滚动到页面顶部
+    scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    },
+
+    // 滚动到评论区域（假定评论容器 id 为 comments）
+    scrollToComments() {
+      const el = document.getElementById('comments');
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const offset = 90; // 和标题滚动偏移保持一致
+      const top = window.pageYOffset + rect.top - offset;
+
+      window.scrollTo({
+        top,
+        behavior: 'smooth'
+      });
+    },
+
+    // 切换手机端目录抽屉
+    toggleMobileToc() {
+      this.isMobileTocOpen = !this.isMobileTocOpen;
+    },
+
+    // 为代码块绑定复制事件
+    enhanceCodeBlocks() {
+      const blocks = this.$el.querySelectorAll('.code-block');
+      blocks.forEach(block => {
+        const btn = block.querySelector('.code-block__copy');
+        if (!btn || btn.dataset.bound === 'true') return;
+
+        btn.dataset.bound = 'true';
+        btn.addEventListener('click', () => {
+          const codeEl = block.querySelector('pre code');
+          if (!codeEl) return;
+          const text = codeEl.innerText;
+
+          const setCopied = () => {
+            const oldText = btn.innerText;
+            btn.innerText = '已复制';
+            btn.classList.add('code-block__copy--success');
+            setTimeout(() => {
+              btn.innerText = oldText;
+              btn.classList.remove('code-block__copy--success');
+            }, 2000);
+          };
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(setCopied).catch(() => {});
+          } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+              document.execCommand('copy');
+              setCopied();
+            } catch (e) {
+              console.warn('复制失败', e);
+            } finally {
+              document.body.removeChild(textarea);
+            }
+          }
+        });
+      });
     }
   },
   async created() {
@@ -221,6 +363,18 @@ export default {
       this.post = response.data;
     } catch (error) {
       console.error('加载文章失败:', error);
+    }
+  },
+  mounted() {
+    // 为当前文章初始化 Twikoo 评论（按文章 ID 区分评论串）
+    if (window && window.twikoo) {
+      window.twikoo.init({
+        envId: 'https://twikoo.ayeez.cn',
+        el: '#tcomment-post',
+        path: `/posts/${this.id}`
+      });
+    } else {
+      console.warn('Twikoo 未加载，无法初始化文章评论');
     }
   }
 };
@@ -355,18 +509,91 @@ export default {
 
 /* 代码块样式 */
 :deep(.post-content pre) {
-  background-color: #2d2d2d;
-  padding: 15px;
-  border-radius: 5px;
+  background-color: #1e1e1e;
+  padding: 14px 16px;
   overflow-x: auto;
-  margin: 15px 0;
 }
 
 :deep(.post-content code) {
-  background-color: #3a3a3a;
+  background-color: rgba(0, 0, 0, 0.22);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, 'Courier New',
+    monospace;
+  font-size: 13px;
+}
+
+/* 独立代码块容器（含标题 & 复制按钮） */
+:deep(.code-block) {
+  position: relative;
+  margin: 18px 0;
+  border-radius: 12px;
+  border: 1px solid #ffffff8e;
+  overflow: hidden;
+  background: radial-gradient(circle at top left, #2b3a4a, #141414);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+:deep(.code-block__header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: linear-gradient(90deg, rgba(72, 89, 117, 0.9), rgba(20, 20, 20, 0.95));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+:deep(.code-block__lang) {
+  color: #e2e8f0;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+:deep(.code-block__body) {
+  margin: 0;
+  padding: 10px 14px 12px;
+  background: transparent;
+  font-size: 13px;
+}
+
+:deep(.code-block__body code) {
+  background: transparent;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, 'Courier New',
+    monospace;
+}
+
+:deep(.code-block__copy) {
+  border: none;
+  outline: none;
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5f5;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+:deep(.code-block__copy:hover) {
+  background: rgba(37, 99, 235, 0.9);
+  color: #e5edff;
+  transform: translateY(-0.5px);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.6);
+}
+
+:deep(.code-block__copy:active) {
+  transform: translateY(0.5px) scale(0.98);
+  box-shadow: none;
+}
+
+:deep(.code-block__copy--success) {
+  background: rgba(22, 163, 74, 0.9);
+  color: #e5ffe6;
 }
 
 /* 图片样式 */
@@ -388,5 +615,105 @@ export default {
 .post-description p {
   font-style: italic;
   margin: 0;
+}
+
+/* 文章内嵌评论区域样式 */
+.post-comments {
+  margin-top: 40px;
+}
+
+.post-comments-title {
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.post-comment-card {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+#tcomment-post {
+  color: #ffffff;
+}
+
+/* 桌面端右下角悬浮按钮容器 */
+.float-buttons {
+  position: fixed;
+  right: 32px;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.float-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: #2e789d;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.float-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
+  background: #3691c0;
+}
+
+/* 手机适配：窄屏下改为上下布局 */
+@media (max-width: 768px) {
+  .post-container {
+    flex-direction: column;
+    margin: 80px auto 40px;
+    padding: 10px;
+  }
+
+  .post-main {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .post-detail {
+    padding: 16px;
+  }
+
+  /* 手机端：目录默认隐藏，点击右下角“目”按钮后，从右侧悬浮展开 */
+  .toc-sidebar {
+    display: none;
+  }
+
+  .toc-sidebar.toc-sidebar--mobile-open {
+    position: fixed;
+    right: 16px;
+    bottom: 90px;
+    width: 70vw;
+    max-width: 320px;
+    max-height: 60vh;
+    margin-top: 0;
+    z-index: 1100;
+    display: block;
+    border: 1px solid #ffffff;
+  }
+
+  .toc-sidebar.toc-sidebar--mobile-open .toc-list {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
+  /* 覆盖 markdown 中图片的内联宽度，使其在手机上占满容器 */
+  :deep(.post-content img) {
+    width: 100% !important;
+    max-width: 100%;
+    height: auto;
+  }
 }
 </style>

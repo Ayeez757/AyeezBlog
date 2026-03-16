@@ -527,7 +527,7 @@ export default {
 /* 响应式：小屏使用汉堡菜单，大屏保持原布局 */
 @media (max-width: 768px) {
     .blog-header {
-        padding: 5px 18px;
+        padding: 10px 25px;
         /* 减小左右内边距，让左侧炫光灯和标题更贴近屏幕左边 */
     }
 
