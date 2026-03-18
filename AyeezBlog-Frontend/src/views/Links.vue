@@ -8,29 +8,15 @@
       <p class="links-subtitle">这里是阿叶 Ayeez 的友链小角落，欢迎互相串门。</p>
 
       <!-- 友链列表（按分组展示） -->
-      <div
-        v-for="(group, gIndex) in friendGroups"
-        :key="gIndex"
-        class="links-group"
-      >
+      <div v-for="(group, gIndex) in friendGroups" :key="gIndex" class="links-group">
         <h2 class="group-title">{{ group.class_name }}</h2>
         <p class="group-desc" v-if="group.class_desc">{{ group.class_desc }}</p>
 
         <div class="links-grid">
-          <a
-            v-for="(site, index) in group.link_list"
-            :key="site.link || index"
-            class="link-card"
-            :href="site.link"
-            target="_blank"
-            rel="noopener"
-          >
+          <a v-for="(site, index) in group.link_list" :key="site.link || index" class="link-card" :href="site.link"
+            target="_blank" rel="noopener">
             <div class="link-card-header">
-              <img
-                class="link-avatar"
-                :src="site.avatar"
-                :alt="site.name"
-              />
+              <img class="link-avatar" :src="site.avatar" :alt="site.name" />
               <div class="link-meta">
                 <h2 class="link-name">{{ site.name }}</h2>
                 <p class="link-descr">
@@ -114,7 +100,7 @@ export default {
           class_name: '1.特别关心',
           class_desc: '常联系的朋友~~',
           link_list: [
-          {
+            {
               name: '阿叶Ayeez的旧站',
               link: 'https://blog.ayeez.cn/',
               avatar: 'https://blog.ayeez.cn/imgs/photo.jpg',
@@ -335,6 +321,12 @@ export default {
               link: 'https://inaline.net',
               avatar: 'https://inaline.net/usr/themes/inaline/assets/images/logo/cover.png',
               descr: '此情可待成追忆，只是当时已惘然'
+            },
+            {
+              name: 时光潜流,
+              link: 'https://www.dreamcenter.top',
+              descr: '妹控的中二君！',
+              avatar: 'https://www.dreamcenter.top/imgs/avatar.jpg'
             }
           ]
         }
