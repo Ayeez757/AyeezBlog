@@ -323,7 +323,7 @@ export default {
               descr: '此情可待成追忆，只是当时已惘然'
             },
             {
-              name: 时光潜流,
+              name: '时光潜流',
               link: 'https://www.dreamcenter.top',
               descr: '妹控的中二君！',
               avatar: 'https://www.dreamcenter.top/imgs/avatar.jpg'
