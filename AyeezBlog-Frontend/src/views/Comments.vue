@@ -124,7 +124,7 @@ const CommentNode = {
     fallbackAvatar: { type: Function, required: true }
   },
   template: `
-    <div class="node" :style="{ marginLeft: depth ? (depth * 16) + 'px' : '0px' }">
+    <div class="node" :style="{ '--depth': depth }">
       <div class="node-row">
         <img class="node-avatar" :src="node.avatar || fallbackAvatar(node)" alt="" />
         <div class="node-body">
@@ -165,6 +165,7 @@ export default {
 
       loadingAll: false,
       loadError: '',
+      partialErrors: [],
       loadedUrls: 0,
       totalUrls: 0,
 
@@ -265,6 +266,7 @@ export default {
     async loadAllSiteComments() {
       this.loadingAll = true;
       this.loadError = '';
+      this.partialErrors = [];
       this.loadedUrls = 0;
       try {
         const resp = await fetchPosts(1, 9999, 'update_time', 'desc');
@@ -280,8 +282,14 @@ export default {
         const worker = async () => {
           while (idx < urls.length) {
             const url = urls[idx++];
-            const g = await this.loadAllForUrl(url);
-            nextMap.set(url, g);
+            try {
+              const g = await this.loadAllForUrl(url);
+              nextMap.set(url, g);
+            } catch (e) {
+              const msg = e && e.message ? e.message : '未知错误';
+              this.partialErrors.push({ url, message: msg });
+              nextMap.set(url, { url, items: [], count: 0, _error: msg });
+            }
             this.loadedUrls += 1;
           }
         };
@@ -289,6 +297,10 @@ export default {
         await Promise.all(workers);
 
         this.siteCommentMap = nextMap;
+        if (this.partialErrors.length) {
+          const sample = this.partialErrors.slice(0, 3).map((x) => `${x.url}（${x.message}）`).join('；');
+          this.loadError = `部分页面抓取失败：${this.partialErrors.length}/${this.totalUrls}${sample ? `，例如：${sample}` : ''}`;
+        }
       } catch (e) {
         this.loadError = e && e.message ? e.message : '未知错误';
         this.siteCommentMap = new Map();
@@ -297,39 +309,56 @@ export default {
       }
     },
     async loadAllForUrl(url) {
-      const allTop = [];
-      let before = undefined;
-      let more = true;
-      let guard = 0;
-      let totalCount = 0;
+      const fetchAllByKey = async (twikooUrlKey) => {
+        const allTop = [];
+        let before = undefined;
+        let more = true;
+        let guard = 0;
+        let totalCount = 0;
 
-      while (more && guard < 10000) {
-        guard += 1;
-        const res = await this.twikooCommentGet({ url, before });
-        const data = Array.isArray(res && res.data) ? res.data : [];
-        more = !!(res && res.more);
-        totalCount = typeof res.count === 'number' ? res.count : totalCount;
-        allTop.push(...data);
+        while (more && guard < 10000) {
+          guard += 1;
+          const res = await this.twikooCommentGet({ url: twikooUrlKey, before });
+          const data = Array.isArray(res && res.data) ? res.data : [];
+          more = !!(res && res.more);
+          totalCount = typeof res.count === 'number' ? res.count : totalCount;
+          allTop.push(...data);
 
-        if (!more) break;
+          if (!more) break;
 
-        const createdList = [];
-        const collectCreated = (nodes) => {
-          (nodes || []).forEach((n) => {
-            if (n && (typeof n.created === 'number' || typeof n.created === 'string')) {
-              const t = Number(n.created);
-              if (!Number.isNaN(t) && t) createdList.push(t);
-            }
-            if (n && Array.isArray(n.replies) && n.replies.length) collectCreated(n.replies);
-          });
-        };
-        collectCreated(data);
-        const minCreated = createdList.length ? Math.min(...createdList) : 0;
-        if (!minCreated || (before && minCreated >= before)) {
-          more = false;
-          break;
+          const createdList = [];
+          const collectCreated = (nodes) => {
+            (nodes || []).forEach((n) => {
+              if (n && (typeof n.created === 'number' || typeof n.created === 'string')) {
+                const t = Number(n.created);
+                if (!Number.isNaN(t) && t) createdList.push(t);
+              }
+              if (n && Array.isArray(n.replies) && n.replies.length) collectCreated(n.replies);
+            });
+          };
+          collectCreated(data);
+          const minCreated = createdList.length ? Math.min(...createdList) : 0;
+          if (!minCreated || (before && minCreated >= before)) {
+            more = false;
+            break;
+          }
+          before = minCreated;
         }
-        before = minCreated;
+
+        return { items: allTop, count: totalCount };
+      };
+
+      const pagePath = this.mapCommentPathToPagePath(url);
+      const abs = this.toHref(pagePath);
+      const keys = Array.from(new Set([pagePath, abs].filter(Boolean)));
+
+      // 兼容不同部署/迁移形态：Twikoo 的 url key 可能是相对路径，也可能是完整 URL
+      const mergedTop = [];
+      let mergedCount = 0;
+      for (const k of keys) {
+        const { items, count } = await fetchAllByKey(k);
+        mergedTop.push(...(items || []));
+        if (typeof count === 'number' && count > mergedCount) mergedCount = count;
       }
 
       const seen = new Set();
@@ -344,8 +373,8 @@ export default {
         });
         return out;
       };
-      const items = dedupTree(allTop);
-      const count = totalCount || this.countTree(items);
+      const items = dedupTree(mergedTop);
+      const count = mergedCount || this.countTree(items);
       return { url, items, count };
     },
     countTree(nodes) {
@@ -367,7 +396,15 @@ export default {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!r.ok) throw new Error(`Twikoo 请求失败：${r.status}`);
+      if (!r.ok) {
+        let detail = '';
+        try {
+          detail = await r.text();
+        } catch (_) {
+          // ignore
+        }
+        throw new Error(`Twikoo 请求失败：${r.status}${detail ? ` ${detail}` : ''}`);
+      }
       return await r.json();
     },
     displayPath(u) {
@@ -407,6 +444,7 @@ export default {
   justify-content: center;
   min-height: calc(100vh - 68px);
   padding: 20px;
+  --indent-step: 16px;
 }
 
 .comments-inner {
@@ -727,6 +765,7 @@ export default {
 
 .node {
   padding: 8px 0;
+  margin-left: min(calc(var(--depth, 0) * var(--indent-step, 16px)), 64px);
 }
 
 .node-row {
@@ -778,6 +817,9 @@ export default {
   font-size: 12px;
   color: rgba(122, 245, 143, 0.92);
   text-decoration: none;
+  display: block;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .node-link:hover {
@@ -813,6 +855,16 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 12px;
   padding: 14px 14px;
+}
+
+.twikoo-wrap :deep(.tk-submit .tk-row) {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.twikoo-wrap :deep(.tk-preview) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .twikoo-wrap :deep(.tk-avatar),
@@ -892,6 +944,7 @@ export default {
 @media (max-width: 768px) {
   .comments {
     padding: 16px;
+    --indent-step: 14px;
   }
 
   .comments-title-gradient {
@@ -900,6 +953,144 @@ export default {
 
   .comment-card {
     padding: 16px 14px;
+  }
+}
+
+@media (max-width: 520px) {
+  .comments-tagline {
+    font-size: 18px;
+    letter-spacing: 3px;
+  }
+
+  .comments-title-gradient {
+    font-size: 34px;
+    letter-spacing: 4px;
+  }
+
+  .comments-subtitle {
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .card-header {
+    align-items: flex-start;
+  }
+
+  .card-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .seg-btn {
+    flex: 1 1 auto;
+  }
+
+  .refresh-btn {
+    flex: 1 1 100%;
+  }
+
+  .recent-item {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .recent-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .recent-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .recent-nick {
+    max-width: 100%;
+  }
+
+  .recent-url {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
+    word-break: break-word;
+  }
+
+  .reply-tag {
+    display: inline-block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .node-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .node-nick {
+    max-width: 100%;
+  }
+
+  .group-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .group-link {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .node-children {
+    padding-left: 8px;
+  }
+
+  .comments {
+    --indent-step: 12px;
+  }
+
+  .node {
+    margin-left: min(calc(var(--depth, 0) * var(--indent-step, 12px)), 36px);
+  }
+
+  .twikoo-wrap :deep(.tk-submit) {
+    padding: 12px 12px;
+  }
+
+  .twikoo-wrap :deep(.tk-submit .tk-row .tk-col),
+  .twikoo-wrap :deep(.tk-submit .tk-row .tk-col-lg),
+  .twikoo-wrap :deep(.tk-submit .tk-row .tk-col-md),
+  .twikoo-wrap :deep(.tk-submit .tk-row .tk-col-sm),
+  .twikoo-wrap :deep(.tk-submit .tk-row .tk-col-xs) {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .twikoo-wrap :deep(.tk-submit .tk-row .tk-col + .tk-col) {
+    margin-left: 0;
+  }
+
+  .twikoo-wrap :deep(.tk-send),
+  .twikoo-wrap :deep(.tk-button) {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .comments {
+    padding: 12px;
+  }
+
+  .comment-card {
+    padding: 14px 12px;
+  }
+
+  .comments-title-gradient {
+    font-size: 30px;
+    letter-spacing: 3px;
   }
 }
 </style>
