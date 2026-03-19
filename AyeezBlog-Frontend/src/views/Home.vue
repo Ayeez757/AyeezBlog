@@ -50,7 +50,7 @@
       <img id="home-card-avatar" src="https://blog.ayeez.cn/imgs/photo.jpg" alt="头像">
       <div class="card-content">
         <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
-        <text>这是新博客，仍然在开发中~</text>
+        <text>这是新博客，仍然在开发中~（内容已经迁移，可能有部分图片丢失，可联系管理员修复）</text>
         <text>旧站：<a href="https://blog.ayeez.cn" target="_blank">https://blog.ayeez.cn</a> （仍在使用中）</text>
         <text>qq闲聊交流群：421300955</text>
         <!-- 圆形图标链接 -->
@@ -123,7 +123,7 @@ export default {
       // 文章数据
       posts: [],
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 12,
       total: 0,
       defaultCover: 'https://blog.ayeez.cn/imgs/bg/bg.jpg',
 
