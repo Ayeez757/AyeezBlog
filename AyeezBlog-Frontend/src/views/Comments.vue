@@ -231,12 +231,27 @@ export default {
     this.loadAllSiteComments();
   },
   methods: {
+    // 页面展示/跳转用的路径映射（不等同于 Twikoo 存储评论的 url key）
     mapCommentPathToPagePath(raw) {
       const s = (raw || '').toString();
       if (!s) return s;
       // 友链页：历史评论聚合在 /link，但实际页面是 /links
       if (s === '/link') return '/links';
       return s;
+    },
+    // Twikoo 拉取评论时，尝试的 url key 集合（兼容相对路径 / 完整 URL / 历史映射）
+    twikooKeysForUrl(rawUrl) {
+      const origin = (window && window.location && window.location.origin) ? window.location.origin : '';
+      const raw = (rawUrl || '').toString();
+      const pagePath = this.mapCommentPathToPagePath(raw);
+
+      const candidates = [];
+      if (raw) candidates.push(raw);
+      if (origin && raw && !/^https?:\/\//i.test(raw)) candidates.push(`${origin}${raw}`);
+      if (pagePath && pagePath !== raw) candidates.push(pagePath);
+      if (origin && pagePath && pagePath !== raw && !/^https?:\/\//i.test(pagePath)) candidates.push(`${origin}${pagePath}`);
+
+      return Array.from(new Set(candidates.filter(Boolean)));
     },
     htmlToText(html) {
       const s = (html || '').toString();
@@ -348,9 +363,7 @@ export default {
         return { items: allTop, count: totalCount };
       };
 
-      const pagePath = this.mapCommentPathToPagePath(url);
-      const abs = this.toHref(pagePath);
-      const keys = Array.from(new Set([pagePath, abs].filter(Boolean)));
+      const keys = this.twikooKeysForUrl(url);
 
       // 兼容不同部署/迁移形态：Twikoo 的 url key 可能是相对路径，也可能是完整 URL
       const mergedTop = [];
