@@ -1,10 +1,10 @@
 // src/api/index.js
 import axios from 'axios';
 
-// 直接在这里配置后端接口地址
-// const BASE_URL = 'http://localhost:8080/'; // 手动修改这里的地址
-// const BASE_URL = 'http://111.228.53.6:8080/'; // 手动修改这里的地址
-const BASE_URL = '/'; // 手动修改这里的地址
+// 后端地址：
+// - 生产/手机访问：默认同域（由 nginx/网关反代到后端），避免写死 localhost 导致移动端请求失败
+// - 开发环境：可用 VITE_API_BASE_URL 覆盖，或使用 vite proxy（见 vite.config.js）
+const BASE_URL = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ? import.meta.env.VITE_API_BASE_URL : '/';
 
 
 // 创建 axios 实例

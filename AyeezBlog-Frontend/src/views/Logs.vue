@@ -29,6 +29,16 @@ export default {
     return {
       logs: [
       {
+          date: '2026-03-19',
+          version: 'v0.13.0',
+          changes: [
+            '前端：添加了文章归档页面，支持搜索、按日期筛选与排序。',
+            '前端：做了文章日志页面的手机适配',
+            '前端：重做了留言页，添加了全站评论汇总功能，支持最新评论、按页面分类浏览',
+            '前端：修复了评论页面的手机适配的一系列问题',
+          ]
+        },
+      {
           date: '2026-03-16',
           version: 'v0.12.0',
           changes: [
@@ -251,5 +261,71 @@ export default {
   color: #ffcc00;
   position: absolute;
   left: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .logs {
+    padding: 14px 12px;
+  }
+
+  .title {
+    margin-bottom: 18px;
+    font-size: 1.55em;
+  }
+
+  .timeline {
+    padding-left: 18px;
+  }
+
+  .timeline::before {
+    left: 12px;
+  }
+
+  .log-item {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .date {
+    flex: none;
+    text-align: left;
+    padding-right: 0;
+    font-size: 0.95em;
+  }
+
+  .content {
+    flex: none;
+    padding: 12px;
+  }
+
+  .content h2 {
+    font-size: 1.2em;
+  }
+
+  .content li {
+    padding-left: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .logs {
+    padding: 12px 10px;
+  }
+
+  .title {
+    font-size: 1.4em;
+  }
+
+  .timeline {
+    padding-left: 16px;
+  }
+
+  .timeline::before {
+    left: 10px;
+  }
 }
 </style>

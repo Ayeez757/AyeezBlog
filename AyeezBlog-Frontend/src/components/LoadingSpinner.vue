@@ -77,10 +77,9 @@ export default {
 /* 样式保持不变 */
 .terminal-loader {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background: #000;
   color: #00ff00;
   font-family: 'Courier New', monospace;

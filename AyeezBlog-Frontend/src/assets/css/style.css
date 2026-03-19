@@ -2,6 +2,19 @@ html,
 body {
   width: 100%;
   overflow-x: hidden; /* 禁用横向滚动条 */
+  overscroll-behavior-x: none;
+}
+
+#app {
+  width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
@@ -12,6 +25,7 @@ body {
   background-attachment: fixed;
   overflow-y: scroll; /* 强制显示垂直滚动条 */
   color: white;
+  touch-action: pan-y;
 }
 
 /* 自定义滚动条样式 */

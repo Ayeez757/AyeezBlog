@@ -152,7 +152,7 @@ export default {
         const token = tokens[idx];
         const src = token.attrGet('src');
         const alt = token.content;
-        return `<img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; width: 800px; display: block; margin: 10px 0;" />`;
+        return `<img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; display: block; margin: 10px 0;" />`;
       };
 
       // 自定义标题渲染规则（添加锚点）
@@ -600,7 +600,6 @@ export default {
 :deep(.post-content img) {
   max-width: 100%;
   height: auto;
-  width: 300px;
   display: block;
   margin: 10px 0;
 }
