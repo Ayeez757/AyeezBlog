@@ -2,9 +2,13 @@
 
 # 阿叶Ayeez的博客
 
-
+- [中文](./README.md) | [English](./docs/README_EN.md)
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
+
+
+项目demo：[https://dev-blog.ayeez.cn/](https://dev-blog.ayeez.cn/)
+
 
 <p align="center">
     <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
@@ -20,9 +24,7 @@
 
 
 
-项目demo：[https://dev-blog.ayeez.cn/](https://dev-blog.ayeez.cn/)
 
-- [中文](./README.md) | [English](./docs/README_EN.md)
 
 
 
