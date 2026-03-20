@@ -1,6 +1,10 @@
 注意：开发中，目前最基础的功能已经可以正常使用了，其他的敬请期待......
 可以看看demo来观察进度：https://dev-blog.ayeez.cn
 
+## 语言 / Language
+
+- [中文](./README.md) | [English](./docs/README_EN.md)
+
 # 阿叶Ayeez的博客
 
 <p align="center">
@@ -186,43 +190,10 @@ Apifox：
 ---
 
 ## 数据库设计
-### 表结构概览
 
-#### 1. 用户表 (`user`)
+数据库设计已拆分到独立文档，点击查看：
 
-存储系统用户信息，支持普通用户和管理员角色。
-
-|字段名|类型|约束|说明|
-|---|---|---|---|
-|id|BIGINT|PRIMARY KEY AUTO_INCREMENT|用户ID，自增主键|
-|username|VARCHAR(50)|NOT NULL UNIQUE|用户名，唯一|
-|nickname|VARCHAR(50)||昵称|
-|password|VARCHAR(255)|NOT NULL|密码（BCrypt 加密存储）|
-|email|VARCHAR(100)||邮箱，用于找回密码、通知|
-|avatar|VARCHAR(512)||头像URL|
-|role|TINYINT|NOT NULL DEFAULT 0|角色：0-普通用户，1-管理员|
-|status|TINYINT|NOT NULL DEFAULT 1|状态：0-禁用，1-启用|
-|create_time|DATETIME(3)|DEFAULT CURRENT_TIMESTAMP(3)|注册时间，精确到毫秒|
-
-**索引建议**：`username` 唯一索引，`email` 普通索引。
-
-#### 2. 文章表 (`blog_post`)
-
-存储博客文章内容，支持 Markdown 格式。
-
-|字段名|类型|约束|说明|
-|---|---|---|---|
-|id|VARCHAR(64)|PRIMARY KEY|文章ID（UUID 或雪花算法生成）|
-|title|VARCHAR(255)|NOT NULL|文章标题|
-|content|LONGTEXT|NOT NULL|文章正文（Markdown 格式）|
-|description|VARCHAR(255)||文章摘要，用于列表展示和 SEO|
-|cover|VARCHAR(512)||封面图片URL|
-|category_id|BIGINT||所属分类ID，外键关联 `category(id)`|
-|user_id|BIGINT|NOT NULL|作者ID，外键关联 `user(id)`|
-|status|TINYINT|NOT NULL DEFAULT 1|状态：0-草稿，1-已发布，2-回收站|
-|views|INT|NOT NULL DEFAULT 0|阅读量|
-|create_time|DATETIME(3)|NOT NULL DEFAULT CURRENT_TIMESTAMP(3)|创建时间|
-|update_time|DATETIME(3)|NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)|最后更新时间|
+- [数据库设计文档](./docs/DATABASE_DESIGN.md)
 
 
 
