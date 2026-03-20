@@ -2,6 +2,10 @@
 
 # 阿叶Ayeez的博客
 
+
+
+![](https://qiniu.ayeez.cn/20260228215441383.jpg)
+
 <p align="center">
     <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
     <img alt="项目版本" src="https://img.shields.io/github/package-json/v/ayeez757/AyeezBlog?filename=AyeezBlog-Frontend%2Fpackage.json&label=AyeezBlog%20version">
@@ -13,8 +17,6 @@
   <img alt="Java" src="https://img.shields.io/badge/Java-21-007396?logo=java">
 </p>
 
-
-![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
 
 
