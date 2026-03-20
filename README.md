@@ -1,17 +1,26 @@
-注意：开发中，目前readme里有的功能已经可以正常使用了，其他的敬请期待......
 
-
-可以看看demo来观察进度：[https://dev-blog.ayeez.cn](https://dev-blog.ayeez.cn)
-
-## 语言 / Language
-
-- [中文](./README.md) | [English](./docs/README_EN.md)
 
 # 阿叶Ayeez的博客
+
+<p align="center">
+    <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
+    <img alt="项目版本" src="https://img.shields.io/github/package-json/v/ayeez757/AyeezBlog?filename=AyeezBlog-Frontend%2Fpackage.json&label=AyeezBlog%20version">
+  </a>
+  <a href="https://github.com/ayeez757/AyeezBlog/blob/master/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ayeez757/AyeezBlog"></a>
+  <!-- Spring Boot 版本（从 parent.version 手动获取） -->
+  <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-3.2.0-6DB33F?logo=spring">
+  <!-- Java 版本（从 properties.java.version 手动获取） -->
+  <img alt="Java" src="https://img.shields.io/badge/Java-21-007396?logo=java">
+</p>
+
+
+![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
 
 
 项目demo：[https://dev-blog.ayeez.cn/](https://dev-blog.ayeez.cn/)
+
+- [中文](./README.md) | [English](./docs/README_EN.md)
 
 
 
