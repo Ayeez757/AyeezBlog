@@ -1,5 +1,7 @@
-注意：开发中，目前最基础的功能已经可以正常使用了，其他的敬请期待......
-可以看看demo来观察进度：https://dev-blog.ayeez.cn
+注意：开发中，目前readme里有的功能已经可以正常使用了，其他的敬请期待......
+
+
+可以看看demo来观察进度：[https://dev-blog.ayeez.cn](https://dev-blog.ayeez.cn)
 
 ## 语言 / Language
 
@@ -7,32 +9,31 @@
 
 # 阿叶Ayeez的博客
 
-<p align="center">
-    <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
-    <img alt="项目版本" src="https://img.shields.io/github/package-json/v/ayeez757/AyeezBlog?filename=AyeezBlog-Frontend%2Fpackage.json&label=AyeezBlog%20version">
-  </a>
-  <a href="https://github.com/ayeez757/AyeezBlog/blob/master/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ayeez757/AyeezBlog"></a>
-  <!-- Spring Boot 版本（从 parent.version 手动获取） -->
-  <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-3.2.0-6DB33F?logo=spring">
-  <!-- Java 版本（从 properties.java.version 手动获取） -->
-  <img alt="Java" src="https://img.shields.io/badge/Java-21-007396?logo=java">
-</p>
 
-项目demo：https://dev-blog.ayeez.cn/
 
-![](https://qiniu.ayeez.cn/20260228215441383.jpg)
+项目demo：[https://dev-blog.ayeez.cn/](https://dev-blog.ayeez.cn/)
 
 
 
 ## 项目简介
 
-**AyeezBlog** 是一个开源的博客系统，采用前后端分离架构设计。前端基于 Vue 3 构建；后端使用 Spring Boot 框架，确保系统的稳定与可扩展性。项目包含用户前台展示与后台管理，支持文章管理、评论互动、分类标签等核心功能，适用于个人博客、技术社区或企业官网。
+**AyeezBlog** 是一个开源的博客系统，采用前后端分离架构设计。前台基于 Vue 3 构建，聚焦阅读体验与内容展示；管理端面向内容管理场景，便于文章、分类、标签等信息的统一维护；后端基于 Spring Boot 提供稳定、清晰的 RESTful API 能力，兼顾扩展性与可维护性。
 
-通过 Docker 容器化部署，结合 Nginx 反向代理与负载均衡，可快速搭建高可用生产环境。项目遵循 RESTful API 设计规范，代码结构清晰，易于二次开发和维护。
+项目以“内容创作 + 阅读互动 + 后台管理”作为核心方向，支持 Markdown 文章体系、评论互动、分类标签组织、归档与友链等博客常用能力。整体技术栈覆盖前端工程化、后端安全与数据访问、缓存、容器化部署和自动化流程，适用于个人博客、技术社区与中小型内容站点的搭建和二次开发。
+
+核心页面功能：
+
+- 首页（文章流）
+- 文章详情页（Markdown）
+- 归档页
+- 留言页
+- 友链页
+- 更新日志页
 
 ---
 
 ## 技术栈选用
+
 
 | 层次              | 技术                                                                        | 说明         |
 | --------------- | ------------------------------------------------------------------------- | ---------- |
@@ -45,11 +46,13 @@
 | **服务器（当前实际部署）** | ubantu22.04                                                               | 服务器系统      |
 | **其他第三方工具**     | twikoo（评论）                                                                |            |
 
+
 ---
 
 ## 功能特性
 
 ### 前台展示
+
 - **首页与文章流**：公告卡片、社交链接、文章卡片流展示；文章按更新时间分页查询并支持上一页/下一页切换
 - **文章详情阅读体验**：按文章 ID 路由访问（后端随机短链接）、Markdown 正文渲染、Front Matter 解析、`highlight.js` 代码高亮、代码块语言标识与一键复制
 - **目录与快速导航**：自动提取标题生成 TOC、目录按层级折叠/展开、目录锚点平滑跳转、悬浮按钮支持回顶/跳评论/开关目录
@@ -59,6 +62,7 @@
 - **多端适配**：首页、文章页、留言页、日志页完成移动端响应式优化
 
 ### 后台管理
+
 - **登录与访问控制**：后台登录鉴权、token 本地持久化、路由守卫未登录自动跳转登录页
 - **文章管理全流程**：文章列表分页与关键词搜索、文章新增/编辑/删除、按 ID 回显详情并保存修改
 - **写作与解析能力**：写作表单支持标题/描述/封面/短链/日期/更新时间，Markdown 编辑区与预览区同屏，自动解析 Front Matter（标题/标签/分类/日期等）
@@ -67,6 +71,7 @@
 - **后台首页**：已预留首页入口，可继续扩展统计看板
 
 ### 后端能力
+
 - **文章接口体系**：公共文章列表/详情接口 + 管理端文章增删改查完整接口
 - **分类与标签接口体系**：分类与标签均支持增删改查，并提供分类下文章查询、标签下文章查询接口
 - **认证与安全**：管理员登录认证并返回登录信息/token，基于 Spring Security + JWT + Token 过滤器实现安全基础能力
@@ -89,6 +94,7 @@
 ## 快速开始
 
 ### 环境要求
+
 - **Node.js** 18+
 - **JDK** 17+（推荐 21）
 - **Maven** 3.6+
@@ -96,105 +102,112 @@
 - **Git**
 
 ### 开发环境搭建
+
 首先star
 
 #### 1. 克隆代码
+
 ```bash
 git clone https://github.com/Ayeez757/AyeezBlog.git
 cd AyeezBlog
 ```
 
 #### 2. 初始化数据库
+
 - 创建数据库：`ayeezblog`（字符集建议 `utf8mb4`）。
 - 执行项目根目录建表脚本：`AyeezBlog建表.sql`。
 
 #### 3. 启动后端（blog-server）
+
 后端默认读取 `hm.db.host` 和 `hm.db.password`，本地开发可直接在启动命令传入：
+
 ```bash
 cd AyeezBlog-Backend
 mvn -pl blog-server -am spring-boot:run "-Dspring-boot.run.jvmArguments=-Dhm.db.host=localhost -Dhm.db.password=你的数据库密码"
 ```
+
 默认 API 地址：`http://localhost:8080`
 
 #### 4. 启动前台（AyeezBlog-Frontend）
+
 ```bash
 cd AyeezBlog-Frontend
 npm install
 npm run dev
 ```
+
 访问：`http://localhost:5173`  
 说明：项目已在 `vite.config.js` 中将 `/post`、`/logs` 代理到 `http://localhost:8080`，无需手动改 `src/api/index.js`。
 
 #### 5. 启动管理端（AyeezBlog-AdminPanel）
+
 ```bash
 cd AyeezBlog-AdminPanel
 npm install
 npm run dev
 ```
+
 访问：`http://localhost:5173`（如与前台同时运行，请指定其他端口，例如 `npm run dev -- --port 5174`）
 
-<!-- #### 5. 测试账户
-- 管理员：`admin@example.com` / `admin123`
-- 普通用户：`user@example.com` / `user123` %%
--->
+
+
 ### Docker 部署
 
 项目根目录目前仅包含后端的Dockerfile。
 
 #### 1. 修改配置
+
 - 复制环境变量模板：`cp .env.example .env`，并按需修改密码、密钥等。
 - 检查 Nginx 配置：`nginx/nginx.conf`，调整域名、SSL 证书路径（可选）。
 
 #### 2. 构建并运行
+
 ```bash
 docker-compose up -d --build
 ```
 
 #### 3. 访问服务
+
 - 前台：`http://your-domain`
 - 管理端：`http://your-domain/admin`
 - API：`http://your-domain/api`
 - MySQL（主机映射）：`localhost:3306`，用户 `root`，密码见 `.env`
 
 #### 4. 初始化数据库（首次）
+
 ```bash
 docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.sql
 ```
 
---- 
+---
 
 ## 配置说明
 
 ### 后端配置 (application-{profile}.yml)
 
-|配置项|说明|示例值|部署必改|
-|---|---|---|---|
-|`spring.datasource.url`|MySQL 数据库连接地址|`localhost:3306`|✅|
-|`spring.datasource.username`|数据库用户名|`root`|✅|
-|`spring.datasource.password`|数据库密码|`${hm.db.password}`（建议通过环境变量传入）|✅|
-|`server.port`|后端服务端口|`8080`|按需|
-|`aliyun.oss.endpoint`|OSS 地域节点|`https://oss-cn-beijing.aliyuncs.com`|✅|
-|`aliyun.oss.bucketName`|OSS Bucket 名称|`javaweb-ayeez`|✅|
-|`aliyun.oss.region`|OSS 地域|`cn-beijing`|✅|
 
-<!-- ### 前端配置 (.env)
-| 变量名                  | 说明                     | 示例值                |
-|-------------------------|--------------------------|-----------------------|
-| `VITE_API_BASE_URL`     | API 基础路径             | `/api`                |
-| `VITE_APP_TITLE`        | 站点标题                 | `我的博客`            |
-| `VITE_APP_ICP`          | 备案号                   | `京ICP备12345678号`   | -->
+| 配置项                          | 说明            | 示例值                                   | 部署必改 |
+| ---------------------------- | ------------- | ------------------------------------- | ---- |
+| `spring.datasource.url`      | MySQL 数据库连接地址 | `localhost:3306`                      | ✅    |
+| `spring.datasource.username` | 数据库用户名        | `root`                                | ✅    |
+| `spring.datasource.password` | 数据库密码         | `${hm.db.password}`（建议通过环境变量传入）       | ✅    |
+| `server.port`                | 后端服务端口        | `8080`                                | 按需   |
+| `aliyun.oss.endpoint`        | OSS 地域节点      | `https://oss-cn-beijing.aliyuncs.com` | ✅    |
+| `aliyun.oss.bucketName`      | OSS Bucket 名称 | `javaweb-ayeez`                       | ✅    |
+| `aliyun.oss.region`          | OSS 地域        | `cn-beijing`                          | ✅    |
 
-<!-- ### Nginx 配置要点
-- 反向代理 `/api` 到后端容器（`http://backend:8080`）。
-- 静态文件缓存：对 js、css、图片设置 `expires`。
-- SSL 配置：推荐使用 Let's Encrypt 自动续签。 -->
+
+
+
+
 
 ---
 
 ## API 文档
 
 Apifox：
-- 开发环境：https://tix3ut2jpw.apifox.cn
+
+- 开发环境：[https://tix3ut2jpw.apifox.cn](https://tix3ut2jpw.apifox.cn)
 
 ---
 
@@ -203,8 +216,6 @@ Apifox：
 数据库设计已拆分到独立文档，点击查看：
 
 - [数据库设计文档](./docs/DATABASE_DESIGN.md)
-
-
 
 ---
 
@@ -230,11 +241,13 @@ Apifox：
 - 文档完善勘误
 
 ### 开发流程
+
 1. Fork 项目并克隆到本地。
 2. 创建新分支：`git checkout -b feature/your-feature`
 3. 提交 Pull Request，描述清楚改动内容和测试情况。
 
 ### 代码规范
+
 - 前端：遵循 Vue 3 官方风格指南。
 - 后端：阿里巴巴编码规范
 
@@ -243,7 +256,7 @@ Apifox：
 ## 更新日志
 
 请参阅
-博客内日志： https://dev-blog.ayeez.cn/logs/
+博客内日志： [https://dev-blog.ayeez.cn/logs/](https://dev-blog.ayeez.cn/logs/)
 GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ayeez757/AyeezBlog/activity)
 
 ---
@@ -253,15 +266,15 @@ GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ay
 本项目基于 [Apache License 2.0 许可证](LICENSE) 开源，这意味着您可以自由使用、修改和分发，但需保留原版权声明。
 
 ---
- 
 
 ## 联系方式
 
 - 作者：[阿叶Ayeez]
-- 邮箱：[3406608593@qq.com]
-- 博客：旧博客 https://blog.ayeez.cn 或 新博客（本项目） https://dev.ayeez.cn
-- GitHub Issues： https://github.com/ayeez757/AyeezBlog/issues
+- 邮箱：[[3406608593@qq.com](mailto:3406608593@qq.com)]
+- 博客：旧博客 [https://blog.ayeez.cn](https://blog.ayeez.cn) 或 新博客（本项目） [https://dev.ayeez.cn](https://dev.ayeez.cn)
+- GitHub Issues： [https://github.com/ayeez757/AyeezBlog/issues](https://github.com/ayeez757/AyeezBlog/issues)
 - QQ交流群（不仅限于本博客，欢迎加入）：421300955
+
 ---
 
-*最后更新：2026-02-28
+*最后更新：2026-03-20

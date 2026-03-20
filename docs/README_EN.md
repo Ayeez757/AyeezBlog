@@ -25,11 +25,18 @@ Project demo: https://dev-blog.ayeez.cn/
 
 ## Introduction
 
-**AyeezBlog** is an open-source blog system built with a frontend-backend separated architecture.  
-The frontend is based on Vue 3, while the backend uses Spring Boot for stability and scalability.  
-It includes both public blog pages and an admin panel, with core features such as post management, comment interaction, categories, and tags.
+**AyeezBlog** is an open-source blog system built with a frontend-backend separated architecture. The public site is built with Vue 3 and focuses on reading experience and content presentation; the admin panel focuses on content operations such as post, category, and tag management; the backend is based on Spring Boot and provides stable, clear RESTful APIs with good scalability and maintainability.
 
-With Dockerized deployment plus Nginx reverse proxy/load balancing, the project can be deployed quickly in production environments.
+The project centers around "content creation + reader interaction + admin management", including common blog capabilities such as a Markdown-based post system, comments, category/tag organization, archives, and friend links. The overall stack covers frontend engineering, backend security and data access, caching, containerized deployment, and automation workflows, making it suitable for personal blogs, tech communities, and small-to-medium content sites.
+
+Core page features:
+
+- Home (post feed)
+- Post detail (Markdown)
+- Archive page
+- Comments page
+- Friend links page
+- Changelog page
 
 ---
 
@@ -51,20 +58,29 @@ With Dockerized deployment plus Nginx reverse proxy/load balancing, the project 
 ## Features
 
 ### Public Site
-- **Post list**: Pagination and filters by category/tag/archive (in progress)
-- **Post detail**: Markdown rendering, code highlighting, auto-generated TOC
-- **Comments**: Nested comments and email notifications (Twikoo)
-- **Search**: Full-text search by title/content/tags (planned)
-- **RSS**: Atom feed generation (planned)
-- **Friend links**: Apply/review flow (planned)
-- **Changelog page**: Clear blog update history
+- **Home and post feed**: Announcement card, social links, and post card flow; posts are paginated by update time with previous/next navigation
+- **Post detail reading experience**: Route by post ID (backend-generated short link), Markdown rendering, Front Matter parsing, `highlight.js` syntax highlighting, code language label, and one-click copy
+- **TOC and quick navigation**: Auto-generated TOC from headings, hierarchical collapse/expand, smooth anchor scrolling, and floating buttons for top/comments/TOC toggle
+- **Comment system**: Twikoo post comments (path-isolated) + dedicated comments page (`/comments`) + site-wide comment aggregation (posts/comments/friend-links) + two viewing modes (latest feed / page tree)
+- **Archive system**: Timeline view of all posts with keyword search, year/month filtering, and ascending/descending sorting
+- **Social and content pages**: Grouped friend-link cards with friend-link comments, site changelog timeline, and reserved About/Friends Circle entries (with old-site links)
+- **Responsive design**: Mobile adaptations for home, post detail, comments, and changelog pages
 
 ### Admin Panel
-- **Dashboard**: Metrics and charts for posts/comments/traffic (planned)
-- **Post management**: CRUD, Markdown editor, drafts, scheduled publishing (planned)
-- **Category & tag management**: Tree categories and tag autocomplete (planned)
-- **File management**: Image upload (Qiniu/Alibaba OSS), attachment management
-- **Data backup**: Database export and restore (planned)
+- **Login and access control**: Admin login/authentication, local token persistence, and route guard redirect for unauthenticated access
+- **End-to-end post management**: Paginated post list with keyword search, create/edit/delete, and ID-based detail echo with save
+- **Writing and parsing capabilities**: Form fields for title/description/cover/short link/date/updated date, side-by-side Markdown editor + preview, and automatic Front Matter parsing (title/tags/category/date, etc.)
+- **Category management**: List/query/create/edit/delete categories, with category-post lookup and quick jump to edit
+- **Tag management**: List/query/create/edit/delete tags, with tag-post lookup and quick jump to edit
+- **Admin home**: Reserved home entry for future dashboard/stat expansion
+
+### Backend Capabilities
+- **Post API suite**: Public post list/detail APIs + full admin post CRUD APIs
+- **Category and tag API suite**: Full CRUD for categories and tags, plus "posts by category" and "posts by tag" query APIs
+- **Authentication and security**: Admin login/token response, with baseline security via Spring Security + JWT + token filter
+- **Unified response structure**: `Result` for standard API responses and `PageResult` for paginated data
+- **Data validity and transactions**: Basic null/duplicate validation for category/tag writes, with transaction guarantees for consistency
+- **Backend infrastructure**: CORS support, MyBatis-Plus + Mapper XML data access, and Redis cache integration
 
 ---
 
