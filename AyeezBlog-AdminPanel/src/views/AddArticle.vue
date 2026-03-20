@@ -1,10 +1,10 @@
 <template>
-  <div class="add-article">
+  <div class="add-article page-card">
     <h2>{{ isEdit ? '编辑文章' : '添加文章' }}</h2>
 
     <!-- 表单区域 -->
     <div class="form-section">
-      <el-form :model="form" label-width="100px" style="max-width: 600px;">
+      <el-form :model="form" label-width="100px" class="article-form">
         <el-form-item label="文章标题">
           <el-input v-model="form.title" placeholder="请输入文章标题" />
         </el-form-item>
@@ -274,24 +274,28 @@ export default {
 
 <style scoped>
 .add-article {
-  padding: 20px;
-  height: 90vh;
+  padding: 16px;
+  min-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
-  width: 80vw;
+  width: 100%;
 }
 
 .form-section {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+}
+
+.article-form {
+  max-width: 680px;
 }
 
 .editor-container {
   display: flex;
   flex: 1;
-  gap: 20px;
-  margin-top: 20px;
+  gap: 16px;
+  margin-top: 10px;
   width: 100%;
-  height: 100%;
+  min-height: 360px;
 }
 
 .editor-left,
@@ -299,9 +303,9 @@ export default {
   flex: 1;
   height: 100%;
   overflow: auto;
-  border: 1px solid #ddd;
+  border: 1px solid #e5e7eb;
   padding: 10px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .editor-left textarea {
@@ -311,7 +315,7 @@ export default {
 }
 
 .editor-right {
-  background-color: #f9f9f9;
+  background-color: #fafafa;
 }
 
 /* 调小渲染图片尺寸 */
@@ -322,7 +326,7 @@ export default {
 }
 
 .submit-section {
-  margin-top: 20px;
+  margin-top: 16px;
   text-align: center;
 }
 </style>

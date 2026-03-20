@@ -1,31 +1,28 @@
 <template>
   <div class="login-container">
-    <div class="login-box">
-      <h2>用户登录</h2>
-      <form @submit.prevent="handleLogin">
-        <div class="form-item">
-          <label>用户名</label>
-          <input 
-            v-model="loginForm.username" 
-            type="text" 
+    <div class="login-box page-card">
+      <h2>后台登录</h2>
+      <el-form @submit.prevent="handleLogin" label-position="top">
+        <el-form-item label="用户名">
+          <el-input
+            v-model="loginForm.username"
             placeholder="请输入用户名"
-            required
+            clearable
           />
-        </div>
-        <div class="form-item">
-          <label>密码</label>
-          <input 
-            v-model="loginForm.password" 
-            type="password" 
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            show-password
             placeholder="请输入密码"
-            required
           />
-        </div>
-        <button type="submit" :disabled="loading">
+        </el-form-item>
+        <el-button class="submit-btn" type="primary" :loading="loading" @click="handleLogin">
           {{ loading ? '登录中...' : '登录' }}
-        </button>
-        <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
-      </form>
+        </el-button>
+      </el-form>
+      <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
     </div>
   </div>
 </template>
@@ -79,52 +76,28 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #eef4ff 0%, #f7f9fc 100%);
 }
 
 .login-box {
-  width: 400px;
-  padding: 40px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  width: 420px;
+  padding: 28px;
 }
 
-.form-item {
-  margin-bottom: 20px;
+h2 {
+  margin: 0 0 18px;
+  font-size: 22px;
+  color: #111827;
 }
 
-.form-item label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.form-item input {
+.submit-btn {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  background: #1890ff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:disabled {
-  background: #ccc;
 }
 
 .error-msg {
   color: #f5222d;
-  margin-top: 10px;
-  text-align: center;
+  margin: 12px 0 0;
+  text-align: left;
+  font-size: 13px;
 }
 </style>

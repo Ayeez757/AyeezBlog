@@ -4,8 +4,6 @@ import cn.ayeez.blogpojo.dto.request.PostBody;
 import cn.ayeez.blogpojo.dto.request.PostQueryParam;
 import cn.ayeez.blogpojo.entity.Post;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
@@ -38,4 +36,14 @@ public interface PostMapper {
      * 删除文章
      */
     void delete(String id);
+
+    /**
+     * 按分类ID查询文章简要列表
+     */
+    List<Post> listByCategoryId(Long categoryId);
+
+    /**
+     * 按标签ID查询文章简要列表
+     */
+    List<Post> listByTagId(Long tagId);
 }

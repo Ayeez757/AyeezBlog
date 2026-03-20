@@ -34,3 +34,45 @@ export function loginApi(data) {
 export function logoutApi() {
   return request.post('/admin/logout')
 }
+
+// 分类管理
+export const getCategoryList = (params) => {
+  return request.get('/admin/category/list', { params })
+}
+
+export const addCategory = (data) => {
+  return request.post('/admin/category/add', data)
+}
+
+export const updateCategory = (data) => {
+  return request.put('/admin/category/update', data)
+}
+
+export const deleteCategory = (params) => {
+  return request.delete('/admin/category/delete', { params })
+}
+
+export const getCategoryPosts = (params) => {
+  return request.get('/admin/category/posts', { params })
+}
+
+// 标签管理
+export const getTagList = (params) => {
+  return request.get('/admin/tag/list', { params })
+}
+
+export const addTag = (data) => {
+  return request.post('/admin/tag/add', data)
+}
+
+export const updateTag = (data) => {
+  return request.put('/admin/tag/update', data)
+}
+
+export const deleteTag = (params) => {
+  return request.delete('/admin/tag/delete', { params })
+}
+
+export const getTagPosts = (params) => {
+  return request.get('/admin/tag/posts', { params })
+}

@@ -11,6 +11,7 @@
         <result property="name" column="name"/>
         <result property="description" column="description"/>
         <result property="sort" column="sort"/>
+        <result property="postCount" column="post_count"/>
         <!-- 这里对上 created_at / updated_at -->
         <result property="createdTime" column="created_at"/>
         <result property="updatedTime" column="updated_at"/>
@@ -41,5 +42,39 @@
         INSERT INTO blog_category (parent_id, name, description, sort)
         VALUES (#{parentId}, #{name}, #{description}, #{sort})
     </insert>
+
+    <select id="list" resultMap="BlogCategoryResult">
+        SELECT
+        c.id,
+        c.parent_id,
+        c.name,
+        c.description,
+        c.sort,
+        c.created_at,
+        c.updated_at,
+        COUNT(p.id) AS post_count
+        FROM blog_category c
+        LEFT JOIN blog_post p ON c.id = p.category_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND c.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        GROUP BY c.id, c.parent_id, c.name, c.description, c.sort, c.created_at, c.updated_at
+        ORDER BY c.sort ASC, c.id DESC
+    </select>
+
+    <update id="update" parameterType="cn.ayeez.blogpojo.entity.BlogCategory">
+        UPDATE blog_category
+        SET
+            name = #{name},
+            description = #{description},
+            sort = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM blog_category WHERE id = #{id}
+    </delete>
 
 </mapper>

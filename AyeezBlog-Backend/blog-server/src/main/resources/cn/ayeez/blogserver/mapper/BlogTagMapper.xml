@@ -9,6 +9,7 @@
         <result property="name" column="name"/>
         <result property="slug" column="slug"/>
         <result property="description" column="description"/>
+        <result property="postCount" column="post_count"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -33,6 +34,39 @@
         INSERT INTO blog_tag (name, slug, description)
         VALUES (#{name}, #{slug}, #{description})
     </insert>
+
+    <select id="list" resultMap="BlogTagResult">
+        SELECT
+        t.id,
+        t.name,
+        t.slug,
+        t.description,
+        t.created_at,
+        t.updated_at,
+        COUNT(bpt.post_id) AS post_count
+        FROM blog_tag t
+        LEFT JOIN blog_post_tag bpt ON t.id = bpt.tag_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND t.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        GROUP BY t.id, t.name, t.slug, t.description, t.created_at, t.updated_at
+        ORDER BY t.id DESC
+    </select>
+
+    <update id="update" parameterType="cn.ayeez.blogpojo.entity.BlogTag">
+        UPDATE blog_tag
+        SET
+            name = #{name},
+            slug = #{slug},
+            description = #{description}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM blog_tag WHERE id = #{id}
+    </delete>
 
 </mapper>
 

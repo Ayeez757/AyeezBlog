@@ -1,25 +1,35 @@
 <script setup>
 import Aside from './components/aside.vue';
-// import Home from './views/Home.vue';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 
-
+const route = useRoute();
+const showAside = computed(() => route.path !== '/login');
 </script>
 
 <template>
-    <div class="container">
-
-
-        <Aside />
-
-        <router-view />
+    <div class="app-shell" :class="{ 'is-login': !showAside }">
+        <Aside v-if="showAside" />
+        <main class="app-main">
+            <router-view />
+        </main>
     </div>
-
-
 </template>
 
 <style scoped>
-.container {
+.app-shell {
     display: flex;
-    flex-direction: row;
+    min-height: 100vh;
+    background: #f5f7fb;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+    padding: 20px;
+}
+
+.app-shell.is-login .app-main {
+    padding: 0;
 }
 </style>

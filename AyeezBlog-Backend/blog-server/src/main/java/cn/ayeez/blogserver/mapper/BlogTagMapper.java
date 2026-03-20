@@ -14,5 +14,11 @@ public interface BlogTagMapper {
     void insert(BlogTag tag);
 
     List<BlogTag> findByNames(@Param("names") List<String> names);
+
+    List<BlogTag> list(@Param("keyword") String keyword);
+
+    void update(BlogTag tag);
+
+    void deleteById(@Param("id") Long id);
 }
 

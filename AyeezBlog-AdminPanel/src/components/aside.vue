@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar">
-    <!-- 使用 Element Plus 的菜单组件 -->
+    <div class="brand">AyeezBlog Admin</div>
     <el-menu
       :default-active="$route.path"
       class="el-menu-vertical"
@@ -27,13 +27,27 @@ export default {
 
 <style>
 .sidebar {
-  width: 200px;
+  width: 220px;
   height: 100vh;
-  background-color: #f4f4f4;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+}
+
+.brand {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  border-bottom: 1px solid #eef2f7;
 }
 
 .el-menu-vertical {
   border-right: none;
+  padding-top: 8px;
 }
 </style>

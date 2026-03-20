@@ -11,6 +11,7 @@ public class BlogCategory {
     private String name;
     private String description;
     private Integer sort;
+    private Long postCount;
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
 }

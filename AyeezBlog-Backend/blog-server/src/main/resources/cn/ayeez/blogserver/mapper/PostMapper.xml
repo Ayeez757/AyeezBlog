@@ -73,4 +73,27 @@
         FROM blog_post
         WHERE id = #{id}
     </select>
+
+    <select id="listByCategoryId" resultType="cn.ayeez.blogpojo.entity.Post">
+        SELECT
+        id,
+        title,
+        create_time as createTime,
+        update_time as updateTime
+        FROM blog_post
+        WHERE category_id = #{categoryId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="listByTagId" resultType="cn.ayeez.blogpojo.entity.Post">
+        SELECT
+        p.id,
+        p.title,
+        p.create_time as createTime,
+        p.update_time as updateTime
+        FROM blog_post p
+        INNER JOIN blog_post_tag bpt ON p.id = bpt.post_id
+        WHERE bpt.tag_id = #{tagId}
+        ORDER BY p.create_time DESC
+    </select>
 </mapper>

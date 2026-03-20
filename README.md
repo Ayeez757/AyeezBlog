@@ -76,15 +76,14 @@
 ## 快速开始
 
 ### 环境要求
-- **Node.js** 18+ (本人使用 18.19.0)
-- **JDK** 17+ (本人使用 21)
+- **Node.js** 18+
+- **JDK** 17+（推荐 21）
 - **Maven** 3.6+
 - **MySQL** 8.0+
-- **Docker** 
 - **Git**
 
 ### 开发环境搭建
-首先star，再fork
+首先star
 
 #### 1. 克隆代码
 ```bash
@@ -92,34 +91,34 @@ git clone https://github.com/Ayeez757/AyeezBlog.git
 cd AyeezBlog
 ```
 
-#### 2. 后端配置与启动
-- 创建 MySQL 数据库，例如 `ayeezblog`，字符集 `utf8mb4`。
-- 在 `AyeezBlog-Backend/blog-server/src/main/resources/application-dev.yml`以及`application.yml` 下修改数据库连接、Redis 地址等配置。
-- 在数据库执行项目根目录下的sql建表脚本。
-- 启动后端：
-  ```bash
-  cd AyeezBlog-Backend
-  mvn clean spring-boot:run -Dspring-boot.run.profiles=dev
-  ```
-  默认 API 地址：`http://localhost:8080`
+#### 2. 初始化数据库
+- 创建数据库：`ayeezblog`（字符集建议 `utf8mb4`）。
+- 执行项目根目录建表脚本：`AyeezBlog建表.sql`。
 
-#### 3. 前端启动（前台）
-修改`AyeezBlog-Frontend/src/api/index.js`下的`const BASE_URL = '/';` 为你的后端地址（默认 API 地址：`http://localhost:8080`）
+#### 3. 启动后端（blog-server）
+后端默认读取 `hm.db.host` 和 `hm.db.password`，本地开发可直接在启动命令传入：
+```bash
+cd AyeezBlog-Backend
+mvn -pl blog-server -am spring-boot:run "-Dspring-boot.run.jvmArguments=-Dhm.db.host=localhost -Dhm.db.password=你的数据库密码"
+```
+默认 API 地址：`http://localhost:8080`
+
+#### 4. 启动前台（AyeezBlog-Frontend）
 ```bash
 cd AyeezBlog-Frontend
 npm install
 npm run dev
 ```
-访问 `http://localhost:5173`
+访问：`http://localhost:5173`  
+说明：项目已在 `vite.config.js` 中将 `/post`、`/logs` 代理到 `http://localhost:8080`，无需手动改 `src/api/index.js`。
 
-#### 4. 管理端启动
+#### 5. 启动管理端（AyeezBlog-AdminPanel）
 ```bash
-cd admin
-cp .env.example .env.development   # 修改 API 地址
+cd AyeezBlog-AdminPanel
 npm install
 npm run dev
 ```
-访问 `http://localhost:5174`
+访问：`http://localhost:5173`（如与前台同时运行，请指定其他端口，例如 `npm run dev -- --port 5174`）
 
 <!-- #### 5. 测试账户
 - 管理员：`admin@example.com` / `admin123`

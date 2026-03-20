@@ -31,6 +31,18 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    }
+
+    // 点击首页文章卡片进入详情页时，始终从顶部开始
+    if (to.name === 'PostDetail') {
+      return { top: 0, left: 0 };
+    }
+
+    return { top: 0, left: 0 };
+  }
 });
 
 export default router;
