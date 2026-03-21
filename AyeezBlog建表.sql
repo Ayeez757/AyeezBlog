@@ -1,90 +1,7 @@
--- 用户表
-CREATE TABLE `user`
-(
-    `id`       BIGINT       NOT NULL AUTO_INCREMENT COMMENT '用户ID',
-    `username` VARCHAR(50)  NOT NULL COMMENT '用户名',
-    `nickname` varchar(50) comment '昵称',
-    `password` VARCHAR(255) NOT NULL COMMENT '密码（加密存储）',
-    `role`     TINYINT      NOT NULL DEFAULT 0 COMMENT '角色：0-普通用户，1-管理员',
-    `status`   TINYINT      NOT NULL DEFAULT 1 COMMENT '账户状态：0-禁用，1-启用',
-    PRIMARY KEY (`id`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户表';
 
+create database if not exists ayeezblog;
+use ayeezblog;
 
-
-CREATE TABLE blog_post
-(
-    id          VARCHAR(64)  NOT NULL COMMENT '文章ID（字符串，如UUID）',
-    title       VARCHAR(255) NOT NULL COMMENT '文章标题',
-    content     LONGTEXT     NOT NULL COMMENT '文章正文（Markdown）',
-    cover       VARCHAR(512) NULL COMMENT '封面图片URL，可为空',
-    create_time DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（毫秒精度）',
-    update_time DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '最后更新时间',
-    description varchar(255) comment '描述',
-
-    -- 主键约束
-    PRIMARY KEY (id),
-
-    -- 索引优化（按需添加）
-    INDEX idx_create_time (create_time DESC)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci
-    COMMENT ='博客文章表';
-
-ALTER TABLE blog_post
-    ADD COLUMN category_id BIGINT UNSIGNED NULL COMMENT '分类ID（可为空表示未分类）' AFTER description,
-    ADD KEY idx_category_id (category_id),
-    ADD CONSTRAINT fk_blog_post_category
-        FOREIGN KEY (category_id) REFERENCES blog_category(id)
-            ON DELETE SET NULL ON UPDATE CASCADE;
-
-# select * from blog_post;
-# SELECT
-#     id,
-#     title,
-#     content,
-#     cover,
-#     description,
-#     create_time as createTime,
-#     update_time as updateTime
-# FROM blog_post
-# WHERE id = 'f50487ff';
-
--- 友链分类表
-CREATE TABLE IF NOT EXISTS friend_link_class (
-                                                 id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                                                 class_name   VARCHAR(64)  NOT NULL,
-                                                 class_desc   VARCHAR(255) NULL,
-                                                 sort         INT          NOT NULL DEFAULT 0,
-                                                 created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                                 updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                                                 PRIMARY KEY (id),
-                                                 UNIQUE KEY uk_class_name (class_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 友链表
-CREATE TABLE IF NOT EXISTS friend_link (
-                                           id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                                           class_id    BIGINT UNSIGNED NOT NULL,
-                                           name        VARCHAR(128) NOT NULL,
-                                           link        VARCHAR(512) NOT NULL,
-                                           avatar      VARCHAR(512) NULL,
-                                           descr       VARCHAR(512) NULL,
-                                           rss         VARCHAR(512) NULL,   -- 预留
-                                           sort        INT          NOT NULL DEFAULT 0,
-                                           created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                           updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                                           PRIMARY KEY (id),
-                                           KEY idx_class_id (class_id),
-                                           CONSTRAINT fk_friend_link_class
-                                               FOREIGN KEY (class_id) REFERENCES friend_link_class(id)
-                                                   ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- 文章分类表（树：parent_id 自关联）
 create table blog_category
 (
     id          bigint unsigned auto_increment comment '分类ID'
@@ -109,42 +26,118 @@ create table blog_category
 create index idx_parent_id
     on blog_category (parent_id);
 
+create table blog_post
+(
+    id          varchar(64)                              not null comment '文章ID（字符串，如UUID）'
+        primary key,
+    title       varchar(255)                             not null comment '文章标题',
+    content     longtext                                 not null comment '文章正文（Markdown）',
+    cover       varchar(512)                             null comment '封面图片URL，可为空',
+    create_time datetime(3) default CURRENT_TIMESTAMP(3) not null comment '创建时间（毫秒精度）',
+    update_time datetime(3) default CURRENT_TIMESTAMP(3) not null on update CURRENT_TIMESTAMP(3) comment '最后更新时间',
+    description varchar(255)                             null comment '描述',
+    category_id bigint unsigned                          null comment '分类ID（可为空表示未分类）',
+    constraint fk_blog_post_category
+        foreign key (category_id) references blog_category (id)
+            on update cascade on delete set null
+)
+    comment '博客文章表' collate = utf8mb4_unicode_ci;
+
+create index idx_category_id
+    on blog_post (category_id);
+
+create index idx_create_time
+    on blog_post (create_time desc);
+
+create table blog_tag
+(
+    id          bigint unsigned auto_increment comment '标签ID'
+        primary key,
+    name        varchar(64)                        not null comment '标签名',
+    slug        varchar(64)                        null comment '可选：URL友好标识，唯一',
+    description varchar(255)                       null comment '标签描述',
+    created_at  datetime default CURRENT_TIMESTAMP not null,
+    updated_at  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    constraint uk_tag_name
+        unique (name),
+    constraint uk_tag_slug
+        unique (slug)
+)
+    comment '博客标签表' collate = utf8mb4_unicode_ci;
+
+create table blog_post_tag
+(
+    post_id    varchar(64)                        not null comment '文章ID（对应blog_post.id）',
+    tag_id     bigint unsigned                    not null comment '标签ID（对应blog_tag.id）',
+    created_at datetime default CURRENT_TIMESTAMP not null,
+    primary key (post_id, tag_id),
+    constraint fk_blog_post_tag_post
+        foreign key (post_id) references blog_post (id)
+            on update cascade on delete cascade,
+    constraint fk_blog_post_tag_tag
+        foreign key (tag_id) references blog_tag (id)
+            on update cascade on delete cascade
+)
+    comment '博客文章-标签关联表' collate = utf8mb4_unicode_ci;
+
+create index idx_tag_id
+    on blog_post_tag (tag_id);
+
+create table friend_link_class
+(
+    id         bigint unsigned auto_increment
+        primary key,
+    class_name varchar(64)                        not null,
+    class_desc varchar(255)                       null,
+    sort       int      default 0                 not null,
+    created_at datetime default CURRENT_TIMESTAMP not null,
+    updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    constraint uk_class_name
+        unique (class_name)
+)
+    collate = utf8mb4_unicode_ci;
+
+create table friend_link
+(
+    id         bigint unsigned auto_increment
+        primary key,
+    class_id   bigint unsigned                    not null,
+    name       varchar(128)                       not null,
+    link       varchar(512)                       not null,
+    avatar     varchar(512)                       null,
+    descr      varchar(512)                       null,
+    rss        varchar(512)                       null,
+    sort       int      default 0                 not null,
+    created_at datetime default CURRENT_TIMESTAMP not null,
+    updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    constraint fk_friend_link_class
+        foreign key (class_id) references friend_link_class (id)
+            on update cascade
+)
+    collate = utf8mb4_unicode_ci;
+
+create index idx_class_id
+    on friend_link (class_id);
 
 
-ALTER TABLE blog_post
-    ADD COLUMN category_id BIGINT UNSIGNED NULL COMMENT '分类ID（可为空表示未分类）',
-    ADD KEY idx_category_id (category_id),
-    ADD CONSTRAINT fk_blog_post_category
-        FOREIGN KEY (category_id) REFERENCES blog_category(id)
-            ON DELETE SET NULL ON UPDATE CASCADE;
 
--- 标签表
-CREATE TABLE IF NOT EXISTS blog_tag (
-                                        id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '标签ID',
-                                        name        VARCHAR(64)     NOT NULL COMMENT '标签名',
-                                        slug        VARCHAR(64)     NULL COMMENT '可选：URL友好标识，唯一',
-                                        description VARCHAR(255)    NULL COMMENT '标签描述',
-                                        created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                        updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-                                        PRIMARY KEY (id),
-                                        UNIQUE KEY uk_tag_name (name),
-                                        UNIQUE KEY uk_tag_slug (slug)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博客标签表';
+create table user
+(
+    id       bigint auto_increment comment '用户ID'
+        primary key,
+    username varchar(50)       not null comment '用户名',
+    nickname varchar(50)       null comment '昵称',
+    password varchar(255)      not null comment '密码（加密存储）',
+    role     tinyint default 0 not null comment '角色：0-普通用户，1-管理员',
+    status   tinyint default 1 not null comment '账户状态：0-禁用，1-启用'
+)
+    comment '用户表';
 
 
--- 文章-标签关联表（多对多）
-CREATE TABLE IF NOT EXISTS blog_post_tag (
-                                             post_id VARCHAR(64)      NOT NULL COMMENT '文章ID（对应blog_post.id）',
-                                             tag_id  BIGINT UNSIGNED  NOT NULL COMMENT '标签ID（对应blog_tag.id）',
-                                             created_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- 插入默认管理员用户
+insert into user (username, password, role, status)
+values ('admin', 'admin', 1, 1);
 
-                                             PRIMARY KEY (post_id, tag_id),
-                                             KEY idx_tag_id (tag_id),
-                                             CONSTRAINT fk_blog_post_tag_post
-                                                 FOREIGN KEY (post_id) REFERENCES blog_post(id)
-                                                     ON DELETE CASCADE ON UPDATE CASCADE,
-                                             CONSTRAINT fk_blog_post_tag_tag
-                                                 FOREIGN KEY (tag_id) REFERENCES blog_tag(id)
-                                                     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='博客文章-标签关联表';
+-- 插入一篇默认欢迎使用AyeezBlog博客测试文章
+insert into blog_post (id, title, content, cover, create_time, update_time, description)
+values ('welcome', '欢迎使用AyeezBlog博客系统', '欢迎使用AyeezBlog博客系统，这是默认的欢迎文章。', null, now(), now(), '这是默认的欢迎文章');

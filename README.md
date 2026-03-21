@@ -106,92 +106,125 @@
 
 ## 快速开始
 
+  
+
 ### 环境要求
 
+  
+
 - **Node.js** 18+
+
 - **JDK** 17+（推荐 21）
+
 - **Maven** 3.6+
+
 - **MySQL** 8.0+
+
 - **Git**
+
+  
 
 ### 开发环境搭建
 
+  
+
 首先star
+
+  
 
 #### 1. 克隆代码
 
+  
+
 ```bash
+
 git clone https://github.com/Ayeez757/AyeezBlog.git
+
 cd AyeezBlog
+
 ```
+
+  
 
 #### 2. 初始化数据库
 
+  
+
 - 创建数据库：`ayeezblog`（字符集建议 `utf8mb4`）。
+
 - 执行项目根目录建表脚本：`AyeezBlog建表.sql`。
+
+  
 
 #### 3. 启动后端（blog-server）
 
+  
+
 后端默认读取 `hm.db.host` 和 `hm.db.password`，本地开发可直接在启动命令传入：
 
+  
+
 ```bash
+
 cd AyeezBlog-Backend
-mvn -pl blog-server -am spring-boot:run "-Dspring-boot.run.jvmArguments=-Dhm.db.host=localhost -Dhm.db.password=你的数据库密码"
+
+mvn clean install
+
+cd blog-server
+
+mvn spring-boot:run "-Dspring-boot.run.jvmArguments=-Dhm.db.host=localhost -Dhm.db.password=你的数据库密码"
+
 ```
+
+  
 
 默认 API 地址：`http://localhost:8080`
 
+  
+
 #### 4. 启动前台（AyeezBlog-Frontend）
 
+新建控制台，回到项目根目录，执行如下指令：
+
 ```bash
+
 cd AyeezBlog-Frontend
+
 npm install
+
 npm run dev
+
 ```
 
-访问：`http://localhost:5173`  
+  
+
+访问：`http://localhost:5173`  
+
 说明：项目已在 `vite.config.js` 中将 `/post`、`/logs` 代理到 `http://localhost:8080`，无需手动改 `src/api/index.js`。
+
+  
 
 #### 5. 启动管理端（AyeezBlog-AdminPanel）
 
+新建控制台，回到项目根目录，执行如下指令：
+
 ```bash
+
 cd AyeezBlog-AdminPanel
+
 npm install
+
 npm run dev
+
 ```
+
+  
 
 访问：`http://localhost:5173`（如与前台同时运行，请指定其他端口，例如 `npm run dev -- --port 5174`）
 
-
-
-### Docker 部署
-
-项目根目录目前仅包含后端的Dockerfile。
-
-#### 1. 修改配置
-
-- 复制环境变量模板：`cp .env.example .env`，并按需修改密码、密钥等。
-- 检查 Nginx 配置：`nginx/nginx.conf`，调整域名、SSL 证书路径（可选）。
-
-#### 2. 构建并运行
-
-```bash
-docker-compose up -d --build
-```
-
-#### 3. 访问服务
-
-- 前台：`http://your-domain`
-- 管理端：`http://your-domain/admin`
-- API：`http://your-domain/api`
-- MySQL（主机映射）：`localhost:3306`，用户 `root`，密码见 `.env`
-
-#### 4. 初始化数据库（首次）
-
-```bash
-docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.sql
-```
-
+  
+  
+  
 ---
 
 ## 配置说明
