@@ -1,0 +1,35 @@
+ARG IMAGE_PREFIX=m.daocloud.io/docker.io/library
+
+FROM ${IMAGE_PREFIX}/maven:3.9.6-eclipse-temurin-21 AS build
+
+WORKDIR /build
+
+# 在容器内写入 Maven 镜像源，避免中央仓库网络波动导致构建失败
+RUN mkdir -p /root/.m2 && printf '%s\n' \
+'<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"' \
+'          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
+'          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">' \
+'  <mirrors>' \
+'    <mirror>' \
+'      <id>aliyunmaven</id>' \
+'      <name>aliyun maven</name>' \
+'      <url>https://maven.aliyun.com/repository/public</url>' \
+'      <mirrorOf>central</mirrorOf>' \
+'    </mirror>' \
+'  </mirrors>' \
+'</settings>' > /root/.m2/settings.xml
+
+# 构建后端 jar（blog-server + 依赖模块）
+COPY AyeezBlog-Backend ./AyeezBlog-Backend
+RUN mvn -s /root/.m2/settings.xml -f AyeezBlog-Backend/pom.xml -pl blog-server -am package -DskipTests
+
+FROM ${IMAGE_PREFIX}/eclipse-temurin:21-jre-jammy
+
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+WORKDIR /app
+COPY --from=build /build/AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar /app/app.jar
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+

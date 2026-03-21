@@ -1,3 +1,5 @@
+USE ayeezblog;
+
 -- 用户表
 CREATE TABLE `user`
 (
@@ -32,13 +34,6 @@ CREATE TABLE blog_post
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci
     COMMENT ='博客文章表';
-
-ALTER TABLE blog_post
-    ADD COLUMN category_id BIGINT UNSIGNED NULL COMMENT '分类ID（可为空表示未分类）' AFTER description,
-    ADD KEY idx_category_id (category_id),
-    ADD CONSTRAINT fk_blog_post_category
-        FOREIGN KEY (category_id) REFERENCES blog_category(id)
-            ON DELETE SET NULL ON UPDATE CASCADE;
 
 # select * from blog_post;
 # SELECT

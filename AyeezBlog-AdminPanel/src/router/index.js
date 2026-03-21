@@ -18,7 +18,8 @@ const routers = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  // 将管理端部署到 /admin 子路径下（nginx 会把 /admin/ 回落到 admin/index.html）
+  history: createWebHistory('/admin'),
   routes: routers
 })
 

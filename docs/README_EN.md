@@ -141,24 +141,50 @@ If both frontend and admin run together, use another port, e.g. `npm run dev -- 
 
 ### Docker Deployment
 
+This repository supports one-command Docker Compose deployment (frontend/admin are built in containers, then run with MySQL + Nginx + Backend).
+
+#### 0. Get source code (choose one)
+
+- Option A: clone repository
+```bash
+git clone https://github.com/Ayeez757/AyeezBlog.git
+cd AyeezBlog
+```
+
+- Option B: download Release source archive, extract it, and enter the project root folder
+
 #### 1. Update configs
 - Copy env template: `cp .env.example .env`
-- Check Nginx config: `nginx/nginx.conf`
+- Check Nginx config: `nginx/default.conf`
 
 #### 2. Build and run
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
+
+> The first run may take a while because base images and build dependencies must be downloaded.
 
 #### 3. Access
 - Frontend: `http://your-domain`
 - Admin: `http://your-domain/admin`
 - API: `http://your-domain/api`
-- MySQL: `localhost:3306` (`root`, password in `.env`)
+- Backend internal port: `8080` (proxied by Nginx)
+- MySQL: container-internal by default (add port mapping in `docker-compose.yml` if host access is needed)
 
 #### 4. First-time DB initialization
+
+First startup will automatically create database `ayeezblog` and run `AyeezBlog建表.sql` in MySQL `docker-entrypoint-initdb.d/`.
+
+#### 5. Common operations
 ```bash
-docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.sql
+# Check status
+docker compose ps
+
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
 ```
 
 ---

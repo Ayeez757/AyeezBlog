@@ -1,0 +1,47 @@
+services:
+  mysql:
+    image: m.daocloud.io/docker.io/library/mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/00-create-db.sql:/docker-entrypoint-initdb.d/00-create-db.sql:ro
+      # 使用你仓库里的建表脚本（已修复为可用于首次初始化）
+      - "./AyeezBlog建表.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro"
+    networks:
+      - ayeez
+
+  ayeezblog-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      HM_DB_HOST: mysql
+      HM_DB_PASSWORD: ${HM_DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: dev
+    depends_on:
+      - mysql
+    networks:
+      - ayeez
+    expose:
+      - "8080"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    depends_on:
+      - ayeezblog-backend
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - ayeez
+
+networks:
+  ayeez:
+    driver: bridge
+
+volumes:
+  mysql_data:
+

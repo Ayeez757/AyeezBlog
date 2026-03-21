@@ -166,30 +166,55 @@ npm run dev
 
 ### Docker 部署
 
-项目根目录目前仅包含后端的Dockerfile。
+本仓库根目录提供一键 Docker Compose 部署（会在容器内构建前后端，并启动 MySQL + Nginx + Backend）。
+
+#### 0. 获取代码（任选其一）
+
+- 方式 A：克隆仓库
+
+```bash
+git clone https://github.com/Ayeez757/AyeezBlog.git
+cd AyeezBlog
+```
+
+- 方式 B：下载 Release 源码包并解压后进入项目根目录
 
 #### 1. 修改配置
 
-- 复制环境变量模板：`cp .env.example .env`，并按需修改密码、密钥等。
-- 检查 Nginx 配置：`nginx/nginx.conf`，调整域名、SSL 证书路径（可选）。
+- 复制环境变量模板：`cp .env.example .env`，并按需修改 `MYSQL_ROOT_PASSWORD/HM_DB_PASSWORD`。
+- （可选）检查 Nginx 配置：`nginx/default.conf`，按需调整 `server_name`、HTTP/HTTPS 策略。
 
 #### 2. 构建并运行
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
+
+> 首次执行会拉取基础镜像并构建前后端，耗时通常较长（几分钟到十几分钟不等）。
 
 #### 3. 访问服务
 
 - 前台：`http://your-domain`
 - 管理端：`http://your-domain/admin`
 - API：`http://your-domain/api`
-- MySQL（主机映射）：`localhost:3306`，用户 `root`，密码见 `.env`
+- 后端容器内端口：`8080`（由 Nginx 反向代理）
+- MySQL：默认仅容器内访问（如需主机访问可自行在 `docker-compose.yml` 添加端口映射）
 
 #### 4. 初始化数据库（首次）
 
+首次启动会自动完成：创建数据库 `ayeezblog` 并执行 `AyeezBlog建表.sql`（挂载到 MySQL 的 `docker-entrypoint-initdb.d/`）。
+
+#### 5. 常用运维命令
+
 ```bash
-docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.sql
+# 查看服务状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f
+
+# 停止服务
+docker compose down
 ```
 
 ---
