@@ -222,7 +222,9 @@ npm run dev
 
 访问：`http://localhost:5173`（如与前台同时运行，请指定其他端口，例如 `npm run dev -- --port 5174`）
 
-  
+默认用户：admin
+
+密码：admin
   
   
 ---
