@@ -1,10 +1,12 @@
-name: 部署前端
+name: 部署管理端
 
 on:
   push:
     branches: [ master ]
     paths:
-      - 'AyeezBlog-Frontend/**'
+      - 'AyeezBlog-AdminPanel/**'
+      - '.github/workflows/deploy-adminpanel.yml'
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -19,23 +21,22 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: AyeezBlog-Frontend/package-lock.json
+          cache-dependency-path: AyeezBlog-AdminPanel/package-lock.json
 
       - name: 安装依赖
-        working-directory: ./AyeezBlog-Frontend
+        working-directory: ./AyeezBlog-AdminPanel
         run: npm ci
 
       - name: 构建项目
-        working-directory: ./AyeezBlog-Frontend
+        working-directory: ./AyeezBlog-AdminPanel
         run: npm run build
 
-      # 同步到站点根目录；排除 admin/，避免覆盖管理端（管理端由 deploy-adminpanel 部署）
-      - name: 部署到服务器（rsync）
+      - name: 部署到服务器（rsync 至 html/_data/admin）
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avz --delete --exclude=admin/
-          path: AyeezBlog-Frontend/dist/
-          remote_path: /var/lib/docker/volumes/html/_data/
+          switches: -avz --delete
+          path: AyeezBlog-AdminPanel/dist/
+          remote_path: /var/lib/docker/volumes/html/_data/admin/
           remote_host: ${{ secrets.SERVER_HOST }}
           remote_user: ${{ secrets.SERVER_USER }}
           remote_key: ${{ secrets.SERVER_SSH_KEY }}
