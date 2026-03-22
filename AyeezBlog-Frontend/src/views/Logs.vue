@@ -28,7 +28,21 @@ export default {
   data() {
     return {
       logs: [
-        
+      {
+          date: '2026-03-22',
+          version: 'v0.16.0',
+          changes: [
+            '部署了管理端，并且添加了workfile，让管理端也自动化部署',
+            '管理端：加上了淡淡的背景图（测试工作流是否成功）'
+          ]
+        },
+      {
+          date: '2026-03-21',
+          version: 'v0.15.0',
+          changes: [
+            '测试了readme快速开始，修复了很多问题，并且删除了docker部分'
+          ]
+        },
       {
           date: '2026-03-20',
           version: 'v0.14.0',

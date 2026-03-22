@@ -5,6 +5,8 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // 部署在 Nginx 子路径 /admin/ 时使用；本地 dev 不受影响
+  base: '/admin/',
   plugins: [vue()],
   resolve: {
     alias: {
