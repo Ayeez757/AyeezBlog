@@ -192,7 +192,7 @@ export default {
   name: 'About',
   data() {
     return {
-      avatarUrl: 'https://blog.ayeez.cn/imgs/photo.jpg',
+      avatarUrl: 'https://qiniu.ayeez.cn/avatar.jpg',
 
       titleText: '我叫阿叶Ayeez',
       subtitleText: '很高兴认识你Hi~ o(*￣▽￣*)ブ',

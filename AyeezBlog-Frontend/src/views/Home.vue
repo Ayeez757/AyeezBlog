@@ -47,7 +47,7 @@
   <!-- 新增的横向卡片 -->
   <div class="card-container">
     <div class="card">
-      <img id="home-card-avatar" src="https://blog.ayeez.cn/imgs/photo.jpg" alt="头像">
+      <img id="home-card-avatar" src="https://qiniu.ayeez.cn/avatar.jpg" alt="头像">
       <div class="card-content">
         <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
         <text>这是新博客，仍然在开发中~（内容已经迁移，可能有部分图片丢失，可联系管理员修复）</text>
@@ -125,7 +125,7 @@ export default {
       currentPage: 1,
       pageSize: 12,
       total: 0,
-      defaultCover: 'https://blog.ayeez.cn/imgs/bg/bg.jpg',
+      defaultCover: 'https://qiniu.ayeez.cn/bg.jpg',
 
       // 悬停卡片 ID
       hoveredCardId: null,
@@ -351,8 +351,8 @@ export default {
     // 预加载图片（404/跨域/超时都要 resolve，否则会永久卡住 isLoading）
     preloadImages() {
       const images = [
-        'https://blog.ayeez.cn/imgs/photo.jpg',
-        'https://blog.ayeez.cn/imgs/bg/bg.jpg'
+        'https://qiniu.ayeez.cn/avatar.jpg',
+        'https://qiniu.ayeez.cn/bg.jpg'
       ];
       return Promise.all(
         images.map((src) => {

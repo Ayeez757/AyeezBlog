@@ -61,7 +61,7 @@
         <pre class="links-code">
 - name: 阿叶Ayeez的小站
   link: https://blog.Ayeez.cn
-  avatar: https://blog.ayeez.cn/imgs/photo.jpg
+  avatar: https://qiniu.ayeez.cn/avatar.jpg
   descr: 记录学习历程，记录美好生活
   siteshot:
         </pre>
@@ -103,7 +103,7 @@ export default {
             {
               name: '阿叶Ayeez的旧站',
               link: 'https://blog.ayeez.cn/',
-              avatar: 'https://blog.ayeez.cn/imgs/photo.jpg',
+              avatar: 'https://qiniu.ayeez.cn/avatar.jpg',
               descr: '记录学习历程，记录美好生活'
             },
             {
