@@ -4,6 +4,14 @@
  */
 
 const PROD_TWIKOO_URL = 'https://twikoo.ayeez.cn';
+/** 与博客不同源时，浏览器直连云函数会触发 CORS（预检失败）；需走同源 /twikoo-proxy 由 Nginx 反代 */
+const TWIKOO_HOSTNAME = (() => {
+  try {
+    return new URL(PROD_TWIKOO_URL).hostname;
+  } catch {
+    return 'twikoo.ayeez.cn';
+  }
+})();
 
 let _twikooApiCache = null;
 
@@ -46,8 +54,10 @@ export async function loadTwikoo() {
 }
 
 /**
- * 浏览器端 Twikoo envId：生产用官方域名；本机 dev/preview 走同源代理避免 CORS。
- * 可通过 .env 设置 VITE_TWIKOO_URL 覆盖。
+ * 浏览器端 Twikoo envId：
+ * - 页面与云函数不同源（如 blog.ayeez.cn → twikoo.ayeez.cn）会 CORS，应用 `/twikoo-proxy` + Nginx 反代（见 nginx 示例）。
+ * - 仅在当前页面就部署在 Twikoo 域名上时，才直连 PROD_TWIKOO_URL。
+ * - 可通过 VITE_TWIKOO_URL 覆盖。
  */
 export function getTwikooEnvId() {
   const fromEnv = import.meta.env.VITE_TWIKOO_URL;
@@ -56,9 +66,9 @@ export function getTwikooEnvId() {
   if (typeof window === 'undefined') return PROD_TWIKOO_URL;
 
   const host = window.location.hostname;
-  const isLocal = host === 'localhost' || host === '127.0.0.1';
-  if (isLocal) {
-    return `${window.location.origin}/twikoo-proxy`;
+  if (host === TWIKOO_HOSTNAME) {
+    return PROD_TWIKOO_URL;
   }
-  return PROD_TWIKOO_URL;
+  // 带尾部斜杠，与 Nginx `location /twikoo-proxy/` 一致，避免 301 把部分客户端 POST 弄丢
+  return `${window.location.origin}/twikoo-proxy/`;
 }
