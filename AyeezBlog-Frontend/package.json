@@ -7,11 +7,13 @@
     "preview": "vite preview --port 4173"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "axios": "^1.13.5",
     "front-matter": "^4.0.2",
     "highlight.js": "^11.11.1",
     "markdown-it": "^14.1.1",
     "markdown-it-table-of-contents": "^1.1.0",
+    "twikoo": "^1.6.44",
     "vue": "^3.2.38",
     "vue-router": "^4.0.13"
   },

@@ -328,36 +328,53 @@ export default {
       });
     },
 
-    // 预加载字体
+    // 预加载字体（失败/超时也必须结束，否则会一直卡在首页 Loading）
     preloadFonts() {
       return new Promise((resolve) => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue';
-        link.onload = () => {
-          console.log('字体加载完成');
+        let settled = false;
+        const done = (msg) => {
+          if (settled) return;
+          settled = true;
+          console.log(msg);
           resolve();
         };
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap';
+        link.onload = () => done('字体样式表已加载');
+        link.onerror = () => done('字体样式表跳过(将使用本地 @font-face)');
+        setTimeout(() => done('字体预加载超时'), 8000);
         document.head.appendChild(link);
       });
     },
 
-    // 预加载图片
+    // 预加载图片（404/跨域/超时都要 resolve，否则会永久卡住 isLoading）
     preloadImages() {
       const images = [
         'https://blog.ayeez.cn/imgs/photo.jpg',
         'https://blog.ayeez.cn/imgs/bg/bg.jpg'
-        // 可以添加更多需要预加载的图片
       ];
       return Promise.all(
         images.map((src) => {
           return new Promise((resolve) => {
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-              console.log(`图片加载完成: ${src}`);
+            let settled = false;
+            const finish = (label) => {
+              if (settled) return;
+              settled = true;
+              console.log(`${label}: ${src}`);
               resolve();
             };
+            const img = new Image();
+            const t = setTimeout(() => finish('图片预加载超时'), 12000);
+            img.onload = () => {
+              clearTimeout(t);
+              finish('图片加载完成');
+            };
+            img.onerror = () => {
+              clearTimeout(t);
+              finish('图片预加载跳过(失败)');
+            };
+            img.src = src;
           });
         })
       );
