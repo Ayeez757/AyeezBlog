@@ -84,7 +84,7 @@ export default {
                 { name: "关于", section: "about" },
                 { name: "归档", section: "archive" },
                 { name: "友链", section: "links" },
-                { name: "朋友圈", section: "fc" },
+                // { name: "朋友圈", section: "fc" },
                 { name: "留言", section: "comments" },
                 { name: "日志", section: "logs" },
                 // { name: "联系", section: "contact" }

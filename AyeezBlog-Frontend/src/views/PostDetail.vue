@@ -28,7 +28,7 @@
         <section id="comments" class="post-comments">
           <h2 class="post-comments-title">评论</h2>
           <div class="post-comment-card">
-            <div id="tcomment-post"></div>
+            <div id="tcomment-post" ref="twikooPost"></div>
           </div>
         </section>
       </div>
@@ -85,6 +85,7 @@
 
 <script>
 import { fetchPostById } from '@/api';
+import { loadTwikoo, getTwikooEnvId } from '@/utils/twikoo';
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import fm from 'front-matter';
@@ -365,16 +366,24 @@ export default {
       console.error('加载文章失败:', error);
     }
   },
-  mounted() {
-    // 为当前文章初始化 Twikoo 评论（按文章 ID 区分评论串）
-    if (window && window.twikoo) {
-      window.twikoo.init({
-        envId: 'https://twikoo.ayeez.cn',
-        el: '#tcomment-post',
-        path: `/posts/${this.id}`
-      });
-    } else {
-      console.warn('Twikoo 未加载，无法初始化文章评论');
+  async mounted() {
+    await this.$nextTick();
+    const el = this.$refs.twikooPost;
+    if (!el) {
+      console.warn('Twikoo 容器未找到');
+      return;
+    }
+    try {
+      const tw = await loadTwikoo();
+      await Promise.resolve(
+        tw.init({
+          envId: getTwikooEnvId(),
+          el,
+          path: `/posts/${this.id}`
+        })
+      );
+    } catch (e) {
+      console.error('文章页 Twikoo 初始化失败', e);
     }
   }
 };

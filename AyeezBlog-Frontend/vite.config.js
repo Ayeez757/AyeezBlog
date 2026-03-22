@@ -3,6 +3,19 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+// 本地访问 Twikoo 云函数：浏览器直连会 CORS，走同源代理转发
+const twikooProxy = {
+  '/twikoo-proxy': {
+    target: 'https://twikoo.ayeez.cn',
+    changeOrigin: true,
+    secure: true,
+    rewrite: (path) => {
+      const p = path.replace(/^\/twikoo-proxy/, '')
+      return p || '/'
+    }
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
@@ -21,7 +34,13 @@ export default defineConfig({
       '/logs': {
         target: 'http://localhost:8080',
         changeOrigin: true
-      }
+      },
+      ...twikooProxy
     }
   },
+  preview: {
+    proxy: {
+      ...twikooProxy
+    }
+  }
 })

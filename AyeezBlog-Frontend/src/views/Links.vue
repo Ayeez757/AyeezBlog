@@ -83,13 +83,15 @@
       <!-- 友链评论区 -->
       <div class="comment-card">
         <h2 class="comment-title">友链评论区</h2>
-        <div id="tlinkcomment"></div>
+        <div id="tlinkcomment" ref="twikooLink"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { loadTwikoo, getTwikooEnvId } from '@/utils/twikoo';
+
 export default {
   name: 'Links',
   data() {
@@ -333,19 +335,24 @@ export default {
       ]
     };
   },
-  mounted() {
-    // Twikoo 的“同一页面”是由 path 决定的；要复用旧站评论，需要把这里的 path 设置成旧站当时友链页的 path
-    const envId = 'https://twikoo.ayeez.cn';
+  async mounted() {
+    const envId = getTwikooEnvId();
     const oldSiteLinksPath = '/link';
-
-    if (!window.twikoo) return;
-    this.$nextTick(() => {
-      window.twikoo.init({
-        envId,
-        el: '#tlinkcomment',
-        path: oldSiteLinksPath
-      });
-    });
+    await this.$nextTick();
+    const el = this.$refs.twikooLink;
+    if (!el) return;
+    try {
+      const tw = await loadTwikoo();
+      await Promise.resolve(
+        tw.init({
+          envId,
+          el,
+          path: oldSiteLinksPath
+        })
+      );
+    } catch (e) {
+      console.error('友链页 Twikoo 初始化失败', e);
+    }
   }
 };
 </script>

@@ -104,7 +104,8 @@
           <h2 class="card-title">留言区</h2>
           <span class="meta-muted">提示：这里发表的是本页（/comments）评论</span>
         </div>
-        <div id="tcomment" class="twikoo-wrap"></div>
+        <div id="tcomment" ref="twikooEmbed" class="twikoo-wrap"></div>
+        <p v-if="twikooEmbedError" class="twikoo-embed-error">{{ twikooEmbedError }}</p>
       </div>
     </div>
   </div>
@@ -112,6 +113,7 @@
 
 <script>
 import { fetchPosts } from '@/api';
+import { loadTwikoo, getTwikooEnvId } from '@/utils/twikoo';
 
 const CommentNode = {
   name: 'CommentNode',
@@ -159,7 +161,7 @@ export default {
   components: { CommentNode },
   data() {
     return {
-      envId: 'https://twikoo.ayeez.cn',
+      twikooEmbedError: '',
 
       viewMode: 'recent', // recent | tree
 
@@ -174,6 +176,10 @@ export default {
     };
   },
   computed: {
+    /** 生产直连云函数；localhost 走 Vite 代理 /twikoo-proxy，避免 CORS */
+    twikooEnvId() {
+      return getTwikooEnvId();
+    },
     progressText() {
       if (!this.totalUrls) return '';
       return `${this.loadedUrls}/${this.totalUrls}`;
@@ -219,18 +225,33 @@ export default {
     }
   },
   mounted() {
-    if (window && window.twikoo) {
-      window.twikoo.init({
-        envId: this.envId,
-        el: '#tcomment',
-        path: '/comments'
-      });
-    } else {
-      this.loadError = 'Twikoo 未加载';
-    }
+    this.initTwikooEmbed();
     this.loadAllSiteComments();
   },
   methods: {
+    async initTwikooEmbed() {
+      this.twikooEmbedError = '';
+      await this.$nextTick();
+      const el = this.$refs.twikooEmbed;
+      if (!el) {
+        this.twikooEmbedError = '留言区容器未就绪，请刷新重试';
+        return;
+      }
+      try {
+        const tw = await loadTwikoo();
+        await Promise.resolve(
+          tw.init({
+            envId: this.twikooEnvId,
+            el,
+            path: '/comments'
+          })
+        );
+      } catch (e) {
+        const msg = e && e.message ? e.message : String(e);
+        console.error('Twikoo 留言区初始化失败', e);
+        this.twikooEmbedError = `Twikoo 加载失败：${msg}`;
+      }
+    },
     // 页面展示/跳转用的路径映射（不等同于 Twikoo 存储评论的 url key）
     mapCommentPathToPagePath(raw) {
       const s = (raw || '').toString();
@@ -404,7 +425,7 @@ export default {
     async twikooCommentGet({ url, before }) {
       const payload = { event: 'COMMENT_GET', url };
       if (before) payload.before = before;
-      const r = await fetch(this.envId, {
+      const r = await fetch(this.twikooEnvId, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload)
@@ -856,6 +877,14 @@ export default {
 
 #tcomment {
   color: white;
+  min-height: 120px;
+}
+
+.twikoo-embed-error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #ffb4b4;
+  line-height: 1.5;
 }
 
 /* Twikoo：用 :deep 覆盖内部样式，贴合站点黑金/绿色调 */
