@@ -7,7 +7,7 @@
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
 
-项目demo：[https://dev-blog.ayeez.cn/](https://dev-blog.ayeez.cn/)
+项目demo：[https://blog.ayeez.cn/](https://blog.ayeez.cn/)
 
 
 <p align="center">
