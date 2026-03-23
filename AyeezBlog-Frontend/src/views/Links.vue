@@ -147,7 +147,7 @@ export default {
             {
               name: '苏阳的Blog',
               link: 'https://blog.twis.uk',
-              avatar: 'https://blog.ayeez.cn/imgs/icon/twisuki.png',
+              avatar: 'https://blog.twis.uk/avatar.png',
               descr: '大家好这里是Twisuki'
             },
             {
@@ -235,12 +235,6 @@ export default {
               descr: '𝓙𝓾𝓼𝓽 𝓪 𝓬𝓵𝓸𝓾𝓭'
             },
             {
-              name: '写bug的代码人',
-              link: 'https://bugcoder.asia/',
-              avatar: 'https://bugcoder.asia/headLogo.jpg',
-              descr: '没有比这再简陋的网站了'
-            },
-            {
               name: '鈴奈咲桜のBlog',
               link: 'https://blog.sakura.ink',
               avatar: 'https://q2.qlogo.cn/headimg_dl?dst_uin=2731443459&spec=5',
@@ -249,7 +243,7 @@ export default {
             {
               name: 'LYEy_isine个人博客',
               link: 'https://caiyifeng.top',
-              avatar: 'https://caiyifeng.top/avatar.jpg',
+              avatar: 'https://caiyifeng.top/avatar.webp',
               descr: '花海无一日,少年踏自来'
             },
             {
@@ -265,21 +259,15 @@ export default {
               descr: '向利而生，随心而活'
             },
             {
-              name: 'vegecaiBlog',
-              link: 'https://blog.vegecai.moe/',
-              avatar: 'https://img.vegecai.moe/me.jpg',
-              descr: '守岁花开，季季不同'
-            },
-            {
               name: '东方月初',
               link: 'https://blog.biuxin.com/',
-              avatar: 'https://blog.ayeez.cn/imgs/icon/biuxin.webp',
+              avatar: 'https://x.xinb.de/i/2024/11/06/027080.gif',
               descr: '分享有趣但又无聊的东西。'
             },
             {
               name: '栖童の小站',
               link: 'https://blog.linux-qitong.top',
-              avatar: 'https://blog.ayeez.cn/imgs/icon/qitong.png',
+              avatar: 'https://blog.linux-qitong.top/img/avatar.webp',
               descr: '越努力,越幸运'
             },
             {
@@ -299,12 +287,6 @@ export default {
               link: 'https://www.996icu.eu.org/',
               avatar: 'https://img.scdn.io/i/692d847f79589_1764590719.webp',
               descr: 'Nebula.SYS'
-            },
-            {
-              name: '威威一笑音乐网',
-              link: 'https://music.weismile.top/',
-              avatar: 'https://music.weismile.top/wp-content/uploads/2025/12/20251219150130663767.webp',
-              descr: '一个免费的音乐资源分享网站'
             },
             {
               name: '江鸟博客',
