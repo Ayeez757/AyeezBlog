@@ -29,6 +29,13 @@ export default {
     return {
       logs: [
       {
+          date: '2026-03-23',
+          version: 'v0.17.0',
+          changes: [
+            '修复了一些站点迁移后遗留的问题'
+          ]
+        },
+      {
           date: '2026-03-22',
           version: 'v0.16.0',
           changes: [

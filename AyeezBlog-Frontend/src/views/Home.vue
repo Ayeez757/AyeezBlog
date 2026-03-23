@@ -24,7 +24,7 @@
     </div>
 
     <div class="content">
-      <p class="fade-in-text">这里是阿叶 Ayeez Blog 的博客。</p>
+      <p class="fade-in-text">这里是阿叶Ayeez 的博客。</p>
       <p class="fade-in-text">很高兴与你相遇！</p>
       <p class="fade-in-text">这里会分享技术与生活~</p>
       <div class="left-bottom-line6"></div>
@@ -50,8 +50,8 @@
       <img id="home-card-avatar" src="https://qiniu.ayeez.cn/avatar.jpg" alt="头像">
       <div class="card-content">
         <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
-        <text>这是新博客，仍然在开发中~（内容已经迁移，可能有部分图片丢失，可联系管理员修复）</text>
-        <text>旧站：<a href="https://blog.ayeez.cn" target="_blank">https://blog.ayeez.cn</a> （仍在使用中）</text>
+        <text>这是新博客，仍然在持续开发~（内容已经迁移，可能有部分图片丢失，可联系管理员修复）</text>
+        <text>旧站：<a href="https://blog.ayeez.cn" target="_blank">https://butterfly.ayeez.cn</a> （可能停止更新）</text>
         <text>qq闲聊交流群：421300955</text>
         <!-- 圆形图标链接 -->
         <div class="social-icons">

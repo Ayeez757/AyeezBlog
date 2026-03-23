@@ -447,6 +447,7 @@ export default {
         'p19.jpg',
         'p11.jpeg',
         'p7.jpg',
+        'p46.jpg',
         'p12.jpg',
         'p13.jpg',
         'p14.jpg',

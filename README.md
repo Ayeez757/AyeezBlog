@@ -90,7 +90,7 @@
 - **认证与安全**：管理员登录认证并返回登录信息/token，基于 Spring Security + JWT + Token 过滤器实现安全基础能力
 - **统一数据返回**：`Result` 统一响应结构与 `PageResult` 标准分页结构
 - **数据有效性与事务**：分类/标签写操作含基础参数判空与重名校验，并通过事务保证写入一致性
-- **后端基础设施**：CORS 跨域支持、MyBatis-Plus + Mapper XML 数据访问、Redis 缓存能力集成
+- **后端基础设施**：CORS 跨域支持、MyBatis-Plus + Mapper XML 数据访问
 
 ---
 
@@ -220,7 +220,7 @@ npm run dev
 
   
 
-访问：`http://localhost:5173`（如与前台同时运行，请指定其他端口，例如 `npm run dev -- --port 5174`）
+访问：`http://localhost:5173/admin/`（如与前台同时运行，请指定其他端口，例如 `npm run dev -- --port 5174`）
 
 默认用户：admin
 
@@ -231,18 +231,23 @@ npm run dev
 
 ## 配置说明
 
-### 后端配置 (application-{profile}.yml)
+### 后端配置 (application.yml / application-dev.yml / application-local.yml)
 
+后端通过 `hm.db.host` 和 `hm.db.password` 组装数据库连接（`spring.datasource.url`），其中密码推荐使用环境变量传入（避免仓库内明文）。
 
-| 配置项                          | 说明            | 示例值                                   | 部署必改 |
-| ---------------------------- | ------------- | ------------------------------------- | ---- |
-| `spring.datasource.url`      | MySQL 数据库连接地址 | `localhost:3306`                      | ✅    |
-| `spring.datasource.username` | 数据库用户名        | `root`                                | ✅    |
-| `spring.datasource.password` | 数据库密码         | `${hm.db.password}`（建议通过环境变量传入）       | ✅    |
-| `server.port`                | 后端服务端口        | `8080`                                | 按需   |
-| `aliyun.oss.endpoint`        | OSS 地域节点      | `https://oss-cn-beijing.aliyuncs.com` | ✅    |
-| `aliyun.oss.bucketName`      | OSS Bucket 名称 | `javaweb-ayeez`                       | ✅    |
-| `aliyun.oss.region`          | OSS 地域        | `cn-beijing`                          | ✅    |
+| 配置项 | 说明 | 示例值 | 部署必改 |
+| --- | --- | --- | --- |
+| `hm.db.host` | MySQL 主机名/IP（用于拼接 `spring.datasource.url`） | `mysql` 或 `localhost` | ✅ |
+| `hm.db.password` | MySQL 密码 | `${HM_DB_PASSWORD}` | ✅ |
+| `spring.datasource.url` | JDBC 数据库连接地址 | `jdbc:mysql://localhost:3306/ayeezblog` | ✅ |
+| `spring.datasource.username` | 数据库用户名 | `root` | ✅ |
+| `spring.datasource.password` | 数据库密码（来自 `${hm.db.password}`） | `${hm.db.password}` | ✅ |
+| `server.port` | 后端服务端口 | `8080` | 按需 |
+| `spring.servlet.multipart.max-file-size` | 单个文件上传上限 | `10MB` | 按需 |
+| `spring.servlet.multipart.max-request-size` | 单次请求上传上限 | `100MB` | 按需 |
+| `aliyun.oss.endpoint` | OSS 地域节点 | `https://oss-cn-beijing.aliyuncs.com` | ✅ |
+| `aliyun.oss.bucketName` | OSS Bucket 名称 | `javaweb-ayeez` | ✅ |
+| `aliyun.oss.region` | OSS 地域 | `cn-beijing` | ✅ |
 
 
 
