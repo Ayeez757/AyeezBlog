@@ -57,3 +57,16 @@ export const fetchPosts = (
 export const fetchPostById = (id) => {
   return request('GET', `/post/get?id=${id}`); // 调用后端接口
 };
+
+// 获取站点统计（PV/UV）
+export const fetchSiteStats = () => request('GET', '/post/stats');
+
+// 上报一次访问
+export const trackSiteVisit = (visitorKey, path = '/') => {
+  const params = new URLSearchParams({ path });
+  return apiClient.post(`/post/stats/track?${params.toString()}`, null, {
+    headers: {
+      'X-Visitor-Key': visitorKey,
+    },
+  }).then((res) => res.data);
+};

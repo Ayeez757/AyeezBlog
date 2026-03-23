@@ -30,7 +30,14 @@ export default {
       logs: [
       {
           date: '2026-03-23',
-          version: 'v0.17.0',
+          version: 'v1.1.0',
+          changes: [
+            '加了访问量和访客数统计'
+          ]
+        },
+      {
+          date: '2026-03-23',
+          version: 'v1.0.0',
           changes: [
             '修复了一些站点迁移后遗留的问题'
           ]

@@ -141,3 +141,28 @@ values ('admin', 'admin', 1, 1);
 -- 插入一篇默认欢迎使用AyeezBlog博客测试文章
 insert into blog_post (id, title, content, cover, create_time, update_time, description)
 values ('welcome', '欢迎使用AyeezBlog博客系统', '欢迎使用AyeezBlog博客系统，这是默认的欢迎文章。', null, now(), now(), '这是默认的欢迎文章');
+
+-- 站点访问统计：总访问量（PV）
+create table if not exists blog_site_stats
+(
+    id         tinyint unsigned                not null primary key comment '固定单行ID=1',
+    page_views bigint unsigned default 0       not null comment '总访问量PV',
+    updated_at datetime       default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
+)
+    comment '站点访问统计' collate = utf8mb4_unicode_ci;
+
+insert ignore into blog_site_stats (id, page_views) values (1, 0);
+
+-- 访客记录：用于统计总访客数（UV）
+create table if not exists blog_site_visitor
+(
+    id               bigint unsigned auto_increment primary key,
+    visitor_key      varchar(128)                      not null comment '前端生成的访客唯一标识',
+    ip_address       varchar(64)                       null comment '访客IP',
+    user_agent       varchar(512)                      null comment '浏览器UA',
+    first_path       varchar(255)                      null comment '首次访问路径',
+    first_visit_time datetime default CURRENT_TIMESTAMP not null comment '首次访问时间',
+    last_visit_time  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '最后访问时间',
+    constraint uk_blog_site_visitor_key unique (visitor_key)
+)
+    comment '站点访客记录（UV统计）' collate = utf8mb4_unicode_ci;

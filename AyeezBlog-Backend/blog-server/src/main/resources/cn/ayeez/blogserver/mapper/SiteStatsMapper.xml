@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.SiteStatsMapper">
+
+    <insert id="initStatsRow">
+        INSERT IGNORE INTO blog_site_stats (`id`, `page_views`)
+        VALUES (1, 0)
+    </insert>
+
+    <update id="increasePageViews">
+        UPDATE blog_site_stats
+        SET page_views = page_views + 1
+        WHERE id = 1
+    </update>
+
+    <insert id="insertVisitor">
+        INSERT INTO blog_site_visitor (
+            visitor_key,
+            ip_address,
+            user_agent,
+            first_path,
+            first_visit_time,
+            last_visit_time
+        ) VALUES (
+            #{visitorKey},
+            #{ipAddress},
+            #{userAgent},
+            #{visitPath},
+            NOW(),
+            NOW()
+        )
+        ON DUPLICATE KEY UPDATE visitor_key = visitor_key
+    </insert>
+
+    <update id="touchVisitor">
+        UPDATE blog_site_visitor
+        SET last_visit_time = NOW()
+        WHERE visitor_key = #{visitorKey}
+    </update>
+
+    <select id="getStats" resultType="cn.ayeez.blogpojo.dto.response.SiteVisitStats">
+        SELECT
+            (SELECT page_views FROM blog_site_stats WHERE id = 1) AS pageViews,
+            (SELECT COUNT(1) FROM blog_site_visitor) AS uniqueVisitors
+    </select>
+
+</mapper>
