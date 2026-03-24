@@ -61,28 +61,8 @@ export const fetchPostById = (id) => {
 // 获取站点统计（PV/UV）
 export const fetchSiteStats = () => request('GET', '/post/stats');
 
-// 获取友链分组列表
-// 线上部分网关仅放行 /post/**，因此优先走兼容路径并回退旧路径
-export const fetchLinks = async () => {
-  const isValidLinksResponse = (res) =>
-    !!res && typeof res === 'object' && res.code === 200 && Array.isArray(res.data);
-
-  try {
-    const res = await request('GET', '/post/links/list');
-    if (isValidLinksResponse(res)) {
-      return res;
-    }
-  } catch (error) {
-    // 忽略并回退到旧路径
-  }
-
-  const fallbackRes = await request('GET', '/links/list');
-  if (isValidLinksResponse(fallbackRes)) {
-    return fallbackRes;
-  }
-
-  return fallbackRes;
-};
+// 获取友链分组列表（固定原路径）
+export const fetchLinks = () => request('GET', '/links/list');
 
 // 上报一次访问
 export const trackSiteVisit = (visitorKey, path = '/') => {
