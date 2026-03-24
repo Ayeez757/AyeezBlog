@@ -133,10 +133,10 @@ export default {
               descr: 'Do the things that I like.'
             },
             {
-              name: 'Oxygen‘s Blog',
-              link: 'http://beisent.com',
-              avatar: 'https://blog.ayeez.cn/imgs/icon/oxygen.png',
-              descr: '无'
+              name: 'CGLab-Blog',
+              link: 'https://blog.cglab.top',
+              avatar: 'https://github.com/Yang-Junjie/Yang-Junjie.github.io/blob/main/assets/images/head.jpg',
+              descr: '计算机图形学技术博客'
             },
             {
               name: 'TangShiMei的小空间',
