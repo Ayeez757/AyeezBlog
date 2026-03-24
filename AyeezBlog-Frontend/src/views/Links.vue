@@ -127,10 +127,10 @@ export default {
               descr: '发现巷子里的那颗星星'
             },
             {
-              name: 'ATao-Blog',
-              link: 'https://blog.atao.cyou',
-              avatar: 'https://cdn.atao.cyou/Web/Avatar.png',
-              descr: '做自己喜欢的事'
+              name: 'Saneko',
+              link: 'https://saneko.me',
+              avatar: 'https://cdn.blog.saneko.me/Web/Avatar.png',
+              descr: 'Do the things that I like.'
             },
             {
               name: 'Oxygen‘s Blog',
@@ -311,6 +311,17 @@ export default {
               link: 'https://www.dreamcenter.top',
               descr: '妹控的中二君！',
               avatar: 'https://www.dreamcenter.top/imgs/avatar.jpg'
+            },
+            {
+              name: '爱吃猫的鱼',
+              link: 'https://blog.talen.top',
+              avatar: 'https://image.talen.top/20251229184705_wgsva7g9.png',
+              descr: '前景可待 未来可期'
+            },            {
+              name: 'ATao-Blog',
+              link: 'https://blog.atao.cyou',
+              avatar: 'https://cdn.atao.cyou/Web/Avatar.png',
+              descr: '做自己喜欢的事'
             }
           ]
         }

@@ -81,7 +81,7 @@ onUnmounted(() => {
       <span class="footer-line">
         旧站：
         <a href="https://blog.ayeez.cn" target="_blank" rel="noopener noreferrer">
-          https://blog.ayeez.cn
+          https://butterfly.ayeez.cn
         </a>
       </span>
       <span class="footer-line">粤ICP备2025505813号-1</span>
