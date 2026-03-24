@@ -29,6 +29,13 @@ export default {
     return {
       logs: [
       {
+          date: '2026-03-24',
+          version: 'v1.2.0',
+          changes: [
+            '前端：固定了文章的目录显示',
+          ]
+        },
+      {
           date: '2026-03-23',
           version: 'v1.1.0',
           changes: [

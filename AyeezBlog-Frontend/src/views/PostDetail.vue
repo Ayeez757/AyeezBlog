@@ -34,10 +34,12 @@
       </div>
     </main>
 
+    <div class="toc-sidebar-container">
     <!-- 目录（右侧，可折叠） -->
     <aside
       class="toc-sidebar"
       :class="{ 'toc-sidebar--mobile-open': isMobileTocOpen }"
+      ref="tocSidebar"
       v-if="headings.length"
     >
       <div class="toc-title">目录</div>
@@ -67,6 +69,7 @@
         </li>
       </ul>
     </aside>
+  </div>
 
     <!-- 桌面端右下角悬浮球 -->
     <div class="float-buttons">
@@ -76,7 +79,7 @@
       <button class="float-btn" @click="scrollToTop">
         顶
       </button>
-      <button class="float-btn" @click="toggleMobileToc">
+      <button class="float-btn float-btn--toc" @click="toggleMobileToc">
         目
       </button>
     </div>
@@ -100,7 +103,8 @@ export default {
       frontMatter: {},
       headings: [],     // { level, title, anchor }
       collapsedMap: {}, // { [anchor]: boolean }
-      isMobileTocOpen: false
+      isMobileTocOpen: false,
+      _onResizeBound: null
     };
   },
   computed: {
@@ -184,10 +188,46 @@ export default {
     renderedMarkdown() {
       this.$nextTick(() => {
         this.enhanceCodeBlocks();
+        this.updateTocPosition();
       });
     }
   },
   methods: {
+    updateTocPosition() {
+      // 仅桌面端需要精确贴右；移动端 TOC 走抽屉 fixed right/bottom
+      if (typeof window === 'undefined') return;
+      const tocEl = this.$refs.tocSidebar;
+      if (!tocEl) return;
+
+      // 移动端：清掉桌面端写入的内联定位，让 media query 的 right/bottom 生效
+      if (window.innerWidth <= 768) {
+        tocEl.style.left = '';
+        tocEl.style.right = '';
+        return;
+      }
+
+      const postCard = this.$el.querySelector('.post-detail');
+      if (!postCard) return;
+
+      const gap = 20;
+      const viewportPadding = 16;
+
+      const postRect = postCard.getBoundingClientRect();
+      const tocRect = tocEl.getBoundingClientRect();
+      const tocWidth = tocRect.width || 260;
+
+      // 理想位置：紧贴文章卡片右侧
+      let left = postRect.right + gap;
+
+      // 夹在视口内，避免越界
+      const maxLeft = window.innerWidth - viewportPadding - tocWidth;
+      if (left > maxLeft) left = maxLeft;
+      if (left < viewportPadding) left = viewportPadding;
+
+      tocEl.style.left = `${left}px`;
+      tocEl.style.right = 'auto';
+    },
+
     // 平滑滚动到锚点（整行点击）
     scrollToAnchor(anchor) {
       const el = document.getElementById(anchor);
@@ -385,6 +425,20 @@ export default {
     } catch (e) {
       console.error('文章页 Twikoo 初始化失败', e);
     }
+
+    // 初始化并监听窗口变化，保证 TOC 始终贴在文章卡片右侧
+    this.$nextTick(() => {
+      this.updateTocPosition();
+    });
+    this._onResizeBound = () => this.updateTocPosition();
+    window.addEventListener('resize', this._onResizeBound, { passive: true });
+  }
+  ,
+  beforeDestroy() {
+    if (this._onResizeBound) {
+      window.removeEventListener('resize', this._onResizeBound);
+      this._onResizeBound = null;
+    }
   }
 };
 </script>
@@ -394,28 +448,39 @@ export default {
   display: flex;
   gap: 20px;
   max-width: 1200px;
-  margin: 100px auto;
+  margin: 40px auto;
   padding: 20px;
   justify-content: center;
+  align-items: flex-start;
 }
 
 /* 文章主体固定一个合理宽度 */
 .post-main {
-  flex: 0 0 800px;
+  flex: 1 1 700px;
+  max-width: 700px;
+  min-width: 0;
+}
+
+.toc-sidebar-container {
+  flex: 0 0 260px;
+  position: relative;
+  align-self: flex-start;
 }
 
 /* 目录在右侧，宽度较窄，并固定在页头下面 */
 .toc-sidebar {
-  flex: 0 0 260px;
+  width: min(260px, calc(100vw - 32px));
   background-color: #2d2d2d;
   padding: 12px 10px;
   border-radius: 8px;
   font-size: 13px;
   color: #ccc;
+  height: fit-content;
   overflow-y: auto;
   max-height: 80vh;
-  position: sticky;
-  top: 80px; /* 根据你的导航栏高度微调 */
+  position: fixed;
+  right: 16px; /* 默认回退：避免窄屏重叠 */
+  left: auto;
 }
 
 .toc-title {
@@ -460,6 +525,8 @@ export default {
 .toc-link {
   color: #2e789d;
   text-decoration: none;
+  flex: 1;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -469,6 +536,8 @@ export default {
   text-decoration: underline;
   color: #fff;
 }
+
+/* 桌面端贴右逻辑由 JS 动态计算 left，CSS 仅保留回退定位 */
 
 /* 文章卡片样式 */
 .post-detail {
@@ -711,6 +780,11 @@ export default {
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
+  .toc-sidebar-container {
+    position: static;
+    flex: 0 0 auto;
+  }
+
   .toc-sidebar.toc-sidebar--mobile-open {
     opacity: 1;
     transform: translateY(0);
@@ -727,6 +801,13 @@ export default {
     width: 100% !important;
     max-width: 100%;
     height: auto;
+  }
+}
+
+/* 桌面端隐藏“目录”悬浮球（仅移动端需要） */
+@media (min-width: 769px) {
+  .float-btn--toc {
+    display: none;
   }
 }
 </style>

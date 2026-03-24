@@ -1,13 +1,13 @@
 html,
 body {
   width: 100%;
-  overflow-x: hidden; /* 禁用横向滚动条 */
+  overflow-x: clip; /* 裁剪横向溢出且不破坏 sticky */
   overscroll-behavior-x: none;
 }
 
 #app {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior-x: none;
 }
 
