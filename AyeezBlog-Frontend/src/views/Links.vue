@@ -135,7 +135,7 @@ export default {
             {
               name: 'CGLab-Blog',
               link: 'https://blog.cglab.top',
-              avatar: 'https://github.com/Yang-Junjie/Yang-Junjie.github.io/blob/main/assets/images/head.jpg',
+              avatar: 'https://qiniu.ayeez.cn/20260324181058538.png',
               descr: '计算机图形学技术博客'
             },
             {
