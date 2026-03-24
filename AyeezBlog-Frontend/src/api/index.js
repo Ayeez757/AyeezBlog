@@ -64,11 +64,24 @@ export const fetchSiteStats = () => request('GET', '/post/stats');
 // 获取友链分组列表
 // 线上部分网关仅放行 /post/**，因此优先走兼容路径并回退旧路径
 export const fetchLinks = async () => {
+  const isValidLinksResponse = (res) =>
+    !!res && typeof res === 'object' && res.code === 200 && Array.isArray(res.data);
+
   try {
-    return await request('GET', '/post/links/list');
+    const res = await request('GET', '/post/links/list');
+    if (isValidLinksResponse(res)) {
+      return res;
+    }
   } catch (error) {
-    return request('GET', '/links/list');
+    // 忽略并回退到旧路径
   }
+
+  const fallbackRes = await request('GET', '/links/list');
+  if (isValidLinksResponse(fallbackRes)) {
+    return fallbackRes;
+  }
+
+  return fallbackRes;
 };
 
 // 上报一次访问
