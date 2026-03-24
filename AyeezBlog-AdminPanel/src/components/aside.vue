@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar">
+  <div class="sidebar" :class="{ 'is-mobile': isMobile, 'is-visible': visible }">
     <div class="brand">AyeezBlog Admin</div>
     <el-menu
       :default-active="$route.path"
@@ -17,10 +17,23 @@
 
 <script>
 export default {
+  props: {
+    isMobile: {
+      type: Boolean,
+      default: false
+    },
+    visible: {
+      type: Boolean,
+      default: true
+    }
+  },
   methods: {
     handleSelect(index) {
       // 路由跳转
       this.$router.push(index);
+      if (this.isMobile) {
+        this.$emit('close');
+      }
     }
   }
 };
@@ -50,5 +63,20 @@ export default {
 .el-menu-vertical {
   border-right: none;
   padding-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .sidebar.is-mobile {
+    position: fixed;
+    left: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.22);
+  }
+
+  .sidebar.is-mobile.is-visible {
+    transform: translateX(0);
+  }
 }
 </style>

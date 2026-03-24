@@ -29,6 +29,14 @@ export default {
     return {
       logs: [
       {
+          date: '2026-03-25',
+          version: 'v1.3.0',
+          changes: [
+            '做了管理端的手机适配',
+            
+          ]
+        },
+      {
           date: '2026-03-24',
           version: 'v1.2.0',
           changes: [

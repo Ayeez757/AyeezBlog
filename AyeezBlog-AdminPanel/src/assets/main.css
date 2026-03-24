@@ -50,3 +50,28 @@ body {
   display: flex;
   gap: 8px;
 }
+
+@media (max-width: 768px) {
+  .page-card {
+    border-radius: 10px;
+    padding: 12px;
+  }
+
+  .toolbar-input {
+    width: 100%;
+  }
+
+  .page-toolbar {
+    align-items: stretch;
+  }
+
+  .page-toolbar .el-button,
+  .page-toolbar .el-select {
+    width: 100%;
+  }
+
+  .row-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}

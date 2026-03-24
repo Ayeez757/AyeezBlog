@@ -20,6 +20,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'maven'
 
       - name: Build with Maven
         working-directory: ./AyeezBlog-Backend
@@ -33,7 +34,13 @@ jobs:
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           DB_PASSWORD: ${{ secrets.HM_DB_PASSWORD }}
         run: |
-          sudo apt-get install -y openssh-client
+          if ! command -v ssh >/dev/null 2>&1 || ! command -v scp >/dev/null 2>&1; then
+            echo "⚠️ 未检测到 ssh/scp，开始安装 openssh-client..."
+            sudo apt-get update
+            sudo apt-get install -y openssh-client
+          else
+            echo "✅ ssh/scp 已存在，跳过安装"
+          fi
           
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/id_rsa

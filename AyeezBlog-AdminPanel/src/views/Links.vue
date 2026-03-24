@@ -37,7 +37,7 @@
             v-model="linkClassId"
             clearable
             placeholder="按分类筛选"
-            style="width: 200px;"
+            class="toolbar-select"
           >
             <el-option
               v-for="item in classList"
@@ -360,5 +360,15 @@ export default {
 <style scoped>
 .links-manage-page {
   padding: 16px;
+}
+
+.toolbar-select {
+  width: 200px;
+}
+
+@media (max-width: 768px) {
+  .toolbar-select {
+    width: 100%;
+  }
 }
 </style>

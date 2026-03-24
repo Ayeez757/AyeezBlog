@@ -62,7 +62,14 @@ export const fetchPostById = (id) => {
 export const fetchSiteStats = () => request('GET', '/post/stats');
 
 // 获取友链分组列表
-export const fetchLinks = () => request('GET', '/links/list');
+// 线上部分网关仅放行 /post/**，因此优先走兼容路径并回退旧路径
+export const fetchLinks = async () => {
+  try {
+    return await request('GET', '/post/links/list');
+  } catch (error) {
+    return request('GET', '/links/list');
+  }
+};
 
 // 上报一次访问
 export const trackSiteVisit = (visitorKey, path = '/') => {

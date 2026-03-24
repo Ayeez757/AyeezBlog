@@ -311,4 +311,21 @@ export default {
 .tree-node-actions {
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .tree-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tree-node {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .tree-node-actions {
+    white-space: normal;
+  }
+}
 </style>

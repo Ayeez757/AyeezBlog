@@ -100,4 +100,15 @@ h2 {
   text-align: left;
   font-size: 13px;
 }
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 14px;
+  }
+
+  .login-box {
+    width: 100%;
+    padding: 18px;
+  }
+}
 </style>

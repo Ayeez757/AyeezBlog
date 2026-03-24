@@ -329,4 +329,29 @@ export default {
   margin-top: 16px;
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .article-form {
+    max-width: 100%;
+  }
+
+  .editor-container {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .editor-left,
+  .editor-right {
+    min-height: 260px;
+  }
+
+  .submit-section .el-button {
+    width: 100%;
+  }
+
+  .submit-section .el-button + .el-button {
+    margin-top: 10px;
+    margin-left: 0;
+  }
+}
 </style>
