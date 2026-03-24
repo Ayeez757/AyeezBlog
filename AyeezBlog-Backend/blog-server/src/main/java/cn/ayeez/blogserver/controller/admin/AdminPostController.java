@@ -5,7 +5,7 @@ import cn.ayeez.blogpojo.dto.request.PostBody;
 import cn.ayeez.blogpojo.dto.request.PostQueryParam;
 import cn.ayeez.blogpojo.dto.response.PageResult;
 import cn.ayeez.blogpojo.entity.Post;
-import cn.ayeez.blogserver.service.postServer.PostServer;
+import cn.ayeez.blogserver.service.postServer.PostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,11 +19,12 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPostController {
 
     @Autowired
-    private PostServer postServer;
+    private PostService postServer;
 
     /**
      * 管理端添加文章
-     * @param postBody
+     *
+     * @param postBody 文章主体、分类、标签等完整信息
      * {
      *   "title": "Obsidian+七牛云+PicGo配置教程，实现图片自动上传，分享笔记不再丢图",
      *   "tags": [
@@ -50,6 +51,12 @@ public class AdminPostController {
 
 
     //TODO 管理端删除文章接口待开发
+    /**
+     * 管理端删除文章接口。
+     *
+     * @param id 文章 ID
+     * @return 删除结果
+     */
     @DeleteMapping("/delete")
     public Result delete(String id){
         log.info("删除文章，id：{}",id);
@@ -64,6 +71,9 @@ public class AdminPostController {
     /**
      * 获取文章列表（详细）
      * 包括：文章标题、作者、发布时间、更新时间、分类、标签、阅读数、点赞数、评论数、封面
+     *
+     * @param queryParam 分页与筛选参数
+     * @return 文章分页列表
      */
     @GetMapping("/list")
     public Result list(PostQueryParam queryParam) {
@@ -74,6 +84,9 @@ public class AdminPostController {
 
     /**
      * 管理端查询文章详情（用于编辑回显）
+     *
+     * @param id 文章 ID
+     * @return 文章详情
      */
     @GetMapping("/get")
     public Result get(String id) {
@@ -84,6 +97,9 @@ public class AdminPostController {
 
     /**
      * 管理端修改文章（用于编辑保存）
+     *
+     * @param postBody 文章更新内容
+     * @return 更新结果
      */
     @PutMapping("/update")
     public Result update(@RequestBody PostBody postBody) {
@@ -91,5 +107,7 @@ public class AdminPostController {
         postServer.update(postBody);
         return Result.success();
     }
+
+
 
 }

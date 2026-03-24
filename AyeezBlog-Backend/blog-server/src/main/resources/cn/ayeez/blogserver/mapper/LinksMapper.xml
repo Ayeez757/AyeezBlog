@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.LinksMapper">
+
+    <!--
+        查询友链分类 + 友链明细（扁平结构）
+        说明：
+        1) 使用 LEFT JOIN，保证“有分类但无友链”时分类仍能返回
+        2) 结果在 Service 层按 class_id 聚合为分组结构
+    -->
+    <select id="list" resultType="cn.ayeez.blogpojo.entity.Link">
+        SELECT
+            c.id AS class_id,
+            c.class_name,
+            c.class_desc,
+            c.sort AS class_sort,
+            l.id,
+            l.name,
+            l.link,
+            l.avatar,
+            l.descr,
+            l.rss,
+            l.sort,
+            l.created_at,
+            l.updated_at
+        FROM friend_link_class c
+                 LEFT JOIN friend_link l ON l.class_id = c.id
+        ORDER BY c.sort ASC, c.id ASC, l.sort ASC, l.id ASC
+    </select>
+
+    <select id="listClasses" resultType="cn.ayeez.blogpojo.entity.FriendLinkClass">
+        SELECT
+            id,
+            class_name,
+            class_desc,
+            sort,
+            created_at,
+            updated_at
+        FROM friend_link_class
+        <where>
+            <if test="keyword != null and keyword != ''">
+                class_name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <insert id="insertClass" parameterType="cn.ayeez.blogpojo.entity.FriendLinkClass" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO friend_link_class (class_name, class_desc, sort)
+        VALUES (#{className}, #{classDesc}, #{sort})
+    </insert>
+
+    <update id="updateClass" parameterType="cn.ayeez.blogpojo.entity.FriendLinkClass">
+        UPDATE friend_link_class
+        SET
+            class_name = #{className},
+            class_desc = #{classDesc},
+            sort = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteClassById">
+        DELETE FROM friend_link_class WHERE id = #{id}
+    </delete>
+
+    <select id="listLinks" resultType="cn.ayeez.blogpojo.entity.Link">
+        SELECT
+            l.id,
+            l.class_id,
+            c.class_name,
+            c.class_desc,
+            c.sort AS class_sort,
+            l.name,
+            l.link,
+            l.avatar,
+            l.descr,
+            l.rss,
+            l.sort,
+            l.created_at,
+            l.updated_at
+        FROM friend_link l
+        INNER JOIN friend_link_class c ON l.class_id = c.id
+        <where>
+            <if test="classId != null">
+                l.class_id = #{classId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (l.name LIKE CONCAT('%', #{keyword}, '%') OR l.link LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY c.sort ASC, c.id ASC, l.sort ASC, l.id ASC
+    </select>
+
+    <insert id="insertLink" parameterType="cn.ayeez.blogpojo.entity.Link" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO friend_link (class_id, name, link, avatar, descr, rss, sort)
+        VALUES (#{classId}, #{name}, #{link}, #{avatar}, #{descr}, #{rss}, #{sort})
+    </insert>
+
+    <update id="updateLink" parameterType="cn.ayeez.blogpojo.entity.Link">
+        UPDATE friend_link
+        SET
+            class_id = #{classId},
+            name = #{name},
+            link = #{link},
+            avatar = #{avatar},
+            descr = #{descr},
+            rss = #{rss},
+            sort = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteLinkById">
+        DELETE FROM friend_link WHERE id = #{id}
+    </delete>
+</mapper>

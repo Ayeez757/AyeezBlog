@@ -76,3 +76,37 @@ export const deleteTag = (params) => {
 export const getTagPosts = (params) => {
   return request.get('/admin/tag/posts', { params })
 }
+
+// 友链分类管理
+export const getLinkClassList = (params) => {
+  return request.get('/admin/links/class/list', { params })
+}
+
+export const addLinkClass = (data) => {
+  return request.post('/admin/links/class/add', data)
+}
+
+export const updateLinkClass = (data) => {
+  return request.put('/admin/links/class/update', data)
+}
+
+export const deleteLinkClass = (params) => {
+  return request.delete('/admin/links/class/delete', { params })
+}
+
+// 友链管理
+export const getLinkList = (params) => {
+  return request.get('/admin/links/link/list', { params })
+}
+
+export const addLink = (data) => {
+  return request.post('/admin/links/link/add', data)
+}
+
+export const updateLink = (data) => {
+  return request.put('/admin/links/link/update', data)
+}
+
+export const deleteLink = (params) => {
+  return request.delete('/admin/links/link/delete', { params })
+}

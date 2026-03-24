@@ -33,8 +33,17 @@
         update_time as updateTime
         FROM blog_post
         <where>
-            <if test="title != null and title != ''">
-                AND title LIKE CONCAT('%', #{title}, '%')
+            <if test="(title != null and title != '') or (keyword != null and keyword != '')">
+                AND title LIKE CONCAT('%',
+                <choose>
+                    <when test="title != null and title != ''">
+                        #{title}
+                    </when>
+                    <otherwise>
+                        #{keyword}
+                    </otherwise>
+                </choose>
+                , '%')
             </if>
             <if test="begin != null">
                 AND create_time >= #{begin}

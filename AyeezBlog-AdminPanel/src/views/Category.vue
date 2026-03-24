@@ -35,6 +35,38 @@
     </el-table>
     </div>
 
+    <div class="tree-wrap">
+      <div class="tree-header">
+        <h3>分类目录视图</h3>
+        <el-button size="small" @click="refreshTree">刷新目录</el-button>
+      </div>
+      <el-empty v-if="!categoryTree.length" description="暂无可展示的分类目录" />
+      <el-tree
+        v-else
+        :data="categoryTree"
+        node-key="key"
+        default-expand-all
+        :expand-on-click-node="false"
+      >
+        <template #default="{ data }">
+          <div class="tree-node">
+            <div class="tree-node-left">
+              <el-icon v-if="data.type === 'category'" class="tree-node-icon"><FolderOpened /></el-icon>
+              <el-icon v-else class="tree-node-icon"><Document /></el-icon>
+              <span>{{ data.label }}</span>
+            </div>
+            <div class="tree-node-actions" v-if="data.type === 'category'">
+              <el-button type="primary" link @click.stop="openEditDialog(data.raw)">编辑分类</el-button>
+              <el-button type="primary" link @click.stop="showPosts(data.raw)">文章列表</el-button>
+            </div>
+            <div class="tree-node-actions" v-else>
+              <el-button type="primary" link @click.stop="goEditPost(data.raw)">编辑文章</el-button>
+            </div>
+          </div>
+        </template>
+      </el-tree>
+    </div>
+
     <el-dialog :title="isEdit ? '编辑分类' : '新增分类'" v-model="dialogVisible" width="520px">
       <el-form :model="form" label-width="90px">
         <el-form-item label="分类名称">
@@ -69,12 +101,18 @@
 
 <script>
 import { addCategory, deleteCategory, getCategoryList, getCategoryPosts, updateCategory } from '@/api'
+import { Document, FolderOpened } from '@element-plus/icons-vue'
 
 export default {
+  components: {
+    FolderOpened,
+    Document
+  },
   data() {
     return {
       keyword: '',
       tableData: [],
+      categoryTree: [],
       dialogVisible: false,
       postDialogVisible: false,
       postDialogTitle: '分类下文章',
@@ -96,10 +134,62 @@ export default {
       try {
         const data = await getCategoryList({ keyword: this.keyword || undefined })
         this.tableData = data || []
+        await this.buildTreeData()
       } catch (error) {
         console.error('获取分类列表失败:', error)
         this.$message.error('获取分类列表失败')
       }
+    },
+    async refreshTree() {
+      await this.buildTreeData()
+      this.$message.success('目录已刷新')
+    },
+    async buildTreeData() {
+      if (!this.tableData.length) {
+        this.categoryTree = []
+        return
+      }
+      const postMap = {}
+      const postTasks = this.tableData.map(async (item) => {
+        try {
+          const posts = await getCategoryPosts({ id: item.id })
+          postMap[item.id] = posts || []
+        } catch (error) {
+          postMap[item.id] = []
+          console.error(`获取分类 ${item.id} 的文章失败:`, error)
+        }
+      })
+      await Promise.all(postTasks)
+      this.categoryTree = this.composeCategoryTree(this.tableData, postMap)
+    },
+    composeCategoryTree(categories, postMap) {
+      const nodeMap = new Map()
+      categories.forEach((item) => {
+        const posts = postMap[item.id] || []
+        nodeMap.set(item.id, {
+          key: `category-${item.id}`,
+          type: 'category',
+          label: `${item.name} (${posts.length})`,
+          raw: item,
+          children: posts.map((post) => ({
+            key: `post-${item.id}-${post.id}`,
+            type: 'post',
+            label: post.title || `文章 ${post.id}`,
+            raw: post
+          }))
+        })
+      })
+      const roots = []
+      categories.forEach((item) => {
+        const node = nodeMap.get(item.id)
+        const parentId = item.parentId
+        if (parentId && nodeMap.has(parentId)) {
+          nodeMap.get(parentId).children.unshift(node)
+        } else {
+          roots.push(node)
+        }
+      })
+      return roots
     },
     openAddDialog() {
       this.isEdit = false
@@ -176,5 +266,49 @@ export default {
 <style scoped>
 .category-page {
   padding: 16px;
+}
+
+.tree-wrap {
+  margin-top: 18px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tree-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tree-node {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tree-node-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tree-node-icon {
+  color: #909399;
+}
+
+.tree-node-actions {
+  white-space: nowrap;
 }
 </style>

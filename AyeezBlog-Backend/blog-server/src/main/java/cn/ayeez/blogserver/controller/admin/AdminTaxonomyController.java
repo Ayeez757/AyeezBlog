@@ -30,8 +30,9 @@ public class AdminTaxonomyController {
 
     /**
      * 查看分类列表
-     * @param keyword
-     * @return
+     *
+     * @param keyword 分类名称关键字（可选）
+     * @return 分类列表
      */
     @GetMapping("/category/list")
     public Result listCategory(@RequestParam(required = false) String keyword) {
@@ -41,8 +42,9 @@ public class AdminTaxonomyController {
 
     /**
      * 添加分类
-     * @param category
-     * @return
+     *
+     * @param category 分类信息
+     * @return 添加结果
      */
     @PostMapping("/category/add")
     @Transactional
@@ -64,8 +66,9 @@ public class AdminTaxonomyController {
 
     /**
      * 修改分类
-     * @param category
-     * @return
+     *
+     * @param category 分类信息（需包含 ID）
+     * @return 修改结果
      */
     @PutMapping("/category/update")
     @Transactional
@@ -83,8 +86,9 @@ public class AdminTaxonomyController {
 
     /**
      * 删除分类
-     * @param id
-     * @return
+     *
+     * @param id 分类 ID
+     * @return 删除结果
      */
     @DeleteMapping("/category/delete")
     @Transactional
@@ -98,8 +102,9 @@ public class AdminTaxonomyController {
 
     /**
      * 查看标签列表
-     * @param keyword
-     * @return
+     *
+     * @param keyword 标签名称关键字（可选）
+     * @return 标签列表
      */
     @GetMapping("/tag/list")
     public Result listTag(@RequestParam(required = false) String keyword) {
@@ -109,8 +114,9 @@ public class AdminTaxonomyController {
 
     /**
      * 查看分类下的文章列表
-     * @param id
-     * @return
+     *
+     * @param id 分类 ID
+     * @return 文章列表
      */
     @GetMapping("/category/posts")
     public Result listCategoryPosts(@RequestParam Long id) {
@@ -123,8 +129,9 @@ public class AdminTaxonomyController {
 
     /**
      * 查看标签下的文章列表
-     * @param id
-     * @return
+     *
+     * @param id 标签 ID
+     * @return 文章列表
      */
     @GetMapping("/tag/posts")
     public Result listTagPosts(@RequestParam Long id) {
@@ -136,9 +143,10 @@ public class AdminTaxonomyController {
     }
 
     /**
+     * 添加标签。
      *
-     * @param tag
-     * @return
+     * @param tag 标签信息
+     * @return 添加结果
      */
     @PostMapping("/tag/add")
     @Transactional
@@ -157,8 +165,9 @@ public class AdminTaxonomyController {
 
     /**
      * 修改标签
-     * @param tag
-     * @return
+     *
+     * @param tag 标签信息（需包含 ID）
+     * @return 修改结果
      */
     @PutMapping("/tag/update")
     @Transactional
@@ -176,8 +185,9 @@ public class AdminTaxonomyController {
 
     /**
      * 删除标签
-     * @param id
-     * @return
+     *
+     * @param id 标签 ID
+     * @return 删除结果
      */
     @DeleteMapping("/tag/delete")
     @Transactional

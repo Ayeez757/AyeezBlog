@@ -10,6 +10,7 @@
       <el-menu-item index="/article">文章管理</el-menu-item>
       <el-menu-item index="/category">分类管理</el-menu-item>
       <el-menu-item index="/tag">标签管理</el-menu-item>
+      <el-menu-item index="/links">友链管理</el-menu-item>
     </el-menu>
   </div>
 </template>

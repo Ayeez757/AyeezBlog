@@ -11,7 +11,7 @@ import cn.ayeez.blogserver.mapper.BlogCategoryMapper;
 import cn.ayeez.blogserver.mapper.BlogPostTagMapper;
 import cn.ayeez.blogserver.mapper.BlogTagMapper;
 import cn.ayeez.blogserver.mapper.PostMapper;
-import cn.ayeez.blogserver.service.postServer.PostServer;
+import cn.ayeez.blogserver.service.postServer.PostService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class PostServerImpl implements PostServer {
+public class PostServerImpl implements PostService {
 
     @Autowired
     private PostMapper postMapper;
@@ -40,9 +40,21 @@ public class PostServerImpl implements PostServer {
     /**
      * 获取文章列表（详细）
      * 包括：文章标题、作者、发布时间、更新时间、分类、标签、阅读数、点赞数、评论数、封面
+     *
+     * @param queryParam 分页与筛选参数
+     * @return 文章分页结果
      */
     @Override
     public PageResult<Post> listDetail(PostQueryParam queryParam) {
+        // 兼容前端传参：优先使用 title；若为空则回退到 keyword
+        if (queryParam.getTitle() == null || queryParam.getTitle().trim().isEmpty()) {
+            if (queryParam.getKeyword() != null && !queryParam.getKeyword().trim().isEmpty()) {
+                queryParam.setTitle(queryParam.getKeyword().trim());
+            }
+        } else {
+            queryParam.setTitle(queryParam.getTitle().trim());
+        }
+
         // 开启分页
         PageHelper.startPage(queryParam.getPage(), queryParam.getPageSize());
 
@@ -58,8 +70,9 @@ public class PostServerImpl implements PostServer {
 
     /**
      * 根据ID获取文章
-     * @param id
-     * @return
+     *
+     * @param id 文章 ID
+     * @return 文章详情
      */
     @Override
     public Post get(String id) {
@@ -69,7 +82,8 @@ public class PostServerImpl implements PostServer {
 
     /**
      * 添加文章
-     * @param postBody
+     *
+     * @param postBody 文章新增参数
      */
     @Override
     @Transactional
@@ -101,6 +115,11 @@ public class PostServerImpl implements PostServer {
         syncPostTags(postBody.getId(), postBody.getTags());
     }
 
+    /**
+     * 更新文章主体信息、分类与标签关联。
+     *
+     * @param postBody 文章更新参数
+     */
     @Override
     @Transactional
     public void update(PostBody postBody) {
@@ -120,6 +139,11 @@ public class PostServerImpl implements PostServer {
         syncPostTags(postBody.getId(), postBody.getTags());
     }
 
+    /**
+     * 删除文章及其标签关联关系。
+     *
+     * @param id 文章 ID
+     */
     @Override
     public void delete(String id) {
         // 先删除标签关联，再删除文章
@@ -131,6 +155,9 @@ public class PostServerImpl implements PostServer {
      * 解析分类路径（categories）为最终的分类ID：
      *  - 按顺序依次解析/创建 parent_id + name
      *  - 返回最后一个（叶子节点）的 ID
+     *
+     * @param categories 分类路径名称集合
+     * @return 叶子分类 ID，若为空则返回 null
      */
     private Long resolveCategoryId(java.util.List<String> categories) {
         if (categories == null || categories.isEmpty()) {
@@ -164,6 +191,9 @@ public class PostServerImpl implements PostServer {
      *  - 根据名称查找/创建 blog_tag
      *  - 清空原有关联
      *  - 重新插入 blog_post_tag
+     *
+     * @param postId   文章 ID
+     * @param tagNames 标签名称集合
      */
     private void syncPostTags(String postId, java.util.List<String> tagNames) {
         if (postId == null || postId.isEmpty()) {

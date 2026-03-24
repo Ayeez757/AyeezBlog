@@ -6,6 +6,8 @@
         <div class="links-title-gradient">AYEEZ&nbsp;LINKS</div>
       </div>
       <p class="links-subtitle">这里是阿叶 Ayeez 的友链小角落，欢迎互相串门。</p>
+      <p v-if="loadingLinks" class="links-status">友链加载中...</p>
+      <p v-else-if="linksError" class="links-status links-status-error">{{ linksError }}</p>
 
       <!-- 友链列表（按分组展示） -->
       <div v-for="(group, gIndex) in friendGroups" :key="gIndex" class="links-group">
@@ -91,244 +93,20 @@
 
 <script>
 import { loadTwikoo, getTwikooEnvId } from '@/utils/twikoo';
+import { fetchLinks } from '@/api';
 
 export default {
   name: 'Links',
   data() {
     return {
-      // 友链分组数据，来自原先的 yml 配置
-      friendGroups: [
-        {
-          class_name: '1.特别关心',
-          class_desc: '常联系的朋友~~',
-          link_list: [
-            {
-              name: '阿叶Ayeez的旧站',
-              link: 'https://blog.ayeez.cn/',
-              avatar: 'https://qiniu.ayeez.cn/avatar.jpg',
-              descr: '记录学习历程，记录美好生活'
-            },
-            {
-              name: 'mccsjs',
-              link: 'https://seln.cn/',
-              avatar: 'https://seln.cn/img/head.jpg',
-              descr: '点一盏灯，等一个迷路的夜🍁🍁🍁'
-            },
-            {
-              name: 'ZY知识库',
-              link: 'https://blog.pljzy.top/',
-              avatar: 'https://blog.pljzy.top/_astro/logo.BxIxyJV1_Z19cEQW.webp',
-              descr: '一个技术探索与分享的平台'
-            },
-            {
-              name: '雪萌天文台',
-              link: 'https://blog.snowy.moe',
-              avatar: 'https://img.snowy.moe/head.png',
-              descr: '发现巷子里的那颗星星'
-            },
-            {
-              name: 'Saneko',
-              link: 'https://saneko.me',
-              avatar: 'https://cdn.blog.saneko.me/Web/Avatar.png',
-              descr: 'Do the things that I like.'
-            },
-            {
-              name: 'CGLab-Blog',
-              link: 'https://blog.cglab.top',
-              avatar: 'https://qiniu.ayeez.cn/20260324181058538.png',
-              descr: '计算机图形学技术博客'
-            },
-            {
-              name: 'TangShiMei的小空间',
-              link: 'https://tang-blog.leleosd.top/',
-              avatar: 'https://tang-blog.leleosd.top/img/favicon.ico',
-              descr: '想和你重新认识一次，重你叫什么开始'
-            },
-            {
-              name: '苏阳的Blog',
-              link: 'https://blog.twis.uk',
-              avatar: 'https://blog.twis.uk/avatar.png',
-              descr: '大家好这里是Twisuki'
-            },
-            {
-              name: '裕裕裕的小破宅',
-              link: 'https://yu-blog.top/',
-              avatar: 'https://yu-blog.top/img/avatar.jpg',
-              descr: '一个充满青春活力的技术博客，为初学者提供了优质的博客搭建指南和技术分享。'
-            },
-            {
-              name: '女巫之舞',
-              link: 'https://hexentanz.cn/',
-              avatar: 'https://hexentanz.cn/images/shuangquanmiao.jpg',
-              descr: '喵喵外婆的花田'
-            },
-            {
-              name: '小龙的分享站',
-              link: 'https://xiaolongya.cn/',
-              avatar: 'https://xiaolongya.cn/uploads/avatar.jpg',
-              descr: '来龙岛看看吧，在这里你可以看到龙的开源项目，实用工具，成长感悟与其他分享！'
-            }
-          ]
-        },
-        {
-          class_name: '2.友情链接',
-          class_desc: '一些好朋友~~',
-          link_list: [
-            {
-              name: 'XgrBlog',
-              link: 'https://xgrblog.cn',
-              avatar: 'https://xgrblog.cn/avatar.jpg',
-              descr: '学无止境'
-            },
-            {
-              name: 'YouYou',
-              link: 'https://vpnnew.net/blog/',
-              avatar: 'https://vpnnew.net/youyou.png',
-              descr: ''
-            },
-            {
-              name: 'Revincx',
-              link: 'https://blog.revincx.icu/',
-              avatar: 'https://cdn.jsdelivr.net/gh/Revincx/blog-assets@master/images/avatar.jpg',
-              descr: '可爱就是正义~'
-            },
-            {
-              name: 'Imz',
-              link: 'https://blog.imz.me/',
-              avatar: 'https://blog.imz.me/img/avatar.webp',
-              descr: '仰望星空，脚踏实地。'
-            },
-            {
-              name: '辰渊尘の个人博客',
-              link: 'https://blog.mcxiaochen.top/',
-              avatar: 'https://blog.mcxiaochen.top/favicon.ico',
-              descr: '05后，高中生，内容偏技术向，希望能对你有用QwQ'
-            },
-            {
-              name: '安知鱼',
-              link: 'https://blog.anheyu.com/',
-              avatar: 'https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg',
-              descr: '生活明朗，万物可爱'
-            },
-            {
-              name: '绘星里',
-              link: 'https://blog.storia.ren/',
-              avatar: 'https://blog.storia.ren/images/icon.png',
-              descr: '一起来绘制属于自己的星星！'
-            },
-            {
-              name: '你好可爱',
-              link: 'https://wjldarling.top/',
-              avatar: 'https://wangjinglun.oss-cn-beijing.aliyuncs.com/images/1.jpg',
-              descr: '山水一程，三生有幸✨'
-            },
-            {
-              name: '善小逸🍊',
-              link: 'https://www.donghao.ltd/',
-              avatar: 'https://img.donghao.ltd/img/touxiang.jpg',
-              descr: '所有打不倒你的难，最终都会变成你身上的光'
-            },
-            {
-              name: '𝟞𝟙𝟡\'𝕤 𝔹𝕃𝕆𝔾',
-              link: 'https://66619.eu.org',
-              avatar: 'https://blog.ayeez.cn/imgs/icon/619.png',
-              descr: '𝓙𝓾𝓼𝓽 𝓪 𝓬𝓵𝓸𝓾𝓭'
-            },
-            {
-              name: '鈴奈咲桜のBlog',
-              link: 'https://blog.sakura.ink',
-              avatar: 'https://q2.qlogo.cn/headimg_dl?dst_uin=2731443459&spec=5',
-              descr: '愛することを忘れないで'
-            },
-            {
-              name: 'LYEy_isine个人博客',
-              link: 'https://caiyifeng.top',
-              avatar: 'https://caiyifeng.top/avatar.webp',
-              descr: '花海无一日,少年踏自来'
-            },
-            {
-              name: '安小歪',
-              link: 'https://blog.anxy.top/',
-              avatar: 'https://q2.qlogo.cn/headimg_dl?dst_uin=2622979530&spec=640',
-              descr: '记住你！自己！'
-            },
-            {
-              name: '浪小舟的博客',
-              link: 'https://blog.lonzov.top/',
-              avatar: 'https://img.fastmirror.net/s/2025/09/12/68c39893a84aa.png',
-              descr: '向利而生，随心而活'
-            },
-            {
-              name: '东方月初',
-              link: 'https://blog.biuxin.com/',
-              avatar: 'https://x.xinb.de/i/2024/11/06/027080.gif',
-              descr: '分享有趣但又无聊的东西。'
-            },
-            {
-              name: '栖童の小站',
-              link: 'https://blog.linux-qitong.top',
-              avatar: 'https://blog.linux-qitong.top/img/avatar.webp',
-              descr: '越努力,越幸运'
-            },
-            {
-              name: 'InsectMk',
-              link: 'https://insectmk.cn',
-              avatar: 'https://insectmk.cn/static/img/head/insectmk.jpg',
-              descr: '每天都要微笑'
-            },
-            {
-              name: 'kzhik\'s website',
-              link: 'https://www.kzhik.cn',
-              avatar: 'https://www.kzhik.cn/avatar.webp',
-              descr: 'EXPLORE THE WORLD!'
-            },
-            {
-              name: 'Nebula Blog',
-              link: 'https://www.996icu.eu.org/',
-              avatar: 'https://img.scdn.io/i/692d847f79589_1764590719.webp',
-              descr: 'Nebula.SYS'
-            },
-            {
-              name: '江鸟博客',
-              link: 'https://blog.azucat.eu',
-              avatar: 'https://blog.azucat.eu/favicon/icon.png',
-              descr: '天有不公~地有苍生~万般万般年月过~落日朱门满地红~'
-            },
-            {
-              name: 'SAKURAIN TEAM',
-              link: 'https://sakurain.net/',
-              avatar: 'https://sakurain.net/image/logo.webp',
-              descr: '用代码构建未来'
-            },
-            {
-              name: 'Inalineの小站',
-              link: 'https://inaline.net',
-              avatar: 'https://inaline.net/usr/themes/inaline/assets/images/logo/cover.png',
-              descr: '此情可待成追忆，只是当时已惘然'
-            },
-            {
-              name: '时光潜流',
-              link: 'https://www.dreamcenter.top',
-              descr: '妹控的中二君！',
-              avatar: 'https://www.dreamcenter.top/imgs/avatar.jpg'
-            },
-            {
-              name: '爱吃猫的鱼',
-              link: 'https://blog.talen.top',
-              avatar: 'https://image.talen.top/20251229184705_wgsva7g9.png',
-              descr: '前景可待 未来可期'
-            },            {
-              name: 'ATao-Blog',
-              link: 'https://blog.atao.cyou',
-              avatar: 'https://cdn.atao.cyou/Web/Avatar.png',
-              descr: '做自己喜欢的事'
-            }
-          ]
-        }
-      ]
+      friendGroups: [],
+      loadingLinks: false,
+      linksError: ''
     };
   },
   async mounted() {
+    await this.loadLinks();
+
     const envId = getTwikooEnvId();
     const oldSiteLinksPath = '/link';
     await this.$nextTick();
@@ -345,6 +123,38 @@ export default {
       );
     } catch (e) {
       console.error('友链页 Twikoo 初始化失败', e);
+    }
+  },
+  methods: {
+    async loadLinks() {
+      this.loadingLinks = true;
+      this.linksError = '';
+      try {
+        const res = await fetchLinks();
+        if (res && res.code === 200 && Array.isArray(res.data)) {
+          this.friendGroups = res.data.map((group) => ({
+            class_name: group.class_name ?? group.className ?? '',
+            class_desc: group.class_desc ?? group.classDesc ?? '',
+            link_list: Array.isArray(group.link_list ?? group.linkList)
+              ? (group.link_list ?? group.linkList).map((site) => ({
+                name: site.name ?? '',
+                link: site.link ?? '',
+                avatar: site.avatar ?? '',
+                descr: site.descr ?? ''
+              }))
+              : []
+          }));
+        } else {
+          this.friendGroups = [];
+          this.linksError = '友链数据暂时不可用，请稍后再试。';
+        }
+      } catch (e) {
+        this.friendGroups = [];
+        this.linksError = '友链加载失败，请稍后刷新重试。';
+        console.error('获取友链列表失败', e);
+      } finally {
+        this.loadingLinks = false;
+      }
     }
   }
 };
@@ -389,6 +199,15 @@ export default {
 .links-subtitle {
   margin-bottom: 24px;
   color: #cccccc;
+}
+
+.links-status {
+  margin: 0 0 20px;
+  color: #d8d8d8;
+}
+
+.links-status-error {
+  color: #ff9b9b;
 }
 
 .links-grid {

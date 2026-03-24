@@ -61,6 +61,9 @@ export const fetchPostById = (id) => {
 // 获取站点统计（PV/UV）
 export const fetchSiteStats = () => request('GET', '/post/stats');
 
+// 获取友链分组列表
+export const fetchLinks = () => request('GET', '/links/list');
+
 // 上报一次访问
 export const trackSiteVisit = (visitorKey, path = '/') => {
   const params = new URLSearchParams({ path });

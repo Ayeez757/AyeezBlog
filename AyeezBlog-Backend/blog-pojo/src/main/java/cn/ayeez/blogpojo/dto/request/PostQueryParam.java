@@ -22,6 +22,11 @@ public class PostQueryParam {
      * 文章标题搜索关键词
      */
     private String title;
+
+    /**
+     * 兼容字段：部分前端使用 keyword 传搜索词
+     */
+    private String keyword;
     
     /**
      * 开始时间

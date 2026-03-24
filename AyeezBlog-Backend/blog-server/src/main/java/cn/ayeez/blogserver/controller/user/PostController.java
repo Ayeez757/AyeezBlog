@@ -5,7 +5,7 @@ import cn.ayeez.blogcommon.util.Result;
 import cn.ayeez.blogpojo.dto.request.PostQueryParam;
 import cn.ayeez.blogpojo.dto.response.PageResult;
 import cn.ayeez.blogpojo.entity.Post;
-import cn.ayeez.blogserver.service.postServer.PostServer;
+import cn.ayeez.blogserver.service.postServer.PostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +23,7 @@ public class PostController {
 
     // 注入服务
     @Autowired
-    private PostServer postServer;
+    private PostService postServer;
 
     /**
      * 获取文章列表（详细）

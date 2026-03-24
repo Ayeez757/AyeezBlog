@@ -3,7 +3,7 @@ package cn.ayeez.blogserver.controller.admin;
 import cn.ayeez.blogcommon.util.Result;
 import cn.ayeez.blogpojo.bo.Auth;
 import cn.ayeez.blogpojo.dto.response.LoginInfo;
-import cn.ayeez.blogserver.service.postServer.AuthServer;
+import cn.ayeez.blogserver.service.postServer.AuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 关于账户信息的
+ * 后台认证相关接口。
  */
 @Slf4j
 @RestController
@@ -19,10 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminAuthController {
 
     @Autowired
-    private AuthServer authServer;
+    private AuthService authServer;
 
     /**
-     * 我登录
+     * 管理员登录接口。
+     *
+     * @param auth 登录参数（账号、密码）
+     * @return 登录成功返回用户信息与 token，失败返回错误信息
      */
     //TODO 登录接口已经重写，能正常登录返回token，但是需要加一个加密功能，现在数据库里存的还是未加密临时密码
     @RequestMapping("/login")

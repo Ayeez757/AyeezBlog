@@ -6,6 +6,7 @@ import Tag from '@/views/Tag.vue'
 import AddArticle from '@/views/AddArticle.vue'
 import Contact from '@/views/Contact.vue'
 import Login from '@/views/Login.vue'
+import Links from '@/views/Links.vue'
 
 const routers = [
   { path: '/login', name: 'Login', component: Login, meta: { requiresAuth: false } },
@@ -13,6 +14,7 @@ const routers = [
   { path: '/article', name: 'Article', component: Article, meta: { requiresAuth: true } },
   { path: '/category', name: 'Category', component: Category, meta: { requiresAuth: true } },
   { path: '/tag', name: 'Tag', component: Tag, meta: { requiresAuth: true } },
+  { path: '/links', name: 'Links', component: Links, meta: { requiresAuth: true } },
   { path: '/add-article', name: 'AddArticle', component: AddArticle, meta: { requiresAuth: true } },
   { path: '/edit-article/:id', name: 'EditArticle', component: AddArticle, meta: { requiresAuth: true } },
 ];

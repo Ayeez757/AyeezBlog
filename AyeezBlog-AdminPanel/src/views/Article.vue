@@ -1,8 +1,14 @@
 <template>
   <div class="article-list page-card">
     <div class="page-toolbar">
-      <el-input v-model="searchKeyword" placeholder="请输入文章标题关键词" class="toolbar-input" clearable />
-      <el-button type="primary" @click="fetchArticles">搜索</el-button>
+      <el-input
+        v-model="searchKeyword"
+        placeholder="请输入文章标题关键词"
+        class="toolbar-input"
+        clearable
+        @keyup.enter="handleSearch"
+      />
+      <el-button type="primary" @click="handleSearch">搜索</el-button>
       <el-button type="success" @click="goToAddArticle">添加文章</el-button>
     </div>
 
@@ -58,7 +64,7 @@ export default {
         const data = await getPostList({
           page: this.currentPage,
           pageSize: this.pageSize,
-          keyword: this.searchKeyword
+          title: this.searchKeyword?.trim() || undefined
         });
 
         this.articles = data.rows;
@@ -67,6 +73,10 @@ export default {
         console.error('获取文章列表失败:', error);
         this.$message.error('获取文章列表失败，请稍后再试');
       }
+    },
+    handleSearch() {
+      this.currentPage = 1;
+      this.fetchArticles();
     },
     handlePageChange(page) {
       this.currentPage = page;
