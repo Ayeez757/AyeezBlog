@@ -37,7 +37,7 @@ jobs:
           set -euo pipefail
 
           SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3"
-          SCP_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
+          SCP_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o Compression=no"
 
           JAR_PATH="AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar"
           REMOTE_DIR="/var/lib/docker/volumes/jar/_data"
@@ -93,10 +93,34 @@ jobs:
             echo "::group::scp 上传诊断"
             echo "scp src=$JAR_PATH"
             echo "scp dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+
+            echo "🔄 监控远端 app.jar 大小（scp 期间每 5 秒输出一次）..."
+            # scp 过程中轮询远端 app.jar 大小，快速判断卡在“传输中断”还是“写入/收尾阶段”。
+            # 注意：轮询由远端执行，避免依赖 scp 自带进度输出。
             set +e
-            timeout 900s scp -vv -C $SCP_OPTS "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            POLL_PID=$(ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; (while true; do if [ -f '$REMOTE_JAR' ]; then sz=\$(stat -c%s '$REMOTE_JAR' 2>/dev/null || echo 0); ts=\$(date +%H:%M:%S); echo \"POLL \$ts size=\${sz}B\"; fi; sleep 5; done) & echo \$!" 2>/dev/null)
+            set -e
+
+            if [ -z "$POLL_PID" ]; then
+              echo "⚠️ 未能获取远端轮询进程 PID（忽略轮询）。"
+            else
+              echo "🕵️ 远端轮询 PID=$POLL_PID"
+            fi
+            cleanup_poller() {
+              if [ -n "${POLL_PID:-}" ]; then
+                ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "kill '$POLL_PID' 2>/dev/null || true" >/dev/null 2>&1 || true
+              fi
+            }
+            trap cleanup_poller EXIT
+
+            set +e
+            timeout 900s scp -vv $SCP_OPTS "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
             SCP_RC=$?
             set -e
+
+            trap - EXIT
+            cleanup_poller || true
+
             echo "⬆️ scp 上传返回码：$SCP_RC"
             end_ts=$(date +%s)
             echo "::endgroup::"
