@@ -42,6 +42,7 @@ jobs:
           JAR_PATH="AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar"
           REMOTE_DIR="/var/lib/docker/volumes/jar/_data"
           REMOTE_JAR="${REMOTE_DIR}/app.jar"
+          REMOTE_WRITE_TEST_FILE="${REMOTE_DIR}/.write_test"
 
           if ! command -v ssh >/dev/null 2>&1 || ! command -v scp >/dev/null 2>&1; then
             echo "⚠️ 未检测到 ssh/scp，开始安装 openssh-client..."
@@ -75,6 +76,9 @@ jobs:
           echo "🔍 远端目录/磁盘状态（部署前）："
           ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; df -h /var/lib/docker; ls -lah '$REMOTE_DIR' || true; ls -lah '$REMOTE_JAR' || true"
 
+          echo "🧪 远端写入测试（写 20MB，小文件 IO 是否卡住）..."
+          timeout 120s ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; rm -f '$REMOTE_WRITE_TEST_FILE' || true; (time dd if=/dev/zero of='$REMOTE_WRITE_TEST_FILE' bs=1M count=20 conv=fdatasync status=progress) ; rm -f '$REMOTE_WRITE_TEST_FILE' || true"
+
           echo "🗑️  删除旧的 jar包..."
           {
             start_ts=$(date +%s)
@@ -89,14 +93,26 @@ jobs:
             echo "::group::scp 上传诊断"
             echo "scp src=$JAR_PATH"
             echo "scp dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            set +e
             timeout 900s scp -vv -C $SCP_OPTS "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            SCP_RC=$?
+            set -e
+            echo "⬆️ scp 上传返回码：$SCP_RC"
             end_ts=$(date +%s)
             echo "::endgroup::"
             echo "⬆️ scp 上传耗时：$((end_ts-start_ts))s"
+
+            if [ "$SCP_RC" -ne 0 ]; then
+              echo "❌ scp 未成功完成：请重点检查远端写入是否卡住/网络是否不稳定。"
+              ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; ls -lah '$REMOTE_DIR' || true; (sha256sum '$REMOTE_JAR' || true) "
+              exit "$SCP_RC"
+            fi
           }
 
           echo "🔍 远端目录/磁盘状态（部署后）："
           ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; df -h /var/lib/docker; ls -lah '$REMOTE_DIR'; ls -lah '$REMOTE_JAR'"
+
+          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; echo '远端 app.jar sha256:'; sha256sum '$REMOTE_JAR' | awk '{print \$1}'"
           
           echo "🔄 重启 Docker 容器并注入环境变量..."
           # 关键修复：去掉 'EOF' 的单引号，让本地变量展开
