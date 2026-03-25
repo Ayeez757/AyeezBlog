@@ -50,7 +50,7 @@ public class AdminPostController {
     }
 
 
-    //TODO 管理端删除文章接口待开发
+
     /**
      * 管理端删除文章接口。
      *
@@ -64,8 +64,6 @@ public class AdminPostController {
         return Result.success();
     }
 
-
-    //TODO 管理端修改文章接口待开发
 
 
     /**

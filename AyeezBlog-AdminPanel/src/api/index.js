@@ -110,3 +110,24 @@ export const updateLink = (data) => {
 export const deleteLink = (params) => {
   return request.delete('/admin/links/link/delete', { params })
 }
+
+// 日志管理
+export const getLogList = (params) => {
+  return request.get('/admin/logs/list', { params })
+}
+
+export const addLogVersion = (data) => {
+  return request.post('/admin/logs/add', data)
+}
+
+export const updateLogVersion = (data) => {
+  return request.put('/admin/logs/update', data)
+}
+
+export const deleteLogVersion = (params) => {
+  return request.delete('/admin/logs/delete', { params })
+}
+
+export const setCurrentLogVersion = (data) => {
+  return request.post('/admin/logs/set-current', data)
+}

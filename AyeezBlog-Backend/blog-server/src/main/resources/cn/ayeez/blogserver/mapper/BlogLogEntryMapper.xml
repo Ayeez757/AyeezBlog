@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.BlogLogEntryMapper">
+
+    <resultMap id="BlogLogEntryResult" type="cn.ayeez.blogpojo.entity.BlogLogEntry">
+        <id property="id" column="id"/>
+        <result property="versionId" column="version_id"/>
+        <result property="sort" column="sort"/>
+        <result property="content" column="content"/>
+    </resultMap>
+
+    <delete id="deleteByVersionId">
+        DELETE FROM blog_log_entry
+        WHERE version_id = #{versionId}
+    </delete>
+
+    <insert id="insertEntries">
+        INSERT INTO blog_log_entry (version_id, sort, content)
+        VALUES
+        <foreach collection="changes" item="c" index="idx" separator=",">
+            (#{versionId}, #{idx}, #{c})
+        </foreach>
+    </insert>
+
+    <select id="listEntriesByVersionId" resultMap="BlogLogEntryResult">
+        SELECT
+            id,
+            version_id,
+            sort,
+            content
+        FROM blog_log_entry
+        WHERE version_id = #{versionId}
+        ORDER BY sort ASC, id ASC
+    </select>
+
+</mapper>
+

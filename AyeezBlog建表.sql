@@ -166,3 +166,29 @@ create table if not exists blog_site_visitor
     constraint uk_blog_site_visitor_key unique (visitor_key)
 )
     comment '站点访客记录（UV统计）' collate = utf8mb4_unicode_ci;
+
+-- 站点更新日志版本表
+create table if not exists blog_log_version
+(
+    id          bigint unsigned auto_increment primary key,
+    version     varchar(64) not null comment '版本号，例如 v1.3.0',
+    log_date    date         not null comment '版本日期',
+    is_current  tinyint      not null default 0 comment '是否为当前生效版本：0/1',
+    created_at  datetime     default CURRENT_TIMESTAMP not null,
+    updated_at  datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    unique uk_blog_log_version (version)
+) comment '站点更新日志版本表' collate = utf8mb4_unicode_ci;
+
+-- 站点更新日志条目表
+create table if not exists blog_log_entry
+(
+    id         bigint unsigned auto_increment primary key,
+    version_id bigint unsigned not null comment '日志版本ID',
+    sort       int             not null default 0 comment '排序（保持 changes 顺序）',
+    content    varchar(2048)  not null comment '变更内容',
+    index idx_blog_log_entry_version_id (version_id),
+    constraint fk_blog_log_entry_version
+        foreign key (version_id) references blog_log_version (id)
+            on update cascade on delete cascade,
+    unique uk_blog_log_entry_version_sort (version_id, sort)
+) comment '站点更新日志条目表' collate = utf8mb4_unicode_ci;

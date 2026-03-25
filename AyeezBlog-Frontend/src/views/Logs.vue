@@ -21,13 +21,15 @@
 </template>
 
 <script>
+import { fetchLogs } from '@/api';
+
 export default {
   name: 'Logs',
 
 
   data() {
     return {
-      logs: [
+      logs: [] /*
       {
           date: '2026-03-25',
           version: 'v1.3.0',
@@ -221,7 +223,24 @@ export default {
           ]
         }
       ]
-    };
+    */};
+  },
+  mounted() {
+    this.loadLogs();
+  },
+  methods: {
+    async loadLogs() {
+      try {
+        // 初始化时不依赖硬编码数据：只以后端返回为准
+        this.logs = [];
+        const res = await fetchLogs();
+        const fetched = res?.data;
+        this.logs = Array.isArray(fetched) ? fetched : [];
+      } catch (error) {
+        console.error('获取日志失败:', error);
+        this.logs = [];
+      }
+    }
   }
 };
 </script>

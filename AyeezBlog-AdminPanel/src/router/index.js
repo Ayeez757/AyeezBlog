@@ -7,6 +7,8 @@ import AddArticle from '@/views/AddArticle.vue'
 import Contact from '@/views/Contact.vue'
 import Login from '@/views/Login.vue'
 import Links from '@/views/Links.vue'
+import Logs from '@/views/Logs.vue'
+import LogsView from '@/views/LogsView.vue'
 
 const routers = [
   { path: '/login', name: 'Login', component: Login, meta: { requiresAuth: false } },
@@ -15,6 +17,8 @@ const routers = [
   { path: '/category', name: 'Category', component: Category, meta: { requiresAuth: true } },
   { path: '/tag', name: 'Tag', component: Tag, meta: { requiresAuth: true } },
   { path: '/links', name: 'Links', component: Links, meta: { requiresAuth: true } },
+  { path: '/logs', name: 'Logs', component: Logs, meta: { requiresAuth: true } },
+  { path: '/logs/content', name: 'LogsView', component: LogsView, meta: { requiresAuth: true } },
   { path: '/add-article', name: 'AddArticle', component: AddArticle, meta: { requiresAuth: true } },
   { path: '/edit-article/:id', name: 'EditArticle', component: AddArticle, meta: { requiresAuth: true } },
 ];

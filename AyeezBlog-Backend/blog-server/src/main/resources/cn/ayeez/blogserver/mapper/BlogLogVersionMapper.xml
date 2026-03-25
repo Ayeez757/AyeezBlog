@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.BlogLogVersionMapper">
+
+    <resultMap id="BlogLogVersionResult" type="cn.ayeez.blogpojo.entity.BlogLogVersion">
+        <id property="id" column="id"/>
+        <result property="version" column="version"/>
+        <result property="logDate" column="log_date"/>
+        <result property="isCurrent" column="is_current"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="cn.ayeez.blogpojo.entity.BlogLogVersion"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_log_version (version, log_date, is_current)
+        VALUES (#{version}, #{logDate}, #{isCurrent})
+    </insert>
+
+    <update id="update" parameterType="cn.ayeez.blogpojo.entity.BlogLogVersion">
+        UPDATE blog_log_version
+        SET
+            version = #{version},
+            log_date = #{logDate}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM blog_log_version WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="BlogLogVersionResult">
+        SELECT
+            id,
+            version,
+            log_date,
+            is_current,
+            created_at,
+            updated_at
+        FROM blog_log_version
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="listAll" resultMap="BlogLogVersionResult">
+        SELECT
+            id,
+            version,
+            log_date,
+            is_current,
+            created_at,
+            updated_at
+        FROM blog_log_version
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND version LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY log_date DESC, id DESC
+    </select>
+
+    <select id="selectCurrent" resultMap="BlogLogVersionResult">
+        SELECT
+            id,
+            version,
+            log_date,
+            is_current,
+            created_at,
+            updated_at
+        FROM blog_log_version
+        WHERE is_current = 1
+        ORDER BY log_date DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatest" resultMap="BlogLogVersionResult">
+        SELECT
+            id,
+            version,
+            log_date,
+            is_current,
+            created_at,
+            updated_at
+        FROM blog_log_version
+        ORDER BY log_date DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <update id="resetCurrent">
+        UPDATE blog_log_version
+        SET is_current = 0
+    </update>
+
+    <update id="setCurrentById">
+        UPDATE blog_log_version
+        SET is_current = 1
+        WHERE id = #{id}
+    </update>
+
+</mapper>
+
