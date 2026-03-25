@@ -96,8 +96,8 @@ jobs:
 
             # 用 rsync 替代 scp：更容易观察进度，也更不容易在某些场景下卡在 sftp 收尾阶段。
             set +e
-            timeout 900s rsync -av --progress --partial --inplace \
-              --timeout=30 --contimeout=10 \
+            timeout 900s rsync -av --progress --partial \
+              --timeout=30 \
               -e "ssh $SSH_OPTS" \
               "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
             RSYNC_RC=$?
