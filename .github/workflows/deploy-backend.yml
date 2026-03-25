@@ -10,7 +10,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -26,6 +26,7 @@ jobs:
         working-directory: ./AyeezBlog-Backend
         run: |
           mvn clean package -DskipTests
+
       - name: Deploy to server
         env:
           SSH_HOST: ${{ secrets.SERVER_HOST }}
@@ -33,13 +34,8 @@ jobs:
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           DB_PASSWORD: ${{ secrets.HM_DB_PASSWORD }}
         run: |
-          set -euo pipefail
-          SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3"
-          SCP_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o Compression=no"
-          JAR_PATH="AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar"
-          REMOTE_DIR="/var/lib/docker/volumes/jar/_data"
-          REMOTE_JAR="${REMOTE_DIR}/app.jar"
-          REMOTE_WRITE_TEST_FILE="${REMOTE_DIR}/.write_test"
+
+
           if ! command -v ssh >/dev/null 2>&1 || ! command -v scp >/dev/null 2>&1; then
             echo "⚠️ 未检测到 ssh/scp，开始安装 openssh-client..."
             sudo apt-get update
@@ -63,55 +59,21 @@ jobs:
           else
             echo "✅ 本地 DB_PASSWORD 非空，长度: ${#DB_PASSWORD}"
           fi
-          echo "🔍 本地 jar 信息："
-          ls -lh "$JAR_PATH"
-          echo -n "本地 jar sha256: "
-          sha256sum "$JAR_PATH" | awk '{print $1}'
-          echo "🔍 远端目录/磁盘状态（部署前）："
-          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; df -h /var/lib/docker; ls -lah '$REMOTE_DIR' || true; ls -lah '$REMOTE_JAR' || true"
-          echo "🧪 远端写入测试（写 20MB，小文件 IO 是否卡住）..."
-          timeout 120s ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; rm -f '$REMOTE_WRITE_TEST_FILE' || true; (time dd if=/dev/zero of='$REMOTE_WRITE_TEST_FILE' bs=1M count=20 conv=fdatasync status=progress) ; rm -f '$REMOTE_WRITE_TEST_FILE' || true"
+
           echo "🗑️  删除旧的 jar包..."
-          {
-            start_ts=$(date +%s)
-            ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "rm -f '$REMOTE_DIR'/*.jar"
-            end_ts=$(date +%s)
-            echo "🗑️ 删除旧 jar 耗时：$((end_ts-start_ts))s"
-          }
+          ssh ${SSH_USER}@${SSH_HOST} "rm -f /var/lib/docker/volumes/jar/_data/*.jar"
+
           
           echo "⬆️  上传新的jar包..."
-          {
-            start_ts=$(date +%s)
-            echo "::group::rsync 上传诊断"
-            echo "rsync src=$JAR_PATH"
-            echo "rsync dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
-            # 用 rsync 替代 scp：更容易观察进度，也更不容易在某些场景下卡在 sftp 收尾阶段。
-            set +e
-            timeout 900s rsync -av --progress --partial \
-              --timeout=30 \
-              -e "ssh $SSH_OPTS" \
-              "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
-            RSYNC_RC=$?
-            set -e
-            echo "⬆️ rsync 上传返回码：$RSYNC_RC"
-            end_ts=$(date +%s)
-            echo "::endgroup::"
-            echo "⬆️ rsync 上传耗时：$((end_ts-start_ts))s"
-            if [ "$RSYNC_RC" -ne 0 ]; then
-              echo "❌ rsync 未成功完成：请重点检查网络/远端 ssh 或磁盘/IO 是否异常。"
-              ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; ls -lah '$REMOTE_DIR' || true; (sha256sum '$REMOTE_JAR' || true)"
-              exit "$RSYNC_RC"
-            fi
-          }
-          echo "🔍 远端目录/磁盘状态（部署后）："
-          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; df -h /var/lib/docker; ls -lah '$REMOTE_DIR'; ls -lah '$REMOTE_JAR'"
-          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; echo '远端 app.jar sha256:'; sha256sum '$REMOTE_JAR' | awk '{print \$1}'"
+          scp AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar \
+              ${SSH_USER}@${SSH_HOST}:/var/lib/docker/volumes/jar/_data/app.jar
+
           
           echo "🔄 重启 Docker 容器并注入环境变量..."
           # 关键修复：去掉 'EOF' 的单引号，让本地变量展开
-          {
-            start_ts=$(date +%s)
-            ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} << EOF
+          ssh ${SSH_USER}@${SSH_HOST} << EOF
+
+
             echo "🔍 调试2：远程脚本开始执行"
             echo "🔍 调试2：接收到的密码长度：${#DB_PASSWORD}"
             echo "🔍 调试2：密码前4位（仅验证）：${DB_PASSWORD:0:4}****"
@@ -138,12 +100,9 @@ jobs:
           
             echo "✅ 后端部署完成！"
           EOF
-            end_ts=$(date +%s)
-            echo "🔄 容器重启/环境注入耗时：$((end_ts-start_ts))s"
-          }
           
           # 调试4：从宿主机再次验证
           echo "🔍 调试4：从宿主机二次验证容器环境变量："
-          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "docker exec ayeezblog-backend env | grep HM_DB_PASSWORD || echo '❌ 未找到'"
+          ssh ${SSH_USER}@${SSH_HOST} "docker exec ayeezblog-backend env | grep HM_DB_PASSWORD || echo '❌ 未找到'"
           
           echo "🌐 服务地址：http://${SSH_HOST}:8080"
