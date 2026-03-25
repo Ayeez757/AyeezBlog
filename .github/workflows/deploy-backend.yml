@@ -43,6 +43,7 @@ jobs:
           REMOTE_DIR="/var/lib/docker/volumes/jar/_data"
           REMOTE_JAR="${REMOTE_DIR}/app.jar"
           REMOTE_WRITE_TEST_FILE="${REMOTE_DIR}/.write_test"
+          REMOTE_RSYNC_TEST_FILE="${REMOTE_DIR}/.rsync_net_test"
 
           if ! command -v ssh >/dev/null 2>&1 || ! command -v scp >/dev/null 2>&1; then
             echo "⚠️ 未检测到 ssh/scp，开始安装 openssh-client..."
@@ -86,6 +87,28 @@ jobs:
             end_ts=$(date +%s)
             echo "🗑️ 删除旧 jar 耗时：$((end_ts-start_ts))s"
           }
+
+          echo "🧪 网络上传测试（上传 5MB 到远端，测链路速度）..."
+          {
+            LOCAL_TEST_FILE="rsync_net_test_5mb.bin"
+            rm -f "$LOCAL_TEST_FILE" || true
+            dd if=/dev/zero of="$LOCAL_TEST_FILE" bs=1M count=5 status=none
+            TEST_SIZE_BYTES=$(stat -c%s "$LOCAL_TEST_FILE")
+            start_ts=$(date +%s)
+            set +e
+            timeout 120s rsync -av --progress --partial --whole-file --no-perms --no-owner --no-group \
+              --timeout=30 \
+              -e "ssh $SSH_OPTS" "$LOCAL_TEST_FILE" "${SSH_USER}@${SSH_HOST}:${REMOTE_RSYNC_TEST_FILE}"
+            RC=$?
+            set -e
+            end_ts=$(date +%s)
+            rm -f "$LOCAL_TEST_FILE" || true
+            ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "rm -f '$REMOTE_RSYNC_TEST_FILE' || true" >/dev/null 2>&1 || true
+            echo "🧪 网络上传测试返回码=$RC, 耗时：$((end_ts-start_ts))s, 文件大小：$TEST_SIZE_BYTES B"
+            if [ "$RC" -ne 0 ]; then
+              echo "⚠️ 网络上传测试失败：后续 jar 传输也可能会非常慢/失败。"
+            fi
+          }
           
           echo "⬆️  上传新的jar包..."
           {
@@ -96,7 +119,7 @@ jobs:
 
             # 用 rsync 替代 scp：更容易观察进度，也更不容易在某些场景下卡在 sftp 收尾阶段。
             set +e
-            timeout 900s rsync -av --progress --partial \
+            timeout 900s rsync -av --progress --partial --whole-file --no-perms --no-owner --no-group \
               --timeout=30 \
               -e "ssh $SSH_OPTS" \
               "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
