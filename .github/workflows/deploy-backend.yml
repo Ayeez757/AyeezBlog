@@ -36,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3"
+          SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -o Compression=no"
           SCP_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o Compression=no"
 
           JAR_PATH="AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar"
@@ -88,6 +88,9 @@ jobs:
             echo "🗑️ 删除旧 jar 耗时：$((end_ts-start_ts))s"
           }
 
+          # 如果 rsync 使用 --inplace，有目标文件存在会更稳定
+          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; : > '$REMOTE_JAR'"
+
           echo "🧪 网络上传测试（上传 5MB 到远端，测链路速度）..."
           {
             LOCAL_TEST_FILE="rsync_net_test_5mb.bin"
@@ -97,6 +100,7 @@ jobs:
             start_ts=$(date +%s)
             set +e
             timeout 120s rsync -av --progress --partial --whole-file --no-perms --no-owner --no-group \
+              --inplace \
               --timeout=30 \
               -e "ssh $SSH_OPTS" "$LOCAL_TEST_FILE" "${SSH_USER}@${SSH_HOST}:${REMOTE_RSYNC_TEST_FILE}"
             RC=$?
@@ -120,6 +124,7 @@ jobs:
             # 用 rsync 替代 scp：更容易观察进度，也更不容易在某些场景下卡在 sftp 收尾阶段。
             set +e
             timeout 900s rsync -av --progress --partial --whole-file --no-perms --no-owner --no-group \
+              --inplace \
               --timeout=30 \
               -e "ssh $SSH_OPTS" \
               "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
