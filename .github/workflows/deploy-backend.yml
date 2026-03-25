@@ -37,13 +37,12 @@ jobs:
           set -euo pipefail
 
           SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -o Compression=no"
-          SCP_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o Compression=no"
+          SCP_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o Compression=no -o LogLevel=DEBUG"
 
           JAR_PATH="AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar"
           REMOTE_DIR="/var/lib/docker/volumes/jar/_data"
           REMOTE_JAR="${REMOTE_DIR}/app.jar"
           REMOTE_WRITE_TEST_FILE="${REMOTE_DIR}/.write_test"
-          REMOTE_RSYNC_TEST_FILE="${REMOTE_DIR}/.rsync_net_test"
 
           if ! command -v ssh >/dev/null 2>&1 || ! command -v scp >/dev/null 2>&1; then
             echo "⚠️ 未检测到 ssh/scp，开始安装 openssh-client..."
@@ -88,58 +87,29 @@ jobs:
             echo "🗑️ 删除旧 jar 耗时：$((end_ts-start_ts))s"
           }
 
-          # 如果 rsync 使用 --inplace，有目标文件存在会更稳定
-          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; : > '$REMOTE_JAR'"
-
-          echo "🧪 网络上传测试（上传 5MB 到远端，测链路速度）..."
-          {
-            LOCAL_TEST_FILE="rsync_net_test_5mb.bin"
-            rm -f "$LOCAL_TEST_FILE" || true
-            dd if=/dev/zero of="$LOCAL_TEST_FILE" bs=1M count=5 status=none
-            TEST_SIZE_BYTES=$(stat -c%s "$LOCAL_TEST_FILE")
-            start_ts=$(date +%s)
-            set +e
-            timeout 120s rsync -av --progress --partial --whole-file --no-perms --no-owner --no-group \
-              --inplace \
-              --timeout=30 \
-              -e "ssh $SSH_OPTS" "$LOCAL_TEST_FILE" "${SSH_USER}@${SSH_HOST}:${REMOTE_RSYNC_TEST_FILE}"
-            RC=$?
-            set -e
-            end_ts=$(date +%s)
-            rm -f "$LOCAL_TEST_FILE" || true
-            ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "rm -f '$REMOTE_RSYNC_TEST_FILE' || true" >/dev/null 2>&1 || true
-            echo "🧪 网络上传测试返回码=$RC, 耗时：$((end_ts-start_ts))s, 文件大小：$TEST_SIZE_BYTES B"
-            if [ "$RC" -ne 0 ]; then
-              echo "⚠️ 网络上传测试失败：后续 jar 传输也可能会非常慢/失败。"
-            fi
-          }
-          
           echo "⬆️  上传新的jar包..."
           {
             start_ts=$(date +%s)
-            echo "::group::rsync 上传诊断"
-            echo "rsync src=$JAR_PATH"
-            echo "rsync dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            echo "::group::scp 上传诊断"
+            echo "scp src=$JAR_PATH"
+            echo "scp dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
 
-            # 用 rsync 替代 scp：更容易观察进度，也更不容易在某些场景下卡在 sftp 收尾阶段。
+            # -O: 强制使用传统 scp 协议（绕开某些环境下 sftp 相关收尾卡住的问题）
+            # -vvv + LogLevel=DEBUG: 让你看到 ssh/sftp/传输阶段更多细节
             set +e
-            timeout 900s rsync -av --progress --partial --whole-file --no-perms --no-owner --no-group \
-              --inplace \
-              --timeout=30 \
-              -e "ssh $SSH_OPTS" \
-              "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
-            RSYNC_RC=$?
+            timeout 900s scp -vvv -O $SCP_OPTS "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            SCP_RC=$?
             set -e
 
-            echo "⬆️ rsync 上传返回码：$RSYNC_RC"
+            echo "⬆️ scp 上传返回码：$SCP_RC"
             end_ts=$(date +%s)
             echo "::endgroup::"
-            echo "⬆️ rsync 上传耗时：$((end_ts-start_ts))s"
+            echo "⬆️ scp 上传耗时：$((end_ts-start_ts))s"
 
-            if [ "$RSYNC_RC" -ne 0 ]; then
-              echo "❌ rsync 未成功完成：请重点检查网络/远端 ssh 或磁盘/IO 是否异常。"
+            if [ "$SCP_RC" -ne 0 ]; then
+              echo "❌ scp 未成功完成：请重点检查网络/ssh 通道或远端写入/关闭阶段。"
               ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; ls -lah '$REMOTE_DIR' || true; (sha256sum '$REMOTE_JAR' || true)"
-              exit "$RSYNC_RC"
+              exit "$SCP_RC"
             fi
           }
 
