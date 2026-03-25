@@ -34,6 +34,15 @@ jobs:
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           DB_PASSWORD: ${{ secrets.HM_DB_PASSWORD }}
         run: |
+          set -euo pipefail
+
+          SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3"
+          SCP_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
+
+          JAR_PATH="AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar"
+          REMOTE_DIR="/var/lib/docker/volumes/jar/_data"
+          REMOTE_JAR="${REMOTE_DIR}/app.jar"
+
           if ! command -v ssh >/dev/null 2>&1 || ! command -v scp >/dev/null 2>&1; then
             echo "⚠️ 未检测到 ssh/scp，开始安装 openssh-client..."
             sudo apt-get update
@@ -57,17 +66,43 @@ jobs:
           else
             echo "✅ 本地 DB_PASSWORD 非空，长度: ${#DB_PASSWORD}"
           fi
-          
+
+          echo "🔍 本地 jar 信息："
+          ls -lh "$JAR_PATH"
+          echo -n "本地 jar sha256: "
+          sha256sum "$JAR_PATH" | awk '{print $1}'
+
+          echo "🔍 远端目录/磁盘状态（部署前）："
+          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; df -h /var/lib/docker; ls -lah '$REMOTE_DIR' || true; ls -lah '$REMOTE_JAR' || true"
+
           echo "🗑️  删除旧的 jar包..."
-          ssh ${SSH_USER}@${SSH_HOST} "rm -f /var/lib/docker/volumes/jar/_data/*.jar"
+          {
+            start_ts=$(date +%s)
+            ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "rm -f '$REMOTE_DIR'/*.jar"
+            end_ts=$(date +%s)
+            echo "🗑️ 删除旧 jar 耗时：$((end_ts-start_ts))s"
+          }
           
           echo "⬆️  上传新的jar包..."
-          scp AyeezBlog-Backend/blog-server/target/blog-server-0.0.1-SNAPSHOT.jar \
-              ${SSH_USER}@${SSH_HOST}:/var/lib/docker/volumes/jar/_data/app.jar
+          {
+            start_ts=$(date +%s)
+            echo "::group::scp 上传诊断"
+            echo "scp src=$JAR_PATH"
+            echo "scp dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            timeout 900s scp -vv -C $SCP_OPTS "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            end_ts=$(date +%s)
+            echo "::endgroup::"
+            echo "⬆️ scp 上传耗时：$((end_ts-start_ts))s"
+          }
+
+          echo "🔍 远端目录/磁盘状态（部署后）："
+          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; df -h /var/lib/docker; ls -lah '$REMOTE_DIR'; ls -lah '$REMOTE_JAR'"
           
           echo "🔄 重启 Docker 容器并注入环境变量..."
           # 关键修复：去掉 'EOF' 的单引号，让本地变量展开
-          ssh ${SSH_USER}@${SSH_HOST} << EOF
+          {
+            start_ts=$(date +%s)
+            ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} << EOF
             echo "🔍 调试2：远程脚本开始执行"
             echo "🔍 调试2：接收到的密码长度：${#DB_PASSWORD}"
             echo "🔍 调试2：密码前4位（仅验证）：${DB_PASSWORD:0:4}****"
@@ -94,9 +129,12 @@ jobs:
           
             echo "✅ 后端部署完成！"
           EOF
+            end_ts=$(date +%s)
+            echo "🔄 容器重启/环境注入耗时：$((end_ts-start_ts))s"
+          }
           
           # 调试4：从宿主机再次验证
           echo "🔍 调试4：从宿主机二次验证容器环境变量："
-          ssh ${SSH_USER}@${SSH_HOST} "docker exec ayeezblog-backend env | grep HM_DB_PASSWORD || echo '❌ 未找到'"
+          ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "docker exec ayeezblog-backend env | grep HM_DB_PASSWORD || echo '❌ 未找到'"
           
           echo "🌐 服务地址：http://${SSH_HOST}:8080"
