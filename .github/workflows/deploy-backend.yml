@@ -90,46 +90,28 @@ jobs:
           echo "⬆️  上传新的jar包..."
           {
             start_ts=$(date +%s)
-            echo "::group::scp 上传诊断"
-            echo "scp src=$JAR_PATH"
-            echo "scp dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            echo "::group::rsync 上传诊断"
+            echo "rsync src=$JAR_PATH"
+            echo "rsync dst=${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
 
-            echo "🔄 监控远端 app.jar 大小（scp 期间每 5 秒输出一次）..."
-            # scp 过程中轮询远端 app.jar 大小，快速判断卡在“传输中断”还是“写入/收尾阶段”。
-            # 注意：轮询由远端执行，避免依赖 scp 自带进度输出。
+            # 用 rsync 替代 scp：更容易观察进度，也更不容易在某些场景下卡在 sftp 收尾阶段。
             set +e
-            POLL_PID=$(ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; (while true; do if [ -f '$REMOTE_JAR' ]; then sz=\$(stat -c%s '$REMOTE_JAR' 2>/dev/null || echo 0); ts=\$(date +%H:%M:%S); echo \"POLL \$ts size=\${sz}B\"; fi; sleep 5; done) & echo \$!" 2>/dev/null)
+            timeout 900s rsync -av --progress --partial --inplace \
+              --timeout=30 --contimeout=10 \
+              -e "ssh $SSH_OPTS" \
+              "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
+            RSYNC_RC=$?
             set -e
 
-            if [ -z "$POLL_PID" ]; then
-              echo "⚠️ 未能获取远端轮询进程 PID（忽略轮询）。"
-            else
-              echo "🕵️ 远端轮询 PID=$POLL_PID"
-            fi
-            cleanup_poller() {
-              if [ -n "${POLL_PID:-}" ]; then
-                ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "kill '$POLL_PID' 2>/dev/null || true" >/dev/null 2>&1 || true
-              fi
-            }
-            trap cleanup_poller EXIT
-
-            set +e
-            timeout 900s scp -vv $SCP_OPTS "$JAR_PATH" "${SSH_USER}@${SSH_HOST}:${REMOTE_JAR}"
-            SCP_RC=$?
-            set -e
-
-            trap - EXIT
-            cleanup_poller || true
-
-            echo "⬆️ scp 上传返回码：$SCP_RC"
+            echo "⬆️ rsync 上传返回码：$RSYNC_RC"
             end_ts=$(date +%s)
             echo "::endgroup::"
-            echo "⬆️ scp 上传耗时：$((end_ts-start_ts))s"
+            echo "⬆️ rsync 上传耗时：$((end_ts-start_ts))s"
 
-            if [ "$SCP_RC" -ne 0 ]; then
-              echo "❌ scp 未成功完成：请重点检查远端写入是否卡住/网络是否不稳定。"
-              ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; ls -lah '$REMOTE_DIR' || true; (sha256sum '$REMOTE_JAR' || true) "
-              exit "$SCP_RC"
+            if [ "$RSYNC_RC" -ne 0 ]; then
+              echo "❌ rsync 未成功完成：请重点检查网络/远端 ssh 或磁盘/IO 是否异常。"
+              ssh $SSH_OPTS ${SSH_USER}@${SSH_HOST} "set -e; ls -lah '$REMOTE_DIR' || true; (sha256sum '$REMOTE_JAR' || true)"
+              exit "$RSYNC_RC"
             fi
           }
 
