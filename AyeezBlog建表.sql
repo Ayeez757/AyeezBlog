@@ -167,6 +167,33 @@ create table if not exists blog_site_visitor
 )
     comment '站点访客记录（UV统计）' collate = utf8mb4_unicode_ci;
 
+-- 站点访问统计：每日PV
+create table if not exists blog_site_pv_daily
+(
+    stat_date   date                     not null primary key comment '统计日期（yyyy-MM-dd）',
+    page_views  bigint unsigned default 0 not null comment '当日访问量PV'
+)
+    comment '站点每日访问统计（PV）' collate = utf8mb4_unicode_ci;
+
+-- 站点访客统计：每日UV聚合（用于图表展示）
+create table if not exists blog_site_uv_daily
+(
+    stat_date        date                     not null primary key comment '统计日期（yyyy-MM-dd）',
+    unique_visitors  bigint unsigned default 0 not null comment '当日唯一访客UV'
+)
+    comment '站点每日访客统计（UV）' collate = utf8mb4_unicode_ci;
+
+-- 站点访客统计：每日UV去重明细（visitor_key + stat_date）
+-- tracker 每次请求先插入明细，第一次出现的 visitor 才会累积到 blog_site_uv_daily
+create table if not exists blog_site_uv_daily_detail
+(
+    stat_date   date           not null comment '统计日期（yyyy-MM-dd）',
+    visitor_key varchar(128)  not null comment '前端生成的访客唯一标识',
+    first_seen_time datetime default CURRENT_TIMESTAMP not null,
+    primary key (stat_date, visitor_key)
+)
+    comment '站点每日访客去重明细（UV Detail）' collate = utf8mb4_unicode_ci;
+
 -- 站点更新日志版本表
 create table if not exists blog_log_version
 (

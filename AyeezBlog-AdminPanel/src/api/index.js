@@ -131,3 +131,8 @@ export const deleteLogVersion = (params) => {
 export const setCurrentLogVersion = (data) => {
   return request.post('/admin/logs/set-current', data)
 }
+
+// 管理端控制台：站点流量（PV/UV）仪表盘
+export const getAdminDashboardStats = (params) => {
+  return request.get('/admin/stats/dashboard', { params })
+}

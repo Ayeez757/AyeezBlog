@@ -46,4 +46,35 @@
             (SELECT COUNT(1) FROM blog_site_visitor) AS uniqueVisitors
     </select>
 
+    <!-- ===== 每日PV/UV历史（管理端图表使用） ===== -->
+
+    <insert id="increasePageViewsDaily">
+        INSERT INTO blog_site_pv_daily (stat_date, page_views)
+        VALUES (#{statDate}, 1)
+        ON DUPLICATE KEY UPDATE page_views = page_views + 1
+    </insert>
+
+    <insert id="insertVisitorDaily">
+        INSERT IGNORE INTO blog_site_uv_daily_detail (stat_date, visitor_key)
+        VALUES (#{statDate}, #{visitorKey})
+    </insert>
+
+    <insert id="increaseUniqueVisitorsDaily">
+        INSERT INTO blog_site_uv_daily (stat_date, unique_visitors)
+        VALUES (#{statDate}, 1)
+        ON DUPLICATE KEY UPDATE unique_visitors = unique_visitors + 1
+    </insert>
+
+    <select id="getDailyHistory" resultType="cn.ayeez.blogpojo.dto.response.SiteTrafficHistoryPoint">
+        SELECT
+            DATE_FORMAT(pv.stat_date, '%Y-%m-%d') AS date,
+            pv.page_views AS pageViews,
+            COALESCE(uv.unique_visitors, 0) AS uniqueVisitors
+        FROM blog_site_pv_daily pv
+                 LEFT JOIN blog_site_uv_daily uv
+                           ON uv.stat_date = pv.stat_date
+        WHERE pv.stat_date >= DATE_SUB(CURDATE(), INTERVAL (#{days} - 1) DAY)
+        ORDER BY pv.stat_date
+    </select>
+
 </mapper>

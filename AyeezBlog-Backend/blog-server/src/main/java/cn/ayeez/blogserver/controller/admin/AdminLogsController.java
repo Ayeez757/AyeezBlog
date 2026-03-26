@@ -22,6 +22,11 @@ public class AdminLogsController {
     @Autowired
     private LogService logService;
 
+    /**
+     * 获取日志版本列表
+     * @param keyword
+     * @return
+     */
     @GetMapping("/list")
     public Result list(@RequestParam(required = false) String keyword) {
         log.info("获取日志版本列表，keyword={}", keyword);
@@ -29,11 +34,13 @@ public class AdminLogsController {
         return Result.success(result);
     }
 
+
     @GetMapping("/current")
     public Result current() {
         LogVersionDetail detail = logService.current();
         return Result.success(detail);
     }
+
 
     @PostMapping("/add")
     public Result add(@RequestBody LogVersionBody body) {

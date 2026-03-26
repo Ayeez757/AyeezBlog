@@ -20,6 +20,15 @@ export default defineConfig({
         target: 'http://localhost:8080',  // 后端地址
         changeOrigin: true,  // 允许跨域
         rewrite: (path) => path.replace(/^\/api/, '')
+      },
+      '/twikoo-proxy': {
+        target: 'https://twikoo.ayeez.cn',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => {
+          const p = path.replace(/^\/twikoo-proxy/, '')
+          return p || '/'
+        }
       }
     }
   }

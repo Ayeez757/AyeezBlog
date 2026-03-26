@@ -7,11 +7,22 @@
       <div class="timeline">
         <!-- 日志项 -->
         <div class="log-item" v-for="(log, index) in logs" :key="index">
-          <div class="date">{{ log.date }}</div>
-          <div class="content">
-            <h2>{{ log.version }}</h2>
+          <div class="date" :class="{ 'future-inactive-date': isFutureInactive(index, log) }">
+            {{ log.date }}
+          </div>
+          <div
+            class="content"
+            :class="{
+              current: log.current,
+              'future-inactive': isFutureInactive(index, log),
+            }"
+          >
+            <h2>
+              {{ log.version }}
+              <span v-if="log.current" class="current-badge">当前版本</span>
+            </h2>
             <ul>
-              <li v-for="(change, i) in log.changes" :key="i">{{ change }}</li>
+              <li v-for="(change, i) in (log.changes || [])" :key="i">{{ change }}</li>
             </ul>
           </div>
         </div>
@@ -29,7 +40,8 @@ export default {
 
   data() {
     return {
-      logs: [] /*
+      logs: [],
+      currentIndex: null /*
       {
           date: '2026-03-25',
           version: 'v1.3.0',
@@ -236,10 +248,19 @@ export default {
         const res = await fetchLogs();
         const fetched = res?.data;
         this.logs = Array.isArray(fetched) ? fetched : [];
+        const idx = this.logs.findIndex((i) => i && i.current);
+        this.currentIndex = idx >= 0 ? idx : null;
       } catch (error) {
         console.error('获取日志失败:', error);
         this.logs = [];
+        this.currentIndex = null;
       }
+    },
+    // “后续未生效”：当前版本之后（更晚但 current=false）的条目
+    isFutureInactive(index, log) {
+      if (!log || log.current) return false;
+      if (this.currentIndex === null || this.currentIndex < 0) return false;
+      return index < this.currentIndex;
     }
   }
 };
@@ -313,6 +334,49 @@ export default {
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease;
+}
+
+.content.current {
+  background: rgba(255, 204, 0, 0.12);
+  border: 1px solid rgba(255, 204, 0, 0.35);
+}
+
+.content.current h2 {
+  color: #ffcc00;
+}
+
+.current-badge {
+  display: inline-block;
+  margin-left: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.6em;
+  font-weight: 700;
+  background: rgba(103, 194, 58, 0.18);
+  color: #67c23a;
+  border: 1px solid rgba(103, 194, 58, 0.35);
+  vertical-align: middle;
+}
+
+.content.future-inactive {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.content.future-inactive:hover {
+  transform: none;
+}
+
+.date.future-inactive-date {
+  color: #9ca3af;
+}
+
+.content.future-inactive li {
+  color: #a3a3a3;
+}
+
+.content.future-inactive li::before {
+  color: #9ca3af;
 }
 
 .content:hover {
