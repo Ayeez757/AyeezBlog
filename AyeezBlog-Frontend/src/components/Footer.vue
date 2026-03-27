@@ -80,7 +80,7 @@ onUnmounted(() => {
       <span class="footer-line">2026-2026 by 阿叶Ayeez</span>
       <span class="footer-line">
         旧站：
-        <a href="https://blog.ayeez.cn" target="_blank" rel="noopener noreferrer">
+        <a href="https://butterfly.ayeez.cn" target="_blank" rel="noopener noreferrer">
           https://butterfly.ayeez.cn
         </a>
       </span>

@@ -51,7 +51,7 @@
       <div class="card-content">
         <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
         <text>这是新博客，仍然在持续开发~（内容已经迁移，可能有部分图片丢失，可联系管理员修复）</text>
-        <text>旧站：<a href="https://blog.ayeez.cn" target="_blank">https://butterfly.ayeez.cn</a> （可能停止更新）</text>
+        <text>旧站：<a href="https://butterfly.ayeez.cn" target="_blank">https://butterfly.ayeez.cn</a> （可能停止更新）</text>
         <text>qq闲聊交流群：421300955</text>
         <!-- 圆形图标链接 -->
         <div class="social-icons">

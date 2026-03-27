@@ -41,13 +41,13 @@
           <li>
             <strong>技术栈:</strong>
             <span class="accent-text">
-              Java、HTML、CSS、Git、Astro、Uniapp、MySQL、Springboot、Maven、Ajax、JDBC、mybatis、log4j、slf4j、nginx
+              Java、Springboot、MySQL、Redis、Maven、mybatis、nginx、docker、HTML、CSS、Git、Astro、Uniapp
             </span>
           </li>
           <li>
             <strong>涉及:</strong>
             <span class="accent-text">
-              c、c++、python、javascript、vue、logback、MongoDB、Ajax
+              c、c++、python、javascript、vue、MongoDB
             </span>
           </li>
           <li><strong>IP:</strong> 广东</li>
