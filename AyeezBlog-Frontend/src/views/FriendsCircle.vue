@@ -4,6 +4,7 @@
     <p>这里是阿叶 Ayeez Blog 的朋友圈页面。</p>
             <p>开发中......敬请期待，旧站朋友圈页请看：<a href="https://blog.ayeez.cn/fc" target="_blank">旧站朋友圈页</a></p>
   </div>
+  <span>test</span>
 </template>
 
 <script>
