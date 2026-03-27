@@ -6,7 +6,7 @@
       <h1 class="title">网站更新日志</h1>
       <div class="timeline">
         <!-- 日志项 -->
-        <div class="log-item" v-for="(log, index) in logs" :key="index">
+        <div class="log-item row-reveal-item" v-for="(log, index) in logs" :key="index">
           <div class="date" :class="{ 'future-inactive-date': isFutureInactive(index, log) }">
             {{ log.date }}
           </div>
@@ -41,7 +41,8 @@ export default {
   data() {
     return {
       logs: [],
-      currentIndex: null /*
+      currentIndex: null,
+      rowObserver: null /*
       {
           date: '2026-03-25',
           version: 'v1.3.0',
@@ -240,6 +241,12 @@ export default {
   mounted() {
     this.loadLogs();
   },
+  beforeDestroy() {
+    if (this.rowObserver) {
+      this.rowObserver.disconnect();
+      this.rowObserver = null;
+    }
+  },
   methods: {
     async loadLogs() {
       try {
@@ -250,11 +257,34 @@ export default {
         this.logs = Array.isArray(fetched) ? fetched : [];
         const idx = this.logs.findIndex((i) => i && i.current);
         this.currentIndex = idx >= 0 ? idx : null;
+        this.$nextTick(() => {
+          this.setupRowReveal();
+        });
       } catch (error) {
         console.error('获取日志失败:', error);
         this.logs = [];
         this.currentIndex = null;
       }
+    },
+    setupRowReveal() {
+      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+      if (this.rowObserver) this.rowObserver.disconnect();
+
+      const items = document.querySelectorAll('.timeline .row-reveal-item');
+      items.forEach((item) => item.classList.remove('row-revealed'));
+
+      this.rowObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('row-revealed');
+          this.rowObserver.unobserve(entry.target);
+        });
+      }, {
+        threshold: 0.12,
+        rootMargin: '0px 0px -10% 0px'
+      });
+
+      items.forEach((item) => this.rowObserver.observe(item));
     },
     // “后续未生效”：当前版本之后（更晚但 current=false）的条目
     isFutureInactive(index, log) {
@@ -316,6 +346,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  opacity: 0;
+  transform: translateY(26px);
+}
+
+.log-item.row-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.55s ease, transform 0.55s ease;
 }
 
 .date {

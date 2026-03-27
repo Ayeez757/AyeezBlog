@@ -99,7 +99,7 @@
             <div
               v-for="post in group.items"
               :key="post.id"
-              class="timeline-item"
+              class="timeline-item row-reveal-item"
               @click="goToPost(post.id)"
               role="button"
               tabindex="0"
@@ -143,7 +143,9 @@ export default {
       year: '',
       month: '',
       orderBy: 'update_time',
-      orderType: 'desc'
+      orderType: 'desc',
+      rowObserver: null,
+      revealTimer: null
     };
   },
   computed: {
@@ -230,11 +232,19 @@ export default {
       // 切换年份后，如果月份不在该年份范围内，自动清空
       if (!this.year) {
         this.month = '';
+        this.$nextTick(() => this.setupArchiveRowReveal());
         return;
       }
       if (this.month && !this.monthOptions.includes(Number(this.month))) {
         this.month = '';
       }
+      this.$nextTick(() => this.setupArchiveRowReveal());
+    },
+    month() {
+      this.$nextTick(() => this.setupArchiveRowReveal());
+    },
+    keyword() {
+      this.scheduleArchiveReveal();
     },
     orderType() {
       // 排序变更时重新拉一次，确保跟后端一致（同时本地 computed 也会排序）
@@ -243,6 +253,16 @@ export default {
   },
   async mounted() {
     await this.loadAllPosts();
+  },
+  beforeDestroy() {
+    if (this.rowObserver) {
+      this.rowObserver.disconnect();
+      this.rowObserver = null;
+    }
+    if (this.revealTimer) {
+      clearTimeout(this.revealTimer);
+      this.revealTimer = null;
+    }
   },
   methods: {
     noop() {},
@@ -264,6 +284,7 @@ export default {
       this.keyword = '';
       this.year = '';
       this.month = '';
+      this.$nextTick(() => this.setupArchiveRowReveal());
     },
     goToPost(id) {
       if (!id && id !== 0) return;
@@ -279,11 +300,38 @@ export default {
         const resp = await fetchPosts(page, pageSize, this.orderBy, this.orderType);
         const rows = resp && resp.data && Array.isArray(resp.data.rows) ? resp.data.rows : [];
         this.posts = rows;
+        this.$nextTick(() => this.setupArchiveRowReveal());
       } catch (e) {
         this.loadError = e && e.message ? e.message : '未知错误';
       } finally {
         this.isLoading = false;
       }
+    },
+    scheduleArchiveReveal() {
+      if (this.revealTimer) clearTimeout(this.revealTimer);
+      this.revealTimer = setTimeout(() => {
+        this.setupArchiveRowReveal();
+      }, 120);
+    },
+    setupArchiveRowReveal() {
+      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+      if (this.rowObserver) this.rowObserver.disconnect();
+
+      const items = document.querySelectorAll('.timeline .row-reveal-item');
+      items.forEach((item) => item.classList.remove('row-revealed'));
+
+      this.rowObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('row-revealed');
+          this.rowObserver.unobserve(entry.target);
+        });
+      }, {
+        threshold: 0.12,
+        rootMargin: '0px 0px -10% 0px'
+      });
+
+      items.forEach((item) => this.rowObserver.observe(item));
     }
   }
 };
@@ -528,6 +576,14 @@ export default {
   padding: 10px 0;
   cursor: pointer;
   outline: none;
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.timeline-item.row-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.55s ease, transform 0.55s ease;
 }
 
 .timeline-item:focus-visible .timeline-card {

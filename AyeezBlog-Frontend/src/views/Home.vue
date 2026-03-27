@@ -46,7 +46,7 @@
 
   <!-- 新增的横向卡片 -->
   <div class="card-container">
-    <div class="card">
+    <div class="card row-reveal-item" :class="{ 'row-revealed': isHomeRowRevealed('notice-row') }" data-row-key="notice-row">
       <img id="home-card-avatar" src="https://qiniu.ayeez.cn/avatar.jpg" alt="头像">
       <div class="card-content">
         <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
@@ -77,14 +77,16 @@
     <!-- 文章卡片展示区域 -->
     <div class="posts-container">
       <div
-        v-for="post in posts"
+        v-for="(post, index) in posts"
         :key="post.id"
-        class="post-card"
+        class="post-card row-reveal-item"
         :data-post-id="post.id"
+        :data-row-key="getPostRowKey(index)"
         :class="[
           {
             'scan-active': isActive(post.id) || hoveredCardId === post.id,
-            'active-post': isActive(post.id)
+            'active-post': isActive(post.id),
+            'row-revealed': isHomeRowRevealed(getPostRowKey(index))
           }
         ]"
         @mouseenter="hoveredCardId = post.id" @mouseleave="hoveredCardId = null" @click="goToPost(post.id)">
@@ -133,6 +135,13 @@ export default {
       // 手机端滚动时处于视口中间区域的文章卡片 ID 列表
       activePostIds: [],
 
+      // 已经触发滚动显现动画的行 key
+      revealedRowKeys: [],
+
+      // 卡片滚动观察器
+      cardObserver: null,
+      resizeTimer: null,
+
       // 加载状态
       isLoading: true
     };
@@ -156,10 +165,21 @@ export default {
       this.animateText(); // 触发文本动画
       // 绑定滚动事件，用于手机端文章卡片自动高亮
       window.addEventListener('scroll', this.updateActivePosts, { passive: true });
+      window.addEventListener('resize', this.handleHomeResize, { passive: true });
+      this.setupHomeRowReveal();
     }
   },
   beforeDestroy() {
     window.removeEventListener('scroll', this.updateActivePosts);
+    window.removeEventListener('resize', this.handleHomeResize);
+    if (this.cardObserver) {
+      this.cardObserver.disconnect();
+      this.cardObserver = null;
+    }
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
   },
   methods: {
 
@@ -176,6 +196,9 @@ export default {
         // 等文章渲染完后，初始化一次滚动高亮状态（主要用于手机端）
         this.$nextTick(() => {
           this.updateActivePosts();
+          // 翻页后重新触发行显现
+          this.revealedRowKeys = [];
+          this.setupHomeRowReveal();
         });
       } catch (error) {
         console.error('加载文章失败:', error);
@@ -272,6 +295,55 @@ export default {
     // 是否为当前滚动激活的文章
     isActive(postId) {
       return this.activePostIds.includes(String(postId));
+    },
+
+    handleHomeResize() {
+      if (this.resizeTimer) clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => {
+        this.revealedRowKeys = [];
+        this.setupHomeRowReveal();
+      }, 140);
+    },
+
+    getPostColumns() {
+      return window.innerWidth <= 768 ? 1 : 3;
+    },
+
+    getPostRowKey(index) {
+      const columns = this.getPostColumns();
+      return `post-row-${Math.floor(index / columns)}`;
+    },
+
+    isHomeRowRevealed(rowKey) {
+      return this.revealedRowKeys.includes(rowKey);
+    },
+
+    setupHomeRowReveal() {
+      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+      if (this.cardObserver) this.cardObserver.disconnect();
+
+      this.cardObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const rowKey = entry.target.getAttribute('data-row-key');
+          if (rowKey && !this.revealedRowKeys.includes(rowKey)) {
+            this.revealedRowKeys.push(rowKey);
+          }
+          this.cardObserver.unobserve(entry.target);
+        });
+      }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -8% 0px'
+      });
+
+      const noticeCard = document.querySelector('.card-container .card.row-reveal-item');
+      if (noticeCard) this.cardObserver.observe(noticeCard);
+
+      const postCards = document.querySelectorAll('.posts-container .post-card.row-reveal-item');
+      const columns = this.getPostColumns();
+      for (let i = 0; i < postCards.length; i += columns) {
+        this.cardObserver.observe(postCards[i]);
+      }
     },
 
     // 触发文本动画
@@ -775,6 +847,25 @@ export default {
   border: 2px solid #ffffff00;
   position: relative;
   /* 为伪元素定位做准备 */
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.post-card.row-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card.row-reveal-item {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.card.row-reveal-item.row-revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* 鼠标悬停时的样式 */

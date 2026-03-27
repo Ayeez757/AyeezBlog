@@ -15,7 +15,7 @@
         <p class="group-desc" v-if="group.class_desc">{{ group.class_desc }}</p>
 
         <div class="links-grid">
-          <a v-for="(site, index) in group.link_list" :key="site.link || index" class="link-card" :href="site.link"
+          <a v-for="(site, index) in group.link_list" :key="site.link || index" class="link-card row-reveal-item" :href="site.link"
             target="_blank" rel="noopener">
             <div class="link-card-header">
               <img class="link-avatar" :src="site.avatar" :alt="site.name" />
@@ -101,11 +101,17 @@ export default {
     return {
       friendGroups: [],
       loadingLinks: false,
-      linksError: ''
+      linksError: '',
+      rowObserver: null,
+      resizeTimer: null
     };
   },
   async mounted() {
     await this.loadLinks();
+    this.$nextTick(() => {
+      this.setupRowReveal();
+    });
+    window.addEventListener('resize', this.handleResize, { passive: true });
 
     const envId = getTwikooEnvId();
     const oldSiteLinksPath = '/link';
@@ -123,6 +129,17 @@ export default {
       );
     } catch (e) {
       console.error('友链页 Twikoo 初始化失败', e);
+    }
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize);
+    if (this.rowObserver) {
+      this.rowObserver.disconnect();
+      this.rowObserver = null;
+    }
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
     }
   },
   methods: {
@@ -155,6 +172,57 @@ export default {
       } finally {
         this.loadingLinks = false;
       }
+    },
+    handleResize() {
+      if (this.resizeTimer) clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => {
+        this.setupRowReveal();
+      }, 140);
+    },
+    setupRowReveal() {
+      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+
+      if (this.rowObserver) this.rowObserver.disconnect();
+      const cards = document.querySelectorAll('.links-grid .row-reveal-item');
+      cards.forEach((card) => {
+        card.classList.remove('row-revealed');
+        card.removeAttribute('data-row-key');
+      });
+
+      this.rowObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const rowKey = entry.target.getAttribute('data-row-key');
+          if (!rowKey) return;
+          const rowItems = document.querySelectorAll(`.links-grid .row-reveal-item[data-row-key="${rowKey}"]`);
+          rowItems.forEach((item) => item.classList.add('row-revealed'));
+          this.rowObserver.unobserve(entry.target);
+        });
+      }, {
+        threshold: 0.16,
+        rootMargin: '0px 0px -8% 0px'
+      });
+
+      const groups = document.querySelectorAll('.links-group');
+      groups.forEach((group, groupIndex) => {
+        const groupCards = group.querySelectorAll('.links-grid .row-reveal-item');
+        const rowTops = [];
+        const rowFirstCard = new Map();
+
+        groupCards.forEach((card) => {
+          const top = card.offsetTop;
+          let rowIndex = rowTops.findIndex((item) => Math.abs(item - top) < 6);
+          if (rowIndex === -1) {
+            rowTops.push(top);
+            rowIndex = rowTops.length - 1;
+          }
+          const rowKey = `group-${groupIndex}-row-${rowIndex}`;
+          card.setAttribute('data-row-key', rowKey);
+          if (!rowFirstCard.has(rowKey)) rowFirstCard.set(rowKey, card);
+        });
+
+        rowFirstCard.forEach((firstCard) => this.rowObserver.observe(firstCard));
+      });
     }
   }
 };
@@ -236,6 +304,14 @@ export default {
   -webkit-backdrop-filter: blur(6px);
   overflow: hidden;
   transition: transform 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.link-card.row-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.55s ease, transform 0.55s ease, border 0.3s ease, box-shadow 0.3s ease;
 }
 
 .link-card::before {
