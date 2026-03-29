@@ -46,6 +46,14 @@
     value-format="YYYY-MM-DD"
   />
 </el-form-item>
+        <el-form-item label="列表角标">
+          <div class="badge-switch-row">
+            <el-switch v-model="form.pinned" active-text="置顶" />
+            <el-switch v-model="form.featured" active-text="推荐" />
+            <el-switch v-model="form.editing" active-text="正在编辑" />
+            <el-switch v-model="form.water" active-text="水" />
+          </div>
+        </el-form-item>
       </el-form>
     </div>
 
@@ -89,7 +97,11 @@ export default {
         cover: '',
         abbrlink: '',
         date: '', // 创建时间
-        updated: '' // 更新时间
+        updated: '', // 更新时间
+        pinned: false,
+        featured: false,
+        editing: false,
+        water: false
       },
       // 保存从 front-matter 解析出来的原始结构，提交时优先用它
       parsedFrontMatter: {
@@ -148,6 +160,10 @@ export default {
         this.form.abbrlink = post.id || this.articleId;
         this.form.date = this.formatToYmd(post.createTime);
         this.form.updated = this.formatToYmd(post.updateTime);
+        this.form.pinned = Boolean(post.pinned);
+        this.form.featured = Boolean(post.featured);
+        this.form.editing = Boolean(post.editing);
+        this.form.water = Boolean(post.water);
         this.markdownContent = post.content || '';
 
         // 触发一次解析/渲染（如果无 Front-Matter 也不会影响）
@@ -233,7 +249,11 @@ export default {
         // 后端支持多种日期格式，但不接受空字符串，这里改为在为空时传 null
         date: this.form.date || null,
         updated: this.form.updated || null,
-        content: this.markdownContent
+        content: this.markdownContent,
+        pinned: !!this.form.pinned,
+        featured: !!this.form.featured,
+        editing: !!this.form.editing,
+        water: !!this.form.water
       };
 
       // 以 JSON 形式输出提交数据
@@ -262,7 +282,11 @@ export default {
         cover: '',
         abbrlink: '',
         date: '',
-        updated: ''
+        updated: '',
+        pinned: false,
+        featured: false,
+        editing: false,
+        water: false
       };
       this.markdownContent = '';
       this.renderedHtml = '';
@@ -287,6 +311,13 @@ export default {
 
 .article-form {
   max-width: 680px;
+}
+
+.badge-switch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
 }
 
 .editor-container {

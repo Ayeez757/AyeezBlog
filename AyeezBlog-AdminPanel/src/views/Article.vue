@@ -14,7 +14,26 @@
 
     <div class="table-wrap">
       <el-table :data="articles" stripe style="width: 100%;">
-      <el-table-column prop="title" label="标题" width="500" />
+      <el-table-column prop="title" label="标题" min-width="260" />
+      <el-table-column label="角标" min-width="200" align="left">
+        <template #default="{ row }">
+          <div class="article-badges">
+            <el-tag v-if="isTruthy(row.pinned)" size="small" effect="dark" class="article-badge article-badge--pinned">
+              置顶
+            </el-tag>
+            <el-tag v-if="isTruthy(row.featured)" size="small" effect="dark" class="article-badge article-badge--featured">
+              推荐
+            </el-tag>
+            <el-tag v-if="isTruthy(row.editing)" size="small" effect="dark" class="article-badge article-badge--editing">
+              正在编辑
+            </el-tag>
+            <el-tag v-if="isTruthy(row.water)" size="small" effect="dark" class="article-badge article-badge--water">
+              水
+            </el-tag>
+            <span v-if="!hasAnyBadge(row)" class="article-badges-none">—</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column prop="cover" label="封面" width="300">
         <template #default="scope">
           <img v-if="scope.row.cover" :src="scope.row.cover" alt="封面" class="cover-img" />
@@ -82,6 +101,17 @@ export default {
       this.currentPage = page;
       this.fetchArticles(); // 切换页码重新加载数据
     },
+    isTruthy(v) {
+      return v === true || v === 1 || v === '1';
+    },
+    hasAnyBadge(row) {
+      return (
+        this.isTruthy(row?.pinned)
+        || this.isTruthy(row?.featured)
+        || this.isTruthy(row?.editing)
+        || this.isTruthy(row?.water)
+      );
+    },
     editArticle(row) {
       this.$router.push(`/edit-article/${row.id}`)
     },
@@ -122,5 +152,38 @@ export default {
   height: 60px;
   object-fit: cover;
   border-radius: 6px;
+}
+
+.article-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.article-badges-none {
+  color: #c0c4cc;
+  font-size: 13px;
+}
+
+.article-badge {
+  border: none;
+}
+
+.article-badge--pinned {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+}
+
+.article-badge--featured {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+}
+
+.article-badge--editing {
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8) !important;
+  color: #0c4a6e !important;
+}
+
+.article-badge--water {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
 }
 </style>

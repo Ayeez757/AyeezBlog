@@ -91,6 +91,26 @@ public class PostBody {
     private List<String> tags;
 
     /**
+     * 卡片角标：置顶
+     */
+    private Boolean pinned;
+
+    /**
+     * 卡片角标：推荐
+     */
+    private Boolean featured;
+
+    /**
+     * 卡片角标：正在编辑
+     */
+    private Boolean editing;
+
+    /**
+     * 卡片角标：水
+     */
+    private Boolean water;
+
+    /**
      * 设置 createTime，支持多种日期格式，兼容前端的 date 字段
      * @param value 前端传递的日期字符串，支持 "yyyy-MM-dd" 或 "yyyy-MM-dd HH:mm:ss"
      */

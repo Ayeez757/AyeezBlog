@@ -37,6 +37,10 @@ create table blog_post
     update_time datetime(3) default CURRENT_TIMESTAMP(3) not null on update CURRENT_TIMESTAMP(3) comment '最后更新时间',
     description varchar(255)                             null comment '描述',
     category_id bigint unsigned                          null comment '分类ID（可为空表示未分类）',
+    pinned      tinyint(1) default 0                     not null comment '首页卡片角标：置顶',
+    featured    tinyint(1) default 0                     not null comment '首页卡片角标：推荐',
+    editing     tinyint(1) default 0                     not null comment '首页卡片角标：正在编辑',
+    water       tinyint(1) default 0                     not null comment '首页卡片角标：水',
     constraint fk_blog_post_category
         foreign key (category_id) references blog_category (id)
             on update cascade on delete set null

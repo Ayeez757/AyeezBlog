@@ -89,6 +89,7 @@ public class PostServerImpl implements PostService {
     @Transactional
     public void add(PostBody postBody) {
         log.info("添加文章前查询id(abbrlink)是否存在，参数：{}",postBody);
+        normalizeCardBadges(postBody);
         // 1. 解析并落库分类，得到最终 categoryId
         Long categoryId = resolveCategoryId(postBody.getCategories());
         postBody.setCategoryId(categoryId);
@@ -127,6 +128,7 @@ public class PostServerImpl implements PostService {
         if (postBody.getId() == null || postBody.getId().isEmpty()) {
             throw new IllegalArgumentException("更新文章时，id 不能为空");
         }
+        normalizeCardBadges(postBody);
 
         // 1. 更新分类
         Long categoryId = resolveCategoryId(postBody.getCategories());
@@ -226,6 +228,27 @@ public class PostServerImpl implements PostService {
 
         if (!tagIds.isEmpty()) {
             blogPostTagMapper.insertBatch(postId, tagIds);
+        }
+    }
+
+    /**
+     * 卡片角标布尔字段未传时默认 false，避免写入 null 与列 NOT NULL 冲突。
+     */
+    private void normalizeCardBadges(PostBody postBody) {
+        if (postBody == null) {
+            return;
+        }
+        if (postBody.getPinned() == null) {
+            postBody.setPinned(false);
+        }
+        if (postBody.getFeatured() == null) {
+            postBody.setFeatured(false);
+        }
+        if (postBody.getEditing() == null) {
+            postBody.setEditing(false);
+        }
+        if (postBody.getWater() == null) {
+            postBody.setWater(false);
         }
     }
 
