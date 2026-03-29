@@ -223,3 +223,9 @@ create table if not exists blog_log_entry
             on update cascade on delete cascade,
     unique uk_blog_log_entry_version_sort (version_id, sort)
 ) comment '站点更新日志条目表' collate = utf8mb4_unicode_ci;
+
+ALTER TABLE blog_post
+    ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '置顶' AFTER category_id,
+    ADD COLUMN featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT '推荐' AFTER pinned,
+    ADD COLUMN editing TINYINT(1) NOT NULL DEFAULT 0 COMMENT '正在编辑' AFTER featured,
+    ADD COLUMN water TINYINT(1) NOT NULL DEFAULT 0 COMMENT '水' AFTER editing;
