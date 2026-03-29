@@ -90,7 +90,17 @@
           }
         ]"
         @mouseenter="hoveredCardId = post.id" @mouseleave="hoveredCardId = null" @click="goToPost(post.id)">
-        <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
+        <div class="post-cover-wrap">
+          <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
+          <div v-if="post.cardBadges && post.cardBadges.length" class="post-badges">
+            <span
+              v-for="b in post.cardBadges"
+              :key="b.key"
+              class="post-badge"
+              :class="b.className"
+            >{{ b.label }}</span>
+          </div>
+        </div>
         <div class="post-info">
           <h3 class="post-title" style="margin: 0;">{{ post.title }}</h3>
           <p class="post-description">{{ truncateContent(post.description) }}</p>
@@ -114,6 +124,7 @@
 <script>
 import { fetchPosts } from '@/api'; // 引入 API 方法
 import LoadingSpinner from '@/components/LoadingSpinner.vue'; // 引入加载动画组件
+import { getPostCardBadges } from '@/utils/postCardBadges';
 
 export default {
   name: 'Home',
@@ -182,7 +193,6 @@ export default {
     }
   },
   methods: {
-
     // 跳转到文章详情页
     goToPost(postId) {
       this.$router.push({ name: 'PostDetail', params: { id: postId } });
@@ -191,7 +201,11 @@ export default {
     async loadPosts() {
       try {
         const response = await fetchPosts(this.currentPage, this.pageSize);
-        this.posts = response.data.rows; // 文章列表
+        const rows = response.data.rows || [];
+        this.posts = rows.map((p) => ({
+          ...p,
+          cardBadges: getPostCardBadges(p)
+        }));
         this.total = response.data.total; // 总条数
         // 等文章渲染完后，初始化一次滚动高亮状态（主要用于手机端）
         this.$nextTick(() => {
@@ -915,25 +929,69 @@ export default {
   }
 }
 
-/* 默认状态：图片为黑白 */
+.post-cover-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.post-badges {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: calc(100% - 16px);
+  pointer-events: none;
+}
+
+.post-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #fff;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+}
+
+.post-badge--pinned {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.post-badge--featured {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.post-badge--editing {
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  color: #0c4a6e;
+  text-shadow: none;
+}
+
+.post-badge--water {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* 未聚焦：封面黑白；悬停或手机端当前卡片为彩色 */
 .post-cover {
   width: 100%;
   height: 180px;
   object-fit: cover;
+  display: block;
   filter: grayscale(100%);
-  /* 黑白效果 */
   transition: filter 0.3s ease;
-  /* 添加过渡动画 */
 }
 
-/* 鼠标悬停时：恢复彩色 */
 .post-card:hover .post-cover {
   filter: grayscale(0%);
-  /* 移除黑白效果 */
-
 }
 
-/* 滚动激活的文章卡片在手机端自动变彩色 */
 .active-post .post-cover {
   filter: grayscale(0%);
 }

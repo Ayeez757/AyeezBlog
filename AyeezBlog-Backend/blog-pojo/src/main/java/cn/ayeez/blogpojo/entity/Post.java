@@ -68,6 +68,24 @@ public class Post {
      */
     private String tags;
 
+    /**
+     * 首页卡片角标：置顶
+     */
+    private Boolean pinned;
 
+    /**
+     * 首页卡片角标：推荐
+     */
+    private Boolean featured;
+
+    /**
+     * 首页卡片角标：正在编辑
+     */
+    private Boolean editing;
+
+    /**
+     * 首页卡片角标：水
+     */
+    private Boolean water;
 
 }
