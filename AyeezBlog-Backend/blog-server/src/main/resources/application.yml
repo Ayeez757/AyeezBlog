@@ -43,12 +43,12 @@ aliyun:
 
 # 七牛云图床（管理端直传需要后端下发 uploadToken）
 qiniu:
-  accessKey: ${QINIU_ACCESS_KEY:}
-  secretKey: ${QINIU_SECRET_KEY:}
-  bucket: ${QINIU_BUCKET:}
+  accessKey: ${hm.qiniu.access-key:}
+  secretKey: ${hm.qiniu.secret-key:}
+  bucket: ${hm.qiniu.bucket:}
   # 外链域名（例如：https://img.example.com 或 https://xxx.qiniucdn.com）
-  domain: ${QINIU_DOMAIN:}
+  domain: ${hm.qiniu.domain:}
   # 上传入口（默认华东）；如需按区域替换为对应 upload host
-  uploadUrl: ${QINIU_UPLOAD_URL:https://upload.qiniup.com}
+  uploadUrl: ${hm.qiniu.upload-url:https://up-z2.qiniup.com}
   # token 有效期（秒）
-  tokenExpires: ${QINIU_TOKEN_EXPIRES:1800}
+  tokenExpires: ${hm.qiniu.token-expires:1800}
