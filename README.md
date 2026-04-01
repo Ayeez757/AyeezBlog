@@ -7,7 +7,8 @@
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
 
-项目demo：[https://blog.ayeez.cn/](https://blog.ayeez.cn/)
+本博客链接：[https://blog.ayeez.cn](https://blog.ayeez.cn)  
+旧博客链接（已停止维护）：[https://butterfly.ayeez.cn](https://butterfly.ayeez.cn)
 
 
 <p align="center">
@@ -158,22 +159,13 @@ cd AyeezBlog
 
 #### 3. 启动后端（blog-server）
 
-  
-
-后端默认读取 `hm.db.host` 和 `hm.db.password`，本地开发可直接在启动命令传入：
-
-  
+先修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` 中的数据库与七牛配置，再启动后端：
 
 ```bash
-
 cd AyeezBlog-Backend
-
 mvn clean install
-
 cd blog-server
-
-mvn spring-boot:run "-Dspring-boot.run.jvmArguments=-Dhm.db.host=localhost -Dhm.db.password=你的数据库密码"
-
+mvn spring-boot:run
 ```
 
   
@@ -231,14 +223,20 @@ npm run dev
 
 ## 配置说明
 
-### 后端配置 (application.yml / application-dev.yml / application-local.yml)
+### 后端配置 (application.yml)
 
-后端通过 `hm.db.host` 和 `hm.db.password` 组装数据库连接（`spring.datasource.url`），其中密码推荐使用环境变量传入（避免仓库内明文）。
+本项目默认通过 `application.yml` 管理后端配置。启动前请先按你的环境修改数据库与七牛图床配置。
 
 | 配置项 | 说明 | 示例值 | 部署必改 |
 | --- | --- | --- | --- |
 | `hm.db.host` | MySQL 主机名/IP（用于拼接 `spring.datasource.url`） | `mysql` 或 `localhost` | ✅ |
-| `hm.db.password` | MySQL 密码 | `${HM_DB_PASSWORD}` | ✅ |
+| `hm.db.password` | MySQL 密码 | `your_db_password` | ✅ |
+| `hm.qiniu.access-key` | 七牛 AccessKey | `your_qiniu_access_key` | ✅ |
+| `hm.qiniu.secret-key` | 七牛 SecretKey | `your_qiniu_secret_key` | ✅ |
+| `hm.qiniu.bucket` | 七牛空间名 | `ayeez-blog` | ✅ |
+| `hm.qiniu.domain` | 七牛访问域名 | `https://your-cdn-domain.com` | ✅ |
+| `hm.qiniu.upload-url` | 七牛上传地址（按空间区域） | `https://up-z2.qiniup.com` | ✅ |
+| `hm.qiniu.token-expires` | 上传凭证有效期（秒） | `1800` | 按需 |
 | `spring.datasource.url` | JDBC 数据库连接地址 | `jdbc:mysql://localhost:3306/ayeezblog` | ✅ |
 | `spring.datasource.username` | 数据库用户名 | `root` | ✅ |
 | `spring.datasource.password` | 数据库密码（来自 `${hm.db.password}`） | `${hm.db.password}` | ✅ |
@@ -324,10 +322,10 @@ GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ay
 
 - 作者：[阿叶Ayeez]
 - 邮箱：[[3406608593@qq.com](mailto:3406608593@qq.com)]
-- 博客：旧博客 [https://blog.ayeez.cn](https://blog.ayeez.cn) 或 新博客（本项目） [https://dev.ayeez.cn](https://dev.ayeez.cn)
+- 博客：本博客 [https://blog.ayeez.cn](https://blog.ayeez.cn)；旧博客（已停止维护） [https://butterfly.ayeez.cn](https://butterfly.ayeez.cn)
 - GitHub Issues： [https://github.com/ayeez757/AyeezBlog/issues](https://github.com/ayeez757/AyeezBlog/issues)
 - QQ交流群（不仅限于本博客，欢迎加入）：421300955
 
 ---
 
-*最后更新：2026-03-27
+*最后更新：2026-04-01

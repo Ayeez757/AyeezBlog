@@ -36,7 +36,7 @@
       </el-table-column>
       <el-table-column prop="cover" label="封面" width="300">
         <template #default="scope">
-          <img v-if="scope.row.cover" :src="scope.row.cover" alt="封面" class="cover-img" />
+          <img v-if="scope.row.cover" :src="normalizeCoverUrl(scope.row.cover)" alt="封面" class="cover-img" />
           <span v-else>无封面</span>
         </template>
       </el-table-column>
@@ -111,6 +111,13 @@ export default {
         || this.isTruthy(row?.editing)
         || this.isTruthy(row?.water)
       );
+    },
+    normalizeCoverUrl(url) {
+      const raw = (url || '').trim();
+      if (!raw) return '';
+      if (/^https?:\/\//i.test(raw)) return raw;
+      if (/^\/\//.test(raw)) return `https:${raw}`;
+      return `https://${raw}`;
     },
     editArticle(row) {
       this.$router.push(`/edit-article/${row.id}`)

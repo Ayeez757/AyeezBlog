@@ -226,7 +226,7 @@ export default {
       return (this.$route.params && this.$route.params.id) || '';
     },
     coverPreviewSrc() {
-      return (this.form.cover || '').trim();
+      return this.normalizeCoverUrl(this.form.cover);
     }
   },
   watch: {
@@ -254,6 +254,13 @@ export default {
     }
   },
   methods: {
+    normalizeCoverUrl(url) {
+      const raw = (url || '').trim();
+      if (!raw) return '';
+      if (/^https?:\/\//i.test(raw)) return raw;
+      if (/^\/\//.test(raw)) return `https:${raw}`;
+      return `https://${raw}`;
+    },
     async uploadCoverToQiniu(options) {
       const { file, onProgress, onSuccess, onError } = options || {};
       if (!file) {
@@ -279,7 +286,6 @@ export default {
         formData.append('file', file);
 
         await axios.post(uploadUrl, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (evt) => {
             if (!evt || !evt.total) return;
             const percent = Math.min(99, Math.round((evt.loaded / evt.total) * 100));
@@ -289,14 +295,15 @@ export default {
         });
 
         const normalizedDomain = String(domain).replace(/\/+$/, '');
-        const url = `${normalizedDomain}/${key}`;
+        const url = this.normalizeCoverUrl(`${normalizedDomain}/${key}`);
         this.form.cover = url;
         this.coverUploadProgress = 100;
         this.$message.success('封面上传成功，已自动填入链接');
         onSuccess && onSuccess({ url, key });
       } catch (e) {
         console.error('封面上传失败:', e);
-        this.$message.error(e && e.message ? e.message : '封面上传失败');
+        const serverMsg = e?.response?.data?.error || e?.response?.data?.message || '';
+        this.$message.error(serverMsg || (e && e.message ? e.message : '封面上传失败'));
         onError && onError(e);
       } finally {
         this.coverUploading = false;
@@ -335,7 +342,7 @@ export default {
         }
         this.form.title = post.title || '';
         this.form.description = post.description || '';
-        this.form.cover = post.cover || '';
+        this.form.cover = this.normalizeCoverUrl(post.cover || '');
         // 文章主键即 abbrlink；勿仅用 YAML，避免解析后覆盖为空
         this.form.abbrlink =
           post.id != null && String(post.id).trim() !== ''
@@ -435,7 +442,7 @@ export default {
           this.form.category = categoriesArr.join(',');
           this.form.description =
             attributes.description != null ? String(attributes.description) : '';
-          this.form.cover = attributes.cover || '';
+          this.form.cover = this.normalizeCoverUrl(attributes.cover || '');
           // 编辑页以路由/接口中的文章 id 为准，避免 front matter 未写 abbrlink 时被清空
           if (this.isEdit) {
             this.form.abbrlink = String(this.articleId || '');
@@ -501,7 +508,7 @@ export default {
           ? this.parsedFrontMatter.categories
           : (this.form.category || null),
         description: this.form.description,
-        cover: this.form.cover,
+        cover: this.normalizeCoverUrl(this.form.cover),
         // 后端支持多种日期格式，但不接受空字符串，这里改为在为空时传 null
         date: this.form.date || null,
         updated: this.form.updated || null,

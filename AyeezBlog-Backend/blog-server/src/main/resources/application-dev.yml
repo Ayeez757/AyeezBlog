@@ -2,3 +2,10 @@ hm:
   db:
     host: mysql
     password: ${HM_DB_PASSWORD}
+  qiniu:
+    access-key: ${QINIU_ACCESS_KEY:}
+    secret-key: ${QINIU_SECRET_KEY:}
+    bucket: ${QINIU_BUCKET:}
+    domain: ${QINIU_DOMAIN:}
+    upload-url: ${QINIU_UPLOAD_URL:https://up-z2.qiniup.com}
+    token-expires: ${QINIU_TOKEN_EXPIRES:1800}

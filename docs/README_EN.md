@@ -19,7 +19,8 @@ Progress demo: https://dev-blog.ayeez.cn
   <img alt="Java" src="https://img.shields.io/badge/Java-21-007396?logo=java">
 </p>
 
-Project demo: https://dev-blog.ayeez.cn/
+Main blog: https://blog.ayeez.cn  
+Legacy blog (no longer maintained): https://butterfly.ayeez.cn
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
@@ -116,9 +117,14 @@ cd AyeezBlog
 - Run schema script in project root: `AyeezBlog建表.sql`
 
 #### 3. Start backend (`blog-server`)
+
+Update database and Qiniu settings in `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` first, then start backend:
+
 ```bash
 cd AyeezBlog-Backend
-mvn -pl blog-server -am spring-boot:run "-Dspring-boot.run.jvmArguments=-Dhm.db.host=localhost -Dhm.db.password=your_db_password"
+mvn clean install
+cd blog-server
+mvn spring-boot:run
 ```
 Default API: `http://localhost:8080`
 
@@ -165,10 +171,18 @@ docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.
 
 ## Configuration
 
-### Backend config (`application-{profile}.yml`)
+### Backend config (`application.yml`)
 
 | Key | Description | Example | Required in deployment |
 | --- | --- | --- | --- |
+| `hm.db.host` | MySQL host for composing JDBC URL | `mysql` / `localhost` | Yes |
+| `hm.db.password` | MySQL password | `your_db_password` | Yes |
+| `hm.qiniu.access-key` | Qiniu AccessKey | `your_qiniu_access_key` | Yes |
+| `hm.qiniu.secret-key` | Qiniu SecretKey | `your_qiniu_secret_key` | Yes |
+| `hm.qiniu.bucket` | Qiniu bucket name | `ayeez-blog` | Yes |
+| `hm.qiniu.domain` | Qiniu public domain | `https://your-cdn-domain.com` | Yes |
+| `hm.qiniu.upload-url` | Qiniu upload host (bucket region) | `https://up-z2.qiniup.com` | Yes |
+| `hm.qiniu.token-expires` | Upload token TTL (seconds) | `1800` | Optional |
 | `spring.datasource.url` | MySQL connection URL | `localhost:3306` | Yes |
 | `spring.datasource.username` | MySQL username | `root` | Yes |
 | `spring.datasource.password` | MySQL password | `${hm.db.password}` | Yes |
@@ -243,9 +257,9 @@ This project is open-sourced under the [Apache License 2.0](../LICENSE).
 
 - Author: Ayeez
 - Email: 3406608593@qq.com
-- Blog: https://blog.ayeez.cn / https://dev.ayeez.cn
+- Blog: main https://blog.ayeez.cn; legacy (no longer maintained) https://butterfly.ayeez.cn
 - GitHub Issues: https://github.com/ayeez757/AyeezBlog/issues
 
 ---
 
-*Last updated: 2026-03-20*
+*Last updated: 2026-04-01*
