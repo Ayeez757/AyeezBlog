@@ -35,6 +35,35 @@
           </el-form-item>
           <el-form-item label="封面链接">
             <el-input v-model="form.cover" placeholder="https://…" clearable />
+            <div class="cover-upload-row">
+              <el-upload
+                class="cover-upload"
+                :show-file-list="false"
+                accept="image/*"
+                :http-request="uploadCoverToQiniu"
+                :disabled="coverUploading"
+              >
+                <el-button :loading="coverUploading" type="primary" plain>
+                  {{ coverUploading ? '正在上传封面…' : '选择图片并上传到七牛' }}
+                </el-button>
+              </el-upload>
+              <el-progress
+                v-if="coverUploading"
+                :percentage="coverUploadProgress"
+                :stroke-width="10"
+                status="success"
+                class="cover-upload-progress"
+              />
+              <el-button
+                v-if="form.cover"
+                :disabled="coverUploading"
+                type="info"
+                plain
+                @click="form.cover = ''"
+              >
+                清空封面
+              </el-button>
+            </div>
           </el-form-item>
           <div class="cover-preview-wrap cover-preview-wrap--meta">
             <span class="cover-preview-label">封面预览</span>
@@ -146,10 +175,11 @@
 </template>
 
 <script>
+import axios from 'axios';
 import MarkdownIt from 'markdown-it';
 import fm from 'front-matter';
 import yaml from 'js-yaml';
-import { addPost, getPostDetail, updatePost } from '../api/index';
+import { addPost, getPostDetail, updatePost, getQiniuUploadToken } from '../api/index';
 
 export default {
   data() {
@@ -183,7 +213,9 @@ export default {
       },
       markdownContent: '',
       renderedHtml: '',
-      coverPreviewError: false
+      coverPreviewError: false,
+      coverUploading: false,
+      coverUploadProgress: 0
     };
   },
   computed: {
@@ -222,6 +254,57 @@ export default {
     }
   },
   methods: {
+    async uploadCoverToQiniu(options) {
+      const { file, onProgress, onSuccess, onError } = options || {};
+      if (!file) {
+        onError && onError(new Error('未选择文件'));
+        return;
+      }
+      this.coverUploading = true;
+      this.coverUploadProgress = 0;
+      try {
+        const tokenData = await getQiniuUploadToken({
+          filename: file.name,
+          dir: 'covers'
+        });
+
+        const { uploadToken, key, domain, uploadUrl } = tokenData || {};
+        if (!uploadToken || !key || !domain || !uploadUrl) {
+          throw new Error('获取七牛上传凭证失败（返回数据不完整）');
+        }
+
+        const formData = new FormData();
+        formData.append('token', uploadToken);
+        formData.append('key', key);
+        formData.append('file', file);
+
+        await axios.post(uploadUrl, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (evt) => {
+            if (!evt || !evt.total) return;
+            const percent = Math.min(99, Math.round((evt.loaded / evt.total) * 100));
+            this.coverUploadProgress = percent;
+            onProgress && onProgress({ percent });
+          }
+        });
+
+        const normalizedDomain = String(domain).replace(/\/+$/, '');
+        const url = `${normalizedDomain}/${key}`;
+        this.form.cover = url;
+        this.coverUploadProgress = 100;
+        this.$message.success('封面上传成功，已自动填入链接');
+        onSuccess && onSuccess({ url, key });
+      } catch (e) {
+        console.error('封面上传失败:', e);
+        this.$message.error(e && e.message ? e.message : '封面上传失败');
+        onError && onError(e);
+      } finally {
+        this.coverUploading = false;
+        setTimeout(() => {
+          this.coverUploadProgress = 0;
+        }, 600);
+      }
+    },
     normalizeToArray(value) {
       if (value == null) return [];
       if (Array.isArray(value)) return value.map(v => String(v)).filter(Boolean);
@@ -759,6 +842,19 @@ export default {
 .cover-preview-wrap--meta {
   margin-top: 6px;
   margin-bottom: 0;
+}
+
+.cover-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.cover-upload-progress {
+  width: 220px;
+  max-width: 100%;
 }
 
 .md-preview {
