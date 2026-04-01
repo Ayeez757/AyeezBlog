@@ -25,6 +25,11 @@ export const deletePost = (params) => {
   return request.delete('/admin/post/delete', { params })
 }
 
+// 七牛上传：获取 uploadToken（管理端直传七牛）
+export const getQiniuUploadToken = (params) => {
+  return request.get('/admin/upload/qiniu/token', { params })
+}
+
 // 登录接口
 export function loginApi(data) {
   return request.post('/admin/login', data)

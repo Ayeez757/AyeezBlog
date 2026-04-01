@@ -33,6 +33,12 @@ jobs:
           SSH_USER: ${{ secrets.SERVER_USER }}
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           DB_PASSWORD: ${{ secrets.HM_DB_PASSWORD }}
+          QINIU_ACCESS_KEY: ${{ secrets.QINIU_ACCESS_KEY }}
+          QINIU_SECRET_KEY: ${{ secrets.QINIU_SECRET_KEY }}
+          QINIU_BUCKET: ${{ secrets.QINIU_BUCKET }}
+          QINIU_DOMAIN: ${{ secrets.QINIU_DOMAIN }}
+          QINIU_UPLOAD_URL: ${{ secrets.QINIU_UPLOAD_URL }}
+          QINIU_TOKEN_EXPIRES: ${{ secrets.QINIU_TOKEN_EXPIRES }}
         run: |
 
 
@@ -87,6 +93,12 @@ jobs:
               --network ayeez \\
               -e HM_DB_HOST=mysql \\
               -e "HM_DB_PASSWORD=${DB_PASSWORD}" \\
+              -e "QINIU_ACCESS_KEY=${QINIU_ACCESS_KEY}" \\
+              -e "QINIU_SECRET_KEY=${QINIU_SECRET_KEY}" \\
+              -e "QINIU_BUCKET=${QINIU_BUCKET}" \\
+              -e "QINIU_DOMAIN=${QINIU_DOMAIN}" \\
+              -e "QINIU_UPLOAD_URL=${QINIU_UPLOAD_URL}" \\
+              -e "QINIU_TOKEN_EXPIRES=${QINIU_TOKEN_EXPIRES}" \\
               -e SPRING_PROFILES_ACTIVE=dev \\
               -p 8080:8080 \\
               -v /var/lib/docker/volumes/jar/_data/app.jar:/app/app.jar \\
