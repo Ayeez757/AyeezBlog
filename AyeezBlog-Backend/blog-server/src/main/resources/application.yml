@@ -1,4 +1,4 @@
-#TODO部署后要改配置
+
 #配置数据库的连接信息
 spring:
   application:
@@ -13,6 +13,15 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 100MB
+  # DeepSeek（OpenAI 兼容 API）；密钥建议用环境变量 hm.deepseek.api-key
+  ai:
+    openai:
+      api-key: ${hm.deepseek.api-key:}
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.3
 
 #mybatis的相关配置
 mybatis:
@@ -35,6 +44,12 @@ pagehelper:
 server:
   port: 8080
 
+# AI：封面/简介在 INFO 输出 [AI-COVER] / [AI-SUMMARY]（需 blog.ai.*.verbose-* 为 true）；包级 DEBUG 保留其它调试行
+logging:
+  level:
+    cn.ayeez.blogserver.service.ai: DEBUG
+    cn.ayeez.blogserver.controller.admin.AdminAiController: DEBUG
+
 aliyun:
   oss:
     endpoint: https://oss-cn-beijing.aliyuncs.com
@@ -52,3 +67,36 @@ qiniu:
   uploadUrl: ${hm.qiniu.upload-url:https://up-z2.qiniup.com}
   # token 有效期（秒）
   tokenExpires: ${hm.qiniu.token-expires:1800}
+
+# 是否在保存文章时，在描述为空时自动调用模型生成简介
+blog:
+  ai:
+    summary:
+      enabled: ${hm.deepseek.summary-enabled:false}
+      max-content-chars: 12000
+      max-description-length: 240
+      # 为 true 时 INFO 打印 DeepSeek 系统/用户提示词与模型原始输出
+      verbose-log: ${hm.deepseek.verbose-log:true}
+    # 火山引擎即梦：智能视觉 CVProcess（签名鉴权）→ 临时图 URL → 下载后转存七牛
+    # 密钥为控制台「访问控制」API 访问密钥（Access Key + Secret），非百炼 sk-。
+    cover:
+      enabled: ${hm.volcengine.cover-enabled:false}
+      access-key: ${hm.volcengine.access-key:}
+      secret-key: ${hm.volcengine.secret-key:}
+      host: visual.volcengineapi.com
+      action: CVProcess
+      version: 2022-08-31
+      region: cn-north-1
+      service: cv
+      req-key: jimeng_high_aes_general_v21_L
+      width: 1664
+      height: 928
+      seed: -1
+      return-url: true
+      max-content-excerpt-chars: 2000
+      max-total-prompt-chars: 1200
+      max-user-prompt-chars: 300
+      # 为 true 时易改写 prompt、偏离固定封面风格，建议 false
+      use-pre-llm: ${hm.volcengine.use-pre-llm:false}
+      # 为 true 时 INFO 打印即梦完整请求 JSON、URL、响应体（不含 Authorization 明文）
+      verbose-http-log: ${hm.volcengine.verbose-http-log:true}

@@ -2,8 +2,9 @@ import axios from 'axios'
 import router from '@/router'
 
 const request = axios.create({
-  baseURL: '/api',  
-  timeout: 10000
+  baseURL: '/api',
+  // 默认放宽：文章保存、百炼生图等可能较慢；单项请求仍可在调用处覆盖
+  timeout: 120000
 })
 
 // 请求拦截器 - 添加 token

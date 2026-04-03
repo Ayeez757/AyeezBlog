@@ -22,6 +22,13 @@ public class TokenFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
         String url = request.getRequestURI();
+
+        // CORS 预检不携带 token，必须放行，否则浏览器会拦截后续 POST（表现为按钮无反应或控制台 CORS/网络错误）
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
 //        if (!url.contains("/admin")) {
 //            log.info("用户端操作，放行");
 //            filterChain.doFilter(request, response);

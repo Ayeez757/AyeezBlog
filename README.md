@@ -53,7 +53,7 @@
 | --------------- | ------------------------------------------------------------------------- | ---------- |
 | **前端**          | Vue 3 + Vite + Vue Router + Axios                                         | 前台展示界面     |
 | **管理端**         | Vue 3 + Element Plus + ECharts                                            | 后台管理界面     |
-| **后端**          | Java21 + Spring Boot 3.2.0 + Spring Security + JWT + MyBatis-Plus + Redis | 业务逻辑与数据接口  |
+| **后端**          | Java 21 + Spring Boot 3.2.0 + Spring Security + JWT + MyBatis + Spring AI（可选 DeepSeek）+ Redis | 业务逻辑与数据接口  |
 | **数据库**         | MySQL                                                                     | 持久化存储      |
 | **部署**          | Docker + Docker Compose + Nginx                                           | 容器化部署，反向代理 |
 | **CI/CD**       | GitHub Actions                                                            | 自动化测试与构建   |
@@ -80,6 +80,8 @@
 - **登录与访问控制**：后台登录鉴权、token 本地持久化、路由守卫未登录自动跳转登录页
 - **文章管理全流程**：文章列表分页与关键词搜索、文章新增/编辑/删除、按 ID 回显详情并保存修改
 - **写作与解析能力**：写作表单支持标题/描述/封面/短链/日期/更新时间，Markdown 编辑区与预览区同屏，自动解析 Front Matter（标题/标签/分类/日期等）
+- **AI 文章简介（可选）**：描述区域提供「根据正文生成简介」按钮；在后端开启开关且配置 DeepSeek API Key 后，保存文章时若描述为空可自动生成简介（不覆盖已有描述）
+- **AI 文章封面（可选）**：封面区域提供「AI 生成封面（即梦）」；使用火山引擎即梦（智能视觉 CVProcess）按统一风格出图后**转存七牛**，自动填入封面链接（需配置火山 Access Key/Secret、开启开关且七牛可用）
 - **分类管理**：分类列表查询、新增、编辑、删除，并支持查看分类下文章与快速跳转编辑
 - **标签管理**：标签列表查询、新增、编辑、删除，并支持查看标签下文章与快速跳转编辑
 - **后台首页**：已预留首页入口，可继续扩展统计看板
@@ -91,7 +93,9 @@
 - **认证与安全**：管理员登录认证并返回登录信息/token，基于 Spring Security + JWT + Token 过滤器实现安全基础能力
 - **统一数据返回**：`Result` 统一响应结构与 `PageResult` 标准分页结构
 - **数据有效性与事务**：分类/标签写操作含基础参数判空与重名校验，并通过事务保证写入一致性
-- **后端基础设施**：CORS 跨域支持、MyBatis-Plus + Mapper XML 数据访问
+- **后端基础设施**：CORS 跨域支持、MyBatis + Mapper XML 数据访问
+- **AI 与 Spring AI**：集成 `spring-ai-starter-model-openai`，通过 DeepSeek 官方 OpenAI 兼容接口（`https://api.deepseek.com`）生成文章描述；管理端 `POST /admin/ai/article-description`；与文章新增/更新流程可选联动
+- **AI 封面（即梦）**：调用火山引擎即梦文生图接口生成图片，下载后服务端上传七牛；管理端 `POST /admin/ai/article-cover`，返回持久 `coverUrl`
 
 ---
 
@@ -159,7 +163,9 @@ cd AyeezBlog
 
 #### 3. 启动后端（blog-server）
 
-先修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` 中的数据库与七牛配置，再启动后端：
+先修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` 中的数据库与七牛配置，再启动后端。
+
+**可选 — AI**：若需 DeepSeek 生成描述，请配置 `hm.deepseek.api-key` 与 `hm.deepseek.summary-enabled=true`；若需即梦生成封面，请配置 `hm.volcengine.access-key`、`hm.volcengine.secret-key` 与 `hm.volcengine.cover-enabled=true`，并保证七牛已配置（详见下文「配置说明」）。未配置时其余功能不受影响。
 
 ```bash
 cd AyeezBlog-Backend
@@ -246,7 +252,26 @@ npm run dev
 | `aliyun.oss.endpoint` | OSS 地域节点 | `https://oss-cn-beijing.aliyuncs.com` | ✅ |
 | `aliyun.oss.bucketName` | OSS Bucket 名称 | `javaweb-ayeez` | ✅ |
 | `aliyun.oss.region` | OSS 地域 | `cn-beijing` | ✅ |
-
+| `hm.deepseek.api-key` | DeepSeek API Key（供 Spring AI 调用；`dev` profile 下可由环境变量 `DEEPSEEK_API_KEY` 注入） | 留空则不请求模型 | 使用 AI 时 ✅ |
+| `hm.deepseek.summary-enabled` | 是否启用简介生成（保存时空描述自动填充 + 管理端生成接口） | `false` / `true` | 按需 |
+| `hm.deepseek.verbose-log` | 是否在 INFO 打印 DeepSeek 系统/用户提示词与模型原始输出（仅排查用，线上建议 false） | `false` / `true` | 按需 |
+| `spring.ai.openai.api-key` | 与 `hm.deepseek.api-key` 绑定，一般无需单独改 | `${hm.deepseek.api-key:}` | 使用 AI 时 ✅ |
+| `spring.ai.openai.base-url` | OpenAI 兼容服务地址 | `https://api.deepseek.com` | 一般不改 |
+| `spring.ai.openai.chat.options.model` | 对话模型 | `deepseek-chat` | 按需 |
+| `spring.ai.openai.chat.options.temperature` | 采样温度 | `0.3` | 按需 |
+| `blog.ai.summary.enabled` | 业务开关（默认引用 `hm.deepseek.summary-enabled`） | `false` | 按需 |
+| `blog.ai.summary.max-content-chars` | 送入模型的正文最大字符数 | `12000` | 按需 |
+| `blog.ai.summary.max-description-length` | 生成简介最大长度（勿超过库表 `description` 字段） | `240` | 按需 |
+| `hm.volcengine.access-key` | 火山引擎控制台 **API 访问密钥** Access Key ID（`dev` profile 下可由环境变量 `VOLCENGINE_ACCESS_KEY` 注入） | 留空则不生成封面 | 使用封面 AI 时 ✅ |
+| `hm.volcengine.secret-key` | 火山引擎 Secret Access Key（与 Access Key 成对；`dev` profile 下可由环境变量 `VOLCENGINE_SECRET_KEY` 注入） | 同上 | 使用封面 AI 时 ✅ |
+| `hm.volcengine.cover-enabled` | 是否启用封面 AI | `false` / `true` | 按需 |
+| `hm.volcengine.verbose-http-log` | 是否在 INFO 打印即梦完整请求 JSON/URL/响应体（不含密钥；仅排查用） | `false` / `true` | 按需 |
+| `blog.ai.cover.enabled` | 封面功能开关（默认引用 `hm.volcengine.cover-enabled`） | `false` | 按需 |
+| `blog.ai.cover.req-key` | 即梦能力标识 `req_key`（以控制台/文档为准） | `jimeng_high_aes_general_v21_L` | 按需 |
+| `blog.ai.cover.width` / `height` | 输出宽高（像素） | `1664` / `928` | 需与能力支持范围一致 |
+| `blog.ai.cover.region` | 签名用区域 | `cn-north-1` | 一般不改 |
+| `blog.ai.cover.max-total-prompt-chars` | 拼合后正向提示词总长度上限 | `1200` | 按需 |
+| `blog.ai.cover.max-user-prompt-chars` | 管理端「生图补充说明」长度上限 | `300` | 按需 |
 
 
 
@@ -268,17 +293,6 @@ Apifox：
 
 - [数据库设计文档](./docs/DATABASE_DESIGN.md)
 
----
-
-## CI/CD
-
-项目使用 GitHub Actions 自动执行以下流程：
-
-1. **代码推送**：触发单元测试、代码风格检查。
-2. **构建镜像**：通过 Dockerfile 构建后端和前端镜像，并推送到 Docker Hub 或私有仓库。
-3. **部署**：利用 SSH 登录服务器，拉取新镜像并重启服务。
-
-工作流配置文件位于 `.github/workflows/`目录下。
 
 ---
 
@@ -328,4 +342,4 @@ GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ay
 
 ---
 
-*最后更新：2026-04-01
+*最后更新：2026-04-03

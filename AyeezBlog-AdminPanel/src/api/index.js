@@ -20,6 +20,26 @@ export const updatePost = (data) => {
   return request.put('/admin/post/update', data)
 }
 
+// 根据标题与正文生成文章简介（Spring AI + DeepSeek）
+export const generateArticleDescription = (data) => {
+  return request({
+    url: '/admin/ai/article-description',
+    method: 'post',
+    data,
+    timeout: 120000
+  })
+}
+
+// 即梦文生图生成封面并上传七牛，返回 coverUrl（耗时常较长）
+export const generateArticleCover = (data) => {
+  return request({
+    url: '/admin/ai/article-cover',
+    method: 'post',
+    data,
+    timeout: 300000
+  })
+}
+
 // 删除文章接口
 export const deletePost = (params) => {
   return request.delete('/admin/post/delete', { params })

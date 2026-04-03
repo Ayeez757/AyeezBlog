@@ -37,6 +37,9 @@ jobs:
           QINIU_SECRET_KEY: ${{ secrets.QINIU_SECRET_KEY }}
           QINIU_BUCKET: ${{ secrets.QINIU_BUCKET }}
           QINIU_DOMAIN: ${{ secrets.QINIU_DOMAIN }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          VOLCENGINE_ACCESS_KEY: ${{ secrets.VOLCENGINE_ACCESS_KEY }}
+          VOLCENGINE_SECRET_KEY: ${{ secrets.VOLCENGINE_SECRET_KEY }}
         run: |
 
 
@@ -95,6 +98,9 @@ jobs:
               -e "QINIU_SECRET_KEY=${QINIU_SECRET_KEY}" \\
               -e "QINIU_BUCKET=${QINIU_BUCKET}" \\
               -e "QINIU_DOMAIN=${QINIU_DOMAIN}" \\
+              -e "DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}" \\
+              -e "VOLCENGINE_ACCESS_KEY=${VOLCENGINE_ACCESS_KEY}" \\
+              -e "VOLCENGINE_SECRET_KEY=${VOLCENGINE_SECRET_KEY}" \\
               -e SPRING_PROFILES_ACTIVE=dev \\
               -p 8080:8080 \\
               -v /var/lib/docker/volumes/jar/_data/app.jar:/app/app.jar \\

@@ -9,3 +9,16 @@ hm:
     domain: ${QINIU_DOMAIN:}
     upload-url: ${QINIU_UPLOAD_URL:https://up-z2.qiniup.com}
     token-expires: ${QINIU_TOKEN_EXPIRES:1800}
+  deepseek:
+    # 用于管理端生成文章简介（DeepSeek OpenAI-compatible API）
+    api-key: ${DEEPSEEK_API_KEY:}
+    summary-enabled: true
+    # 默认为 false，避免线上日志刷屏
+    verbose-log: ${DEEPSEEK_VERBOSE_LOG:false}
+  volcengine:
+    # 用于管理端生成文章封面（火山引擎即梦 CVProcess）
+    cover-enabled: true
+    access-key: ${VOLCENGINE_ACCESS_KEY:}
+    secret-key: ${VOLCENGINE_SECRET_KEY:}
+    # 默认为 false，避免线上输出大段请求/响应
+    verbose-http-log: ${VOLCENGINE_VERBOSE_HTTP_LOG:false}
