@@ -33,20 +33,37 @@
     </div>
 
     <el-row :gutter="16" class="chart-row">
-      <el-col :span="12">
+      <el-col :span="12" :xs="24">
         <el-card shadow="never" class="chart-card">
           <template #header>
-            <span>PV 历史（按天）</span>
+            <span>累计 PV/UV（可叠加）</span>
           </template>
-          <div ref="pvChartRef" class="chart"></div>
+          <div class="chart-controls">
+            <el-checkbox-group v-model="legendSelectedTotal" @change="updateTotalLegend">
+              <el-checkbox label="累计 PV" />
+              <el-checkbox label="累计 UV" />
+              <el-checkbox label="PV（日）" />
+              <el-checkbox label="UV（日）" />
+            </el-checkbox-group>
+          </div>
+          <div ref="totalChartRef" class="chart"></div>
         </el-card>
       </el-col>
-      <el-col :span="12">
+
+      <el-col :span="12" :xs="24">
         <el-card shadow="never" class="chart-card">
           <template #header>
-            <span>UV 历史（按天）</span>
+            <span>每日 PV/UV（可叠加）</span>
           </template>
-          <div ref="uvChartRef" class="chart"></div>
+          <div class="chart-controls">
+            <el-checkbox-group v-model="legendSelectedDaily" @change="updateDailyLegend">
+              <el-checkbox label="PV（日）" />
+              <el-checkbox label="UV（日）" />
+              <el-checkbox label="累计 PV" />
+              <el-checkbox label="累计 UV" />
+            </el-checkbox-group>
+          </div>
+          <div ref="dailyChartRef" class="chart"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -112,8 +129,11 @@ export default {
       uniqueVisitors: 0,
       history: [],
 
-      pvChart: null,
-      uvChart: null,
+      totalChart: null,
+      dailyChart: null,
+      // 图表图例选中状态（用于手动控制叠加）
+      legendSelectedTotal: ['累计 PV', '累计 UV'],
+      legendSelectedDaily: ['PV（日）', 'UV（日）'],
 
       latestComments: [],
     }
@@ -136,8 +156,8 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)
-    if (this.pvChart) this.pvChart.dispose()
-    if (this.uvChart) this.uvChart.dispose()
+    if (this.totalChart) this.totalChart.dispose()
+    if (this.dailyChart) this.dailyChart.dispose()
   },
   methods: {
     async loadDashboard() {
@@ -160,61 +180,130 @@ export default {
       if (!window.echarts) return
       if (!Array.isArray(this.history) || !this.history.length) return
 
-      const pvEl = this.$refs.pvChartRef
-      const uvEl = this.$refs.uvChartRef
-      if (!pvEl || !uvEl) return
+      const totalEl = this.$refs.totalChartRef
+      const dailyEl = this.$refs.dailyChartRef
+      if (!totalEl || !dailyEl) return
 
-      if (!this.pvChart) this.pvChart = window.echarts.init(pvEl)
-      if (!this.uvChart) this.uvChart = window.echarts.init(uvEl)
+      if (!this.totalChart) this.totalChart = window.echarts.init(totalEl)
+      if (!this.dailyChart) this.dailyChart = window.echarts.init(dailyEl)
 
       const xData = this.history.map((i) => i.date)
       const pvData = this.history.map((i) => i.pageViews || 0)
       const uvData = this.history.map((i) => i.uniqueVisitors || 0)
 
-      const pvOption = {
+      // 在前端把“日新增”转换成“累计总量趋势”
+      const pvTotalData = []
+      const uvTotalData = []
+      let pvSum = 0
+      let uvSum = 0
+      for (let i = 0; i < this.history.length; i++) {
+        pvSum += Number(pvData[i] || 0)
+        uvSum += Number(uvData[i] || 0)
+        pvTotalData.push(pvSum)
+        uvTotalData.push(uvSum)
+      }
+
+      const baseLegend = {
+        show: true,
+        type: 'scroll',
+        orient: 'horizontal',
+        top: 6,
+        data: ['PV（日）', 'UV（日）', '累计 PV', '累计 UV'],
+        // 曲线显隐由外部 checkbox 控制；禁用 legend 点击，避免交互偶发失效
+        selectedMode: false,
+      }
+
+      const baseCommon = {
         tooltip: { trigger: 'axis' },
-        grid: { left: 10, right: 10, bottom: 0, top: 10, containLabel: true },
+        grid: { left: 10, right: 10, bottom: 0, top: 60, containLabel: true },
         xAxis: { type: 'category', data: xData, boundaryGap: false, axisLabel: { color: '#666' } },
         yAxis: { type: 'value', axisLabel: { color: '#666' } },
         series: [
           {
-            name: 'PV',
+            name: 'PV（日）',
             type: 'line',
             data: pvData,
             smooth: true,
             lineStyle: { width: 2 },
             itemStyle: { color: '#22c55e' },
-            areaStyle: { opacity: 0.08 },
+            areaStyle: { opacity: 0.03 },
           },
-        ],
-      }
-
-      const uvOption = {
-        tooltip: { trigger: 'axis' },
-        grid: { left: 10, right: 10, bottom: 0, top: 10, containLabel: true },
-        xAxis: { type: 'category', data: xData, boundaryGap: false, axisLabel: { color: '#666' } },
-        yAxis: { type: 'value', axisLabel: { color: '#666' } },
-        series: [
           {
-            name: 'UV',
+            name: 'UV（日）',
             type: 'line',
             data: uvData,
             smooth: true,
             lineStyle: { width: 2 },
             itemStyle: { color: '#3b82f6' },
+            areaStyle: { opacity: 0.03 },
+          },
+          {
+            name: '累计 PV',
+            type: 'line',
+            data: pvTotalData,
+            smooth: true,
+            lineStyle: { width: 2 },
+            itemStyle: { color: '#16a34a' },
+            areaStyle: { opacity: 0.08 },
+          },
+          {
+            name: '累计 UV',
+            type: 'line',
+            data: uvTotalData,
+            smooth: true,
+            lineStyle: { width: 2 },
+            itemStyle: { color: '#1d4ed8' },
             areaStyle: { opacity: 0.08 },
           },
         ],
       }
 
-      this.pvChart.setOption(pvOption, true)
-      this.uvChart.setOption(uvOption, true)
+      // 默认：累计图叠加累计两条；每日图叠加每日两条
+      const totalOption = {
+        ...baseCommon,
+        legend: {
+          ...baseLegend,
+          selected: this.buildLegendSelected(this.legendSelectedTotal),
+        },
+      }
+
+      const dailyOption = {
+        ...baseCommon,
+        legend: {
+          ...baseLegend,
+          selected: this.buildLegendSelected(this.legendSelectedDaily),
+        },
+      }
+
+      this.totalChart.setOption(totalOption)
+      this.dailyChart.setOption(dailyOption)
+    },
+
+    buildLegendSelected(list) {
+      const names = ['PV（日）', 'UV（日）', '累计 PV', '累计 UV']
+      const selected = {}
+      names.forEach((n) => {
+        selected[n] = Array.isArray(list) ? list.includes(n) : false
+      })
+      return selected
+    },
+
+    updateTotalLegend() {
+      if (!this.totalChart) return
+      const selected = this.buildLegendSelected(this.legendSelectedTotal)
+      this.totalChart.setOption({ legend: { selected } })
+    },
+
+    updateDailyLegend() {
+      if (!this.dailyChart) return
+      const selected = this.buildLegendSelected(this.legendSelectedDaily)
+      this.dailyChart.setOption({ legend: { selected } })
     },
 
     handleResize() {
       try {
-        if (this.pvChart) this.pvChart.resize()
-        if (this.uvChart) this.uvChart.resize()
+        if (this.totalChart) this.totalChart.resize()
+        if (this.dailyChart) this.dailyChart.resize()
       } catch (_) {}
     },
 
@@ -444,6 +533,11 @@ export default {
   width: 100%;
 }
 
+.chart-controls {
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
 .comments-card {
   margin-top: 16px;
 }
@@ -480,6 +574,15 @@ export default {
   }
   .chart {
     height: 260px;
+  }
+  .chart-row {
+    margin-bottom: 12px;
+  }
+
+  :deep(.chart-controls .el-checkbox-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
   }
 }
 </style>
