@@ -47,7 +47,7 @@ Core page features:
 | --- | --- | --- |
 | **Frontend** | Vue 3 + Vite + Vue Router + Axios | Public-facing site |
 | **Admin Panel** | Vue 3 + Element Plus + ECharts | Admin management UI |
-| **Backend** | Java 21 + Spring Boot 3.2.0 + Spring Security + JWT + MyBatis-Plus + Redis | Business logic and APIs |
+| **Backend** | Java 21 + Spring Boot 3.2.0 + Spring Security + JWT + MyBatis + Spring AI (optional DeepSeek) + Redis | Business logic and APIs |
 | **Database** | MySQL | Persistent storage |
 | **Deployment** | Docker + Docker Compose + Nginx | Containerized deployment and reverse proxy |
 | **CI/CD** | GitHub Actions | Automated testing and builds |
@@ -71,6 +71,8 @@ Core page features:
 - **Login and access control**: Admin login/authentication, local token persistence, and route guard redirect for unauthenticated access
 - **End-to-end post management**: Paginated post list with keyword search, create/edit/delete, and ID-based detail echo with save
 - **Writing and parsing capabilities**: Form fields for title/description/cover/short link/date/updated date, side-by-side Markdown editor + preview, and automatic Front Matter parsing (title/tags/category/date, etc.)
+- **AI post excerpt (optional)**: A “generate excerpt from body” action on the description field; when the backend switch and DeepSeek API key are set, saving a post with an empty description can auto-fill an excerpt (existing descriptions are not overwritten)
+- **AI cover image (optional)**: “AI generate cover (Jimeng)” on the cover field; uses Volcengine Jimeng (CV `CVProcess` with a `req_key`) with a fixed style prompt, then **uploads to Qiniu** and fills the cover URL (requires Volcengine Access Key + Secret, feature flag, and Qiniu config)
 - **Category management**: List/query/create/edit/delete categories, with category-post lookup and quick jump to edit
 - **Tag management**: List/query/create/edit/delete tags, with tag-post lookup and quick jump to edit
 - **Admin home**: Reserved home entry for future dashboard/stat expansion
@@ -81,7 +83,9 @@ Core page features:
 - **Authentication and security**: Admin login/token response, with baseline security via Spring Security + JWT + token filter
 - **Unified response structure**: `Result` for standard API responses and `PageResult` for paginated data
 - **Data validity and transactions**: Basic null/duplicate validation for category/tag writes, with transaction guarantees for consistency
-- **Backend infrastructure**: CORS support, MyBatis-Plus + Mapper XML data access, and Redis cache integration
+- **Backend infrastructure**: CORS support, MyBatis + Mapper XML data access, and Redis cache integration
+- **AI and Spring AI**: `spring-ai-starter-model-openai` calls DeepSeek via the OpenAI-compatible endpoint (`https://api.deepseek.com`) to generate post descriptions; admin `POST /admin/ai/article-description`; optional hook on post create/update when description is blank
+- **AI cover (Jimeng)**: Volcengine visual text-to-image, download image bytes, server-side upload to Qiniu; admin `POST /admin/ai/article-cover` returns persistent `coverUrl`
 
 ---
 
@@ -118,7 +122,11 @@ cd AyeezBlog
 
 #### 3. Start backend (`blog-server`)
 
-Update database and Qiniu settings in `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` first, then start backend:
+Update database and Qiniu settings in `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` first, then start backend.
+
+**Optional — AI**: For DeepSeek excerpts, set `hm.deepseek.api-key` and `hm.deepseek.summary-enabled=true`. For Jimeng covers, set `hm.volcengine.access-key`, `hm.volcengine.secret-key`, and `hm.volcengine.cover-enabled=true`, and ensure Qiniu is configured (see **Configuration**). If unset, the rest of the app works as before.
+
+If you run with the `dev` profile (enabling `application-dev.yml`), it is recommended to inject via environment variables: DeepSeek uses `DEEPSEEK_API_KEY` (optional `DEEPSEEK_VERBOSE_LOG`), and Jimeng uses `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` (optional `VOLCENGINE_VERBOSE_HTTP_LOG`).
 
 ```bash
 cd AyeezBlog-Backend
@@ -190,6 +198,40 @@ docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.
 | `aliyun.oss.endpoint` | OSS endpoint | `https://oss-cn-beijing.aliyuncs.com` | Yes |
 | `aliyun.oss.bucketName` | OSS bucket name | `javaweb-ayeez` | Yes |
 | `aliyun.oss.region` | OSS region | `cn-beijing` | Yes |
+| `hm.deepseek.api-key` | DeepSeek API key for Spring AI (`dev` profile can inject via env var `DEEPSEEK_API_KEY`) | empty disables model calls | Yes, if using AI |
+| `hm.deepseek.summary-enabled` | Enable excerpt generation (auto on save when blank + admin endpoint) | `false` / `true` | Optional |
+| `hm.deepseek.verbose-log` | Whether to print DeepSeek system/user prompts and raw model output to INFO (debug only; set false in production) | `false` / `true` | Optional |
+| `spring.ai.openai.api-key` | Bound to `hm.deepseek.api-key` | `${hm.deepseek.api-key:}` | Yes, if using AI |
+| `spring.ai.openai.base-url` | OpenAI-compatible base URL | `https://api.deepseek.com` | Usually unchanged |
+| `spring.ai.openai.chat.options.model` | Chat model | `deepseek-chat` | Optional |
+| `spring.ai.openai.chat.options.temperature` | Sampling temperature | `0.3` | Optional |
+| `blog.ai.summary.enabled` | Feature toggle (defaults from `hm.deepseek.summary-enabled`) | `false` | Optional |
+| `blog.ai.summary.max-content-chars` | Max characters of body sent to the model | `12000` | Optional |
+| `blog.ai.summary.max-description-length` | Max length of generated excerpt (≤ DB `description` column) | `240` | Optional |
+| `hm.volcengine.access-key` | Volcengine API Access Key ID (`dev` profile can inject via env var `VOLCENGINE_ACCESS_KEY`) | empty disables cover AI | Yes, if using cover AI |
+| `hm.volcengine.secret-key` | Volcengine Secret Access Key (pair with access key; `dev` profile can inject via env var `VOLCENGINE_SECRET_KEY`) | same | Yes, if using cover AI |
+| `hm.volcengine.cover-enabled` | Enable cover generation | `false` / `true` | Optional |
+| `hm.volcengine.verbose-http-log` | Whether to print Jimeng full request/URL/response body (no secret) to INFO (debug only) | `false` / `true` | Optional |
+| `blog.ai.cover.enabled` | Cover feature flag (from `hm.volcengine.cover-enabled` by default) | `false` | Optional |
+| `blog.ai.cover.req-key` | Jimeng capability `req_key` | `jimeng_high_aes_general_v21_L` | Optional |
+| `blog.ai.cover.width` / `height` | Output dimensions (px) | `1664` / `928` | Must match product limits |
+| `blog.ai.cover.region` | Signing region | `cn-north-1` | Usually unchanged |
+| `blog.ai.cover.max-total-prompt-chars` | Max length of combined positive prompt | `1200` | Optional |
+| `blog.ai.cover.max-user-prompt-chars` | Max length of admin “image instructions” field | `300` | Optional |
+
+### AI post excerpts (Spring AI + DeepSeek)
+
+- **Scope**: Text chat only—generate a short Chinese excerpt from title + Markdown body for lists/cards; **no image generation**.
+- **Admin UI**: Post create/edit page → description area → “generate excerpt from body” → `POST /admin/ai/article-description` with JSON `title` and `content` (same auth token as other admin APIs; admin dev proxy often uses `/api` as base).
+- **Save hook**: When `blog.ai.summary.enabled` is true and the API key works, **create/update** with an **empty** description auto-fills before persist; non-empty descriptions are kept.
+- **Disable**: Omit `hm.deepseek.api-key` or set `hm.deepseek.summary-enabled=false`; the app still starts.
+
+### AI post cover (Volcengine Jimeng + Qiniu)
+
+- **Flow**: Admin sends title + description (简介) → backend builds a fixed-style prompt → calls Volcengine visual `CVProcess` (Jimeng `req_key`) → downloads bytes from the temporary result URL → **uploads to Qiniu** under `covers/yyyy/MM/dd/` → returns a long-lived CDN URL.
+- **Admin UI**: Post create/edit → optional “AI image instructions” textarea → “AI generate cover (Jimeng)”; API `POST /admin/ai/article-cover` with `title`, `description`, optional `coverPrompt`, response `coverUrl`.
+- **Prerequisites**: `blog.ai.cover.enabled=true`, valid `hm.volcengine.access-key` / `hm.volcengine.secret-key`, and complete `qiniu.*` settings.
+- **Auth**: Backend uses Volcengine OpenAPI signing (HMAC-SHA256), not Bearer tokens; tune `req_key` and dimensions per current Jimeng docs in `application.yml`.
 
 ---
 
@@ -262,4 +304,4 @@ This project is open-sourced under the [Apache License 2.0](../LICENSE).
 
 ---
 
-*Last updated: 2026-04-01*
+*Last updated: 2026-04-03*

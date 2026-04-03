@@ -11,6 +11,7 @@ import cn.ayeez.blogserver.mapper.BlogCategoryMapper;
 import cn.ayeez.blogserver.mapper.BlogPostTagMapper;
 import cn.ayeez.blogserver.mapper.BlogTagMapper;
 import cn.ayeez.blogserver.mapper.PostMapper;
+import cn.ayeez.blogserver.service.ai.ArticleSummaryAiService;
 import cn.ayeez.blogserver.service.postServer.PostService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -36,6 +37,9 @@ public class PostServerImpl implements PostService {
 
     @Autowired
     private BlogPostTagMapper blogPostTagMapper;
+
+    @Autowired
+    private ArticleSummaryAiService articleSummaryAiService;
 
     /**
      * 获取文章列表（详细）
@@ -90,6 +94,7 @@ public class PostServerImpl implements PostService {
     public void add(PostBody postBody) {
         log.info("添加文章前查询id(abbrlink)是否存在，参数：{}",postBody);
         normalizeCardBadges(postBody);
+        articleSummaryAiService.fillDescriptionIfBlank(postBody);
         // 1. 解析并落库分类，得到最终 categoryId
         Long categoryId = resolveCategoryId(postBody.getCategories());
         postBody.setCategoryId(categoryId);
@@ -129,6 +134,7 @@ public class PostServerImpl implements PostService {
             throw new IllegalArgumentException("更新文章时，id 不能为空");
         }
         normalizeCardBadges(postBody);
+        articleSummaryAiService.fillDescriptionIfBlank(postBody);
 
         // 1. 更新分类
         Long categoryId = resolveCategoryId(postBody.getCategories());

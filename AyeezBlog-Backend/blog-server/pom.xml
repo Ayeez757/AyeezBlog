@@ -89,6 +89,12 @@
             <version>7.19.0</version>
         </dependency>
 
+        <!-- Spring AI：通过 OpenAI 兼容接口接入 DeepSeek -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

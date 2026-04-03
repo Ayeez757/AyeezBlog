@@ -37,7 +37,13 @@
     <!-- 统一管理依赖版本（子模块可省略版本号） -->
     <dependencyManagement>
         <dependencies>
-            <!-- 如果有第三方库需要统一版本，放这里 -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>1.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

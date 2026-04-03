@@ -28,13 +28,41 @@
             <el-input
               v-model="form.description"
               type="textarea"
-              placeholder="列表或摘要中显示的简短描述"
+              placeholder="列表或摘要中显示的简短描述；留空保存时若已开启后端 AI，将自动生成"
               :rows="3"
               resize="none"
             />
+            <div class="description-ai-actions">
+              <el-button
+                type="primary"
+                plain
+                :loading="aiDescriptionLoading"
+                :disabled="loading"
+                @click="generateDescriptionByAi"
+              >
+                根据正文生成简介
+              </el-button>
+            </div>
+            <p v-if="aiDescriptionLoading && aiDescriptionHint" class="ai-progress-hint">
+              {{ aiDescriptionHint }}
+            </p>
           </el-form-item>
           <el-form-item label="封面链接">
             <el-input v-model="form.cover" placeholder="https://…" clearable />
+          </el-form-item>
+          <el-form-item label="AI 生图补充说明（可选）" class="cover-ai-prompt-item">
+            <el-input
+              v-model="coverAiUserPrompt"
+              type="textarea"
+              :rows="2"
+              placeholder="对封面构图、配色、主体元素等提出要求；留空则仅按标题与简介自动生成"
+              maxlength="300"
+              show-word-limit
+              resize="none"
+            />
+            <p class="cover-ai-prompt-hint">会拼入发送给即梦的正向提示词，与下方「AI 生成封面」按钮配合使用。</p>
+          </el-form-item>
+          <el-form-item label="封面操作" class="cover-actions-form-item">
             <div class="cover-upload-row">
               <el-upload
                 class="cover-upload"
@@ -63,7 +91,19 @@
               >
                 清空封面
               </el-button>
+              <el-button
+                type="success"
+                plain
+                :loading="aiCoverLoading"
+                :disabled="loading || coverUploading"
+                @click="generateCoverByAi"
+              >
+                AI 生成封面（即梦）
+              </el-button>
             </div>
+            <p v-if="aiCoverLoading && aiCoverHint" class="ai-progress-hint">
+              {{ aiCoverHint }}
+            </p>
           </el-form-item>
           <div class="cover-preview-wrap cover-preview-wrap--meta">
             <span class="cover-preview-label">封面预览</span>
@@ -179,7 +219,7 @@ import axios from 'axios';
 import MarkdownIt from 'markdown-it';
 import fm from 'front-matter';
 import yaml from 'js-yaml';
-import { addPost, getPostDetail, updatePost, getQiniuUploadToken } from '../api/index';
+import { addPost, getPostDetail, updatePost, getQiniuUploadToken, generateArticleDescription, generateArticleCover } from '../api/index';
 
 export default {
   data() {
@@ -215,7 +255,15 @@ export default {
       renderedHtml: '',
       coverPreviewError: false,
       coverUploading: false,
-      coverUploadProgress: 0
+      coverUploadProgress: 0,
+      aiDescriptionLoading: false,
+      aiCoverLoading: false,
+      aiDescriptionHint: '',
+      aiCoverHint: '',
+      _aiDescHintTimer: null,
+      _aiCoverHintTimer: null,
+      /** 仅用于 AI 封面，不写入文章数据 */
+      coverAiUserPrompt: ''
     };
   },
   computed: {
@@ -246,6 +294,7 @@ export default {
   },
   beforeUnmount() {
     clearTimeout(this._formSyncTimer);
+    this.clearAiHintTimers();
   },
   async created() {
     this.md = new MarkdownIt();
@@ -254,6 +303,123 @@ export default {
     }
   },
   methods: {
+    clearAiHintTimers() {
+      if (this._aiCoverHintTimer) {
+        clearInterval(this._aiCoverHintTimer);
+        this._aiCoverHintTimer = null;
+      }
+      if (this._aiDescHintTimer) {
+        clearInterval(this._aiDescHintTimer);
+        this._aiDescHintTimer = null;
+      }
+      this.aiCoverHint = '';
+      this.aiDescriptionHint = '';
+    },
+    startCoverAiHintRotation() {
+      const hints = [
+        '已向即梦提交文生图请求，出图较慢请稍候（通常需数十秒）…',
+        '即梦正在绘制封面，请继续等待…',
+        '已拿到图片，正在下载并上传到七牛…'
+      ];
+      let step = 0;
+      this.aiCoverHint = hints[0];
+      this._aiCoverHintTimer = setInterval(() => {
+        step = Math.min(step + 1, hints.length - 1);
+        this.aiCoverHint = hints[step];
+      }, 14000);
+    },
+    startDescriptionAiHintRotation() {
+      const hints = ['正在调用 DeepSeek 生成简介…', '模型输出中，请稍候…'];
+      let step = 0;
+      this.aiDescriptionHint = hints[0];
+      this._aiDescHintTimer = setInterval(() => {
+        step = Math.min(step + 1, hints.length - 1);
+        this.aiDescriptionHint = hints[step];
+      }, 7000);
+    },
+    async generateCoverByAi() {
+      const description = (this.form.description || '').trim();
+      if (!description) {
+        this.$message.warning('请先填写简介（描述），或点击上方「根据正文生成简介」');
+        return;
+      }
+      this.clearAiHintTimers();
+      this.aiCoverLoading = true;
+      this.startCoverAiHintRotation();
+      this.$message.info({
+        message: '封面生成中，可能需要 1～3 分钟，请勿关闭或刷新页面',
+        duration: 8000,
+        showClose: true
+      });
+      try {
+        const data = await generateArticleCover({
+          title: (this.form.title || '').trim(),
+          description,
+          coverPrompt: (this.coverAiUserPrompt || '').trim()
+        });
+        const url = data && data.coverUrl ? String(data.coverUrl).trim() : '';
+        if (!url) {
+          this.$message.error('未返回封面地址');
+          return;
+        }
+        this.form.cover = this.normalizeCoverUrl(url);
+        this.coverPreviewError = false;
+        this.$message.success('封面已生成并上传到七牛');
+      } catch (error) {
+        const msg = this.pickAxiosErrorMessage(error, '生成封面失败');
+        this.$message.error(msg);
+        console.error('AI 生成封面失败:', error);
+      } finally {
+        this.clearAiHintTimers();
+        this.aiCoverLoading = false;
+      }
+    },
+    async generateDescriptionByAi() {
+      const content = (this.markdownContent || '').trim();
+      if (!content) {
+        this.$message.warning('请先编写正文 Markdown');
+        return;
+      }
+      this.clearAiHintTimers();
+      this.aiDescriptionLoading = true;
+      this.startDescriptionAiHintRotation();
+      this.$message.info({
+        message: '正在生成简介，请稍候',
+        duration: 4000,
+        showClose: true
+      });
+      try {
+        const data = await generateArticleDescription({
+          title: (this.form.title || '').trim(),
+          content
+        });
+        const desc = data && data.description ? String(data.description).trim() : '';
+        if (!desc) {
+          this.$message.error('未返回有效简介');
+          return;
+        }
+        this.form.description = desc;
+        this.$message.success('已生成简介，可继续编辑后保存');
+      } catch (error) {
+        const msg = this.pickAxiosErrorMessage(error, '生成简介失败');
+        this.$message.error(msg);
+        console.error('AI 生成简介失败:', error);
+      } finally {
+        this.clearAiHintTimers();
+        this.aiDescriptionLoading = false;
+      }
+    },
+    pickAxiosErrorMessage(error, fallback) {
+      if (!error) return fallback;
+      const d = error.response && error.response.data;
+      if (d && typeof d.message === 'string' && d.message.trim()) {
+        return d.message.trim();
+      }
+      if (typeof error.message === 'string' && error.message.trim()) {
+        return error.message.trim();
+      }
+      return fallback;
+    },
     normalizeCoverUrl(url) {
       const raw = (url || '').trim();
       if (!raw) return '';
@@ -555,6 +721,7 @@ export default {
       this.markdownContent = '';
       this.renderedHtml = '';
       this.coverPreviewError = false;
+      this.coverAiUserPrompt = '';
       this.parsedFrontMatter = { tags: [], categories: [] };
       this.$nextTick(() => {
         this.suppressFormWatch = false;
@@ -651,6 +818,17 @@ export default {
 
 .article-form__row--dates {
   grid-template-columns: 1fr 1fr;
+}
+
+.description-ai-actions {
+  margin-top: 8px;
+}
+
+.ai-progress-hint {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #64748b;
 }
 
 .badge-switch-row {
@@ -851,12 +1029,26 @@ export default {
   margin-bottom: 0;
 }
 
+.cover-ai-prompt-item {
+  margin-bottom: 4px;
+}
+
+.cover-ai-prompt-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.cover-actions-form-item {
+  margin-bottom: 12px;
+}
+
 .cover-upload-row {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 10px;
 }
 
 .cover-upload-progress {
