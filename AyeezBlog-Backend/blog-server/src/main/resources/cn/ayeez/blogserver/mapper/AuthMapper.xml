@@ -5,10 +5,17 @@
 <mapper namespace="cn.ayeez.blogserver.mapper.AuthMapper">
 
 
-    <select id="loginByUsernameAndPassword" resultType="cn.ayeez.blogpojo.po.Auth">
+    <select id="findByUsername" resultType="cn.ayeez.blogpojo.po.Auth">
         SELECT *
-        from user
-        where username = #{username}
-          and password = #{password};
+        FROM user
+        WHERE username = #{username}
+          AND role = 1
+          AND status = 1
     </select>
+
+    <update id="updatePassword">
+        UPDATE user
+        SET password = #{password}
+        WHERE id = #{id}
+    </update>
 </mapper>

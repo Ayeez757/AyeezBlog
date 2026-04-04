@@ -138,9 +138,9 @@ create table user
     comment '用户表';
 
 
--- 插入默认管理员用户
+-- 插入默认管理员用户（密码为 admin 的 BCrypt 哈希，强度 10）
 insert into user (username, password, role, status)
-values ('admin', 'admin', 1, 1);
+values ('admin', '$2a$10$eBH3YL6wptUNHJidoKGlzeVue1QUxgDEpHOfr0zefa6eM1IxuNfga', 1, 1);
 
 -- 插入一篇默认欢迎使用AyeezBlog博客测试文章
 insert into blog_post (id, title, content, cover, create_time, update_time, description)
