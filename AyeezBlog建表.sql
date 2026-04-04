@@ -224,6 +224,18 @@ create table if not exists blog_log_entry
     unique uk_blog_log_entry_version_sort (version_id, sort)
 ) comment '站点更新日志条目表' collate = utf8mb4_unicode_ci;
 
+-- 关于页追番列表（管理端可排序）
+create table if not exists blog_about_anime
+(
+    id         bigint unsigned auto_increment primary key,
+    image_url  varchar(512)                        not null comment '封面图完整 URL',
+    title      varchar(128)                        null comment '标题/tooltip（可选）',
+    link_url   varchar(512)                        null comment '点击跳转（可选）',
+    sort       int      default 0                 not null comment '展示顺序，升序',
+    created_at datetime default CURRENT_TIMESTAMP not null,
+    updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
+) comment '关于页追番列表' collate = utf8mb4_unicode_ci;
+
 ALTER TABLE blog_post
     ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '置顶' AFTER category_id,
     ADD COLUMN featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT '推荐' AFTER pinned,
