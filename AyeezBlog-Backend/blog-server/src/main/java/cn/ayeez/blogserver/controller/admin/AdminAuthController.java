@@ -27,12 +27,10 @@ public class AdminAuthController {
      * @param auth 登录参数（账号、密码）
      * @return 登录成功返回用户信息与 token，失败返回错误信息
      */
-    //TODO 登录接口已经重写，能正常登录返回token，但是需要加一个加密功能，现在数据库里存的还是未加密临时密码
     @RequestMapping("/login")
     public Result login(@RequestBody Auth auth) {
         String username = auth.getUsername();
-        String password = auth.getPassword();
-        log.info("用户登录，账号：{}，密码{}",username,password);
+        log.info("用户登录，账号：{}", username);
         LoginInfo loginInfo = authServer.login(auth);
         if(loginInfo!=null){
         return Result.success(loginInfo);

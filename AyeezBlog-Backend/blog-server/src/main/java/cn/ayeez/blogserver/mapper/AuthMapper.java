@@ -1,7 +1,8 @@
 package cn.ayeez.blogserver.mapper;
 
-import cn.ayeez.blogpojo.bo.Auth;
+import cn.ayeez.blogpojo.po.Auth;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 管理员登录Mapper接口
@@ -9,5 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface AuthMapper {
 
-    cn.ayeez.blogpojo.po.Auth loginByUsernameAndPassword(Auth auth);
+    Auth findByUsername(@Param("username") String username);
+
+    int updatePassword(@Param("id") Long id, @Param("password") String password);
 }
