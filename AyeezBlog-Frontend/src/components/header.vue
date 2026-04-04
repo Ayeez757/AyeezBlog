@@ -18,11 +18,17 @@
             <nav class="header-nav">
                 <ul>
                     <li
-                        v-for="(item, index) in navItems"
+                        v-for="(item, index) in navEntries"
                         :key="index"
                         class="nav-item"
                     >
-                        <a @click.prevent="navigate(item.section)" href="#">{{ item.name }}</a>
+                        <a
+                            v-if="item.href"
+                            :href="item.href"
+                            :target="item.external ? '_blank' : undefined"
+                            :rel="item.external ? 'noopener noreferrer' : undefined"
+                        >{{ item.name }}</a>
+                        <a v-else @click.prevent="navigate(item.section)" href="#">{{ item.name }}</a>
                         <div class="fluorescent-bar"></div>
                     </li>
                 </ul>
@@ -55,10 +61,10 @@
                     </div>
                     <ul class="side-drawer-list">
                         <li
-                            v-for="(item, index) in navItems"
+                            v-for="(item, index) in navEntries"
                             :key="'side-' + index"
                             class="side-drawer-item"
-                            @click="handleMenuClick(item.section)"
+                            @click="handleDrawerItem(item)"
                         >
                             <span>{{ item.name }}</span>
                             <div class="side-drawer-bar"></div>
@@ -78,8 +84,18 @@
 export default {
     data() {
         return {
-            // 把导航项提出来
-            navItems: [
+            isMenuOpen: false
+        };
+    },
+    computed: {
+        navEntries() {
+            const githubUrl =
+                (import.meta.env.VITE_GITHUB_URL && String(import.meta.env.VITE_GITHUB_URL).trim()) ||
+                "https://github.com/Ayeez757/AyeezBlog";
+            const adminUrl =
+                (import.meta.env.VITE_ADMIN_URL && String(import.meta.env.VITE_ADMIN_URL).trim()) ||
+                "/admin";
+            return [
                 { name: "首页", section: "" },
                 { name: "关于", section: "about" },
                 { name: "归档", section: "archive" },
@@ -87,10 +103,11 @@ export default {
                 // { name: "朋友圈", section: "fc" },
                 { name: "留言", section: "comments" },
                 { name: "日志", section: "logs" },
-                // { name: "联系", section: "contact" }
-            ],
-            isMenuOpen: false
-        };
+                // { name: "联系", section: "contact" },
+                { name: "GitHub", href: githubUrl, external: true },
+                { name: "管理", href: adminUrl, external: false }
+            ];
+        }
     },
     mounted() {
         /// 确保 DOM 渲染完成后再执行动画
@@ -167,6 +184,18 @@ export default {
         handleMenuClick(section) {
             this.navigate(section);
             this.closeMenu();
+        },
+        handleDrawerItem(item) {
+            if (item.href) {
+                if (item.external) {
+                    window.open(item.href, "_blank", "noopener,noreferrer");
+                } else {
+                    window.location.assign(item.href);
+                }
+                this.closeMenu();
+                return;
+            }
+            this.handleMenuClick(item.section);
         },
         handleResize() {
             // 大屏时强制关闭抽屉，防止布局错乱
