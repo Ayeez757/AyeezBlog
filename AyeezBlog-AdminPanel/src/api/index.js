@@ -161,3 +161,24 @@ export const setCurrentLogVersion = (data) => {
 export const getAdminDashboardStats = (params) => {
   return request.get('/admin/stats/dashboard', { params })
 }
+
+// 关于页追番列表
+export const getAboutAnimeList = () => {
+  return request.get('/admin/about/anime/list')
+}
+
+export const addAboutAnime = (data) => {
+  return request.post('/admin/about/anime/add', data)
+}
+
+export const updateAboutAnime = (data) => {
+  return request.put('/admin/about/anime/update', data)
+}
+
+export const deleteAboutAnime = (params) => {
+  return request.delete('/admin/about/anime/delete', { params })
+}
+
+export const reorderAboutAnime = (data) => {
+  return request.put('/admin/about/anime/reorder', data)
+}

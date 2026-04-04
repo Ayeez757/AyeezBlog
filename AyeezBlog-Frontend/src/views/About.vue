@@ -172,14 +172,22 @@
         </div>
         <div class="anime-grid" ref="animeGrid" aria-label="追番卡片列表">
           <a
-            v-for="(src, i) in animeDisplayedImages"
-            :key="src"
-            href="#"
+            v-for="(item, i) in animeDisplayedItems"
+            :key="animeItemKey(item, i)"
+            :href="item.linkUrl || '#'"
+            :target="item.linkUrl ? '_blank' : undefined"
+            :rel="item.linkUrl ? 'noopener noreferrer' : undefined"
             class="anime-card"
-            @click.prevent
-            :title="`番剧 ${i + 1}`"
+            @click="onAnimeCardClick($event, item)"
+            :title="item.title || `番剧 ${i + 1}`"
           >
-            <img :src="src" :alt="`番剧 ${i + 1}`" class="anime-card-img" loading="lazy" @error="hideImage" />
+            <img
+              :src="item.imageUrl"
+              :alt="item.title || `番剧 ${i + 1}`"
+              class="anime-card-img"
+              loading="lazy"
+              @error="hideImage"
+            />
           </a>
         </div>
       </section>
@@ -188,6 +196,8 @@
 </template>
 
 <script>
+import { fetchAboutAnimeList } from '@/api';
+
 export default {
   name: 'About',
   data() {
@@ -257,7 +267,8 @@ export default {
       ],
 
       animeBase: 'https://qiniu.ayeez.cn/',
-      animeImages: [],
+      /** @type {{ id: number|null, imageUrl: string, title: string|null, linkUrl: string|null }[]} */
+      animeList: [],
       animeCollapsed: true,
       animeRowsToShow: 2,
       animeVisibleCount: 0,
@@ -288,10 +299,10 @@ export default {
     wakatimeCompact() {
       return 'https://github-readme-stats-fast.vercel.app/api/wakatime?username=Ayeez757&cache_seconds=1800&layout=compact';
     },
-    animeDisplayedImages() {
-      if (!this.animeCollapsed) return this.animeImages;
+    animeDisplayedItems() {
+      if (!this.animeCollapsed) return this.animeList;
       const count = this.animeVisibleCount || this.animeRowsToShow;
-      return (this.animeImages || []).slice(0, count);
+      return (this.animeList || []).slice(0, count);
     }
   },
   mounted() {
@@ -302,7 +313,7 @@ export default {
     }));
 
     this.initAnimatedTitles();
-    this.initAnimeImages();
+    this.loadAnimeList();
     // 图片列表初始化后，计算当前网格可容纳列数，用于折叠显示“两行”
     this.$nextTick(() => {
       this.updateAnimeVisibleCount();
@@ -425,8 +436,71 @@ export default {
       buildChars(subtitleEl, this.subtitleText, 'subtitle-char');
     },
     
-    initAnimeImages() {
-      // 动漫追番图：统一走七牛资源（p1.jpg ~ p43.jpg）
+    animeItemKey(item, i) {
+      if (item && item.id != null) return `id-${item.id}`;
+      if (item && item.imageUrl) return `u-${item.imageUrl}`;
+      return `i-${i}`;
+    },
+    onAnimeCardClick(e, item) {
+      if (!item || !item.linkUrl) {
+        e.preventDefault();
+      }
+    },
+    /** 从接口响应中取出数组（兼容 { data: [] } 或极少数直连数组） */
+    unwrapAboutAnimePayload(res) {
+      if (Array.isArray(res)) return res;
+      if (res && Array.isArray(res.data)) return res.data;
+      return null;
+    },
+    normalizeAboutAnimeRow(r) {
+      if (!r || typeof r !== 'object') return null;
+      const imageUrl = r.imageUrl || r.image_url;
+      if (!imageUrl || !String(imageUrl).trim()) return null;
+      const sort = r.sort != null ? Number(r.sort) : 0;
+      return {
+        id: r.id != null ? r.id : null,
+        imageUrl: String(imageUrl).trim(),
+        title: r.title != null && String(r.title).trim() ? String(r.title).trim() : null,
+        linkUrl:
+          r.linkUrl || r.link_url
+            ? String(r.linkUrl || r.link_url).trim() || null
+            : null,
+        sort: Number.isFinite(sort) ? sort : 0
+      };
+    },
+    /** 与后端 ORDER BY sort ASC, id ASC 一致，避免网关/序列化导致顺序异常 */
+    sortAboutAnimeRows(rows) {
+      return [...rows].sort((a, b) => {
+        if (a.sort !== b.sort) return a.sort - b.sort;
+        const ida = a.id != null ? Number(a.id) : 0;
+        const idb = b.id != null ? Number(b.id) : 0;
+        return ida - idb;
+      });
+    },
+    async loadAnimeList() {
+      try {
+        const res = await fetchAboutAnimeList();
+        const raw = this.unwrapAboutAnimePayload(res);
+        if (Array.isArray(raw) && raw.length > 0) {
+          const normalized = raw.map((r) => this.normalizeAboutAnimeRow(r)).filter(Boolean);
+          if (normalized.length > 0) {
+            const ordered = this.sortAboutAnimeRows(normalized).map(({ id, imageUrl, title, linkUrl }) => ({
+              id,
+              imageUrl,
+              title,
+              linkUrl
+            }));
+            this.animeList = ordered;
+            this.$nextTick(() => this.updateAnimeVisibleCount());
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('追番列表接口不可用，使用本地兜底顺序', err);
+      }
+      this.initAnimeImagesFallback();
+    },
+    initAnimeImagesFallback() {
       const files = [
         'p45.jpg',
         'p1.jpg',
@@ -473,13 +547,15 @@ export default {
         'p41.jpg',
         'p42.jpg',
         'p43.jpg',
-        'p44.jpg',
+        'p44.jpg'
       ];
-      this.animeImages = files.map((f) => `${this.animeBase}${f}`);
-      // 初始化完成后也更新一次，避免首次渲染折叠行数不准
-      this.$nextTick(() => {
-        this.updateAnimeVisibleCount();
-      });
+      this.animeList = files.map((f) => ({
+        id: null,
+        imageUrl: `${this.animeBase}${f}`,
+        title: null,
+        linkUrl: null
+      }));
+      this.$nextTick(() => this.updateAnimeVisibleCount());
     },
     onAnimeResize() {
       // 轻量 debounce，避免频繁计算
@@ -489,7 +565,7 @@ export default {
       }, 150);
     },
     updateAnimeVisibleCount() {
-      if (!this.animeImages || this.animeImages.length === 0) return;
+      if (!this.animeList || this.animeList.length === 0) return;
 
       const gridEl = this.$refs.animeGrid;
       let colCount = 0;
@@ -515,7 +591,7 @@ export default {
 
       colCount = Math.max(1, colCount || 1);
       const nextCount = colCount * (this.animeRowsToShow || 2);
-      this.animeVisibleCount = Math.min(nextCount, this.animeImages.length);
+      this.animeVisibleCount = Math.min(nextCount, this.animeList.length);
     },
     toggleAnimeCollapse() {
       this.animeCollapsed = !this.animeCollapsed;

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.AboutAnimeMapper">
+
+    <select id="listOrdered" resultType="cn.ayeez.blogpojo.entity.AboutAnime">
+        SELECT id, image_url, title, link_url, sort, created_at, updated_at
+        FROM blog_about_anime
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="selectMaxSort" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(sort), -1) FROM blog_about_anime
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(1) FROM blog_about_anime
+    </select>
+
+    <insert id="insert" parameterType="cn.ayeez.blogpojo.entity.AboutAnime" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_about_anime (image_url, title, link_url, sort)
+        VALUES (#{imageUrl}, #{title}, #{linkUrl}, #{sort})
+    </insert>
+
+    <update id="update" parameterType="cn.ayeez.blogpojo.entity.AboutAnime">
+        UPDATE blog_about_anime
+        SET image_url = #{imageUrl},
+            title     = #{title},
+            link_url  = #{linkUrl},
+            sort      = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateContent" parameterType="cn.ayeez.blogpojo.entity.AboutAnime">
+        UPDATE blog_about_anime
+        SET image_url = #{imageUrl},
+            title     = #{title},
+            link_url  = #{linkUrl}
+        WHERE id = #{id}
+    </update>
+
+    <!-- MySQL：FIELD(id, id1, id2, ...) 返回 id 在列表中的 1-based 位置；减 1 得到 sort -->
+    <update id="reorderSorts">
+        UPDATE blog_about_anime
+        SET sort = FIELD(id
+        <foreach collection="ids" item="i" separator="">
+            ,#{i}
+        </foreach>
+        ) - 1
+        WHERE id IN
+        <foreach collection="ids" item="i" open="(" separator="," close=")">
+            #{i}
+        </foreach>
+    </update>
+
+    <select id="countByIds" resultType="int">
+        SELECT COUNT(*) FROM blog_about_anime WHERE id IN
+        <foreach collection="ids" item="i" open="(" separator="," close=")">
+            #{i}
+        </foreach>
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM blog_about_anime WHERE id = #{id}
+    </delete>
+</mapper>

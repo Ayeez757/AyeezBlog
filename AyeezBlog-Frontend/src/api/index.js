@@ -65,6 +65,9 @@ export const fetchSiteStats = () => request('GET', '/api/post/stats');
 // 获取友链分组列表（固定原路径）
 export const fetchLinks = () => request('GET', '/api/links/list');
 
+// 关于页追番列表（后端 blog_about_anime，按 sort 排序）
+export const fetchAboutAnimeList = () => request('GET', '/api/about/anime/list');
+
 // 上报一次访问
 export const trackSiteVisit = (visitorKey, path = '/') => {
   const params = new URLSearchParams({ path });
