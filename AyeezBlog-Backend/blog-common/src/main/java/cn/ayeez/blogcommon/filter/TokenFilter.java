@@ -14,6 +14,7 @@ import java.io.IOException;
 @WebFilter(urlPatterns = "/admin/*")
 public class TokenFilter implements Filter {
 
+    private static final String ADMIN_LOGIN_PATH = "/admin/login";
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
@@ -21,7 +22,8 @@ public class TokenFilter implements Filter {
         //强转
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
-        String url = request.getRequestURI();
+        String requestUri = request.getRequestURI();
+        String servletPath = normalizePath(request, requestUri);
 
         // CORS 预检不携带 token，必须放行，否则浏览器会拦截后续 POST（表现为按钮无反应或控制台 CORS/网络错误）
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -35,8 +37,8 @@ public class TokenFilter implements Filter {
 //            return;
 //        }
 //
-        if (url.contains("login")) {
-            log.info("登录操作，放行");
+        if (ADMIN_LOGIN_PATH.equals(servletPath)) {
+            log.info("登录接口放行：{}", servletPath);
             filterChain.doFilter(request, response);
             return;
         }
@@ -59,5 +61,30 @@ public class TokenFilter implements Filter {
         log.info("token解析成功，放行");
         filterChain.doFilter(request, response);
         return;
+    }
+
+    /**
+     * 防止误判，比如说防止拦截/admin/login;1这样的路径,本质上还是登录接口，但是不是equals了，所以用处理后的路径来匹配
+     */
+    private static String normalizePath(HttpServletRequest request, String requestUri) {
+        if (requestUri == null || requestUri.isEmpty()) {
+            return "";
+        }
+
+        String path = requestUri;
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty() && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+
+        int semicolonIdx = path.indexOf(';');
+        if (semicolonIdx >= 0) {
+            path = path.substring(0, semicolonIdx);
+        }
+
+        if (path.length() > 1 && path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return path;
     }
 }
