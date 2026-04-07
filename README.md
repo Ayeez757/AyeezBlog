@@ -343,3 +343,6 @@ GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ay
 ---
 
 *最后更新：2026-04-03
+
+
+[![Star History Chart](https://api.star-history.com/chart?repos=ayeez757/ayeezblog&type=date&legend=top-left)](https://www.star-history.com/?repos=ayeez757%2Fayeezblog&type=date&legend=top-left)
