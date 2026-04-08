@@ -68,6 +68,12 @@ export const fetchLinks = () => request('GET', '/api/links/list');
 // 关于页追番列表（后端 blog_about_anime，按 sort 排序）
 export const fetchAboutAnimeList = () => request('GET', '/api/about/anime/list');
 
+// 相册列表（前台）
+export const fetchAlbums = () => request('GET', '/api/album/list');
+
+// 相册详情（前台）
+export const fetchAlbumById = (id) => request('GET', `/api/album/get?id=${id}`);
+
 // 上报一次访问
 export const trackSiteVisit = (visitorKey, path = '/') => {
   const params = new URLSearchParams({ path });

@@ -102,6 +102,7 @@ export default {
                 { name: "友链", section: "links" },
                 // { name: "朋友圈", section: "fc" },
                 { name: "留言", section: "comments" },
+                { name: "相册", section: "albums" },
                 { name: "日志", section: "logs" },
                 // { name: "联系", section: "contact" },
                 { name: "GitHub", href: githubUrl, external: true },

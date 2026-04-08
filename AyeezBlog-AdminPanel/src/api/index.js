@@ -182,3 +182,36 @@ export const deleteAboutAnime = (params) => {
 export const reorderAboutAnime = (data) => {
   return request.put('/admin/about/anime/reorder', data)
 }
+
+// 相册管理
+export const getAlbumList = () => {
+  return request.get('/admin/album/list')
+}
+
+export const addAlbum = (data) => {
+  return request.post('/admin/album/add', data)
+}
+
+export const updateAlbum = (data) => {
+  return request.put('/admin/album/update', data)
+}
+
+export const deleteAlbum = (params) => {
+  return request.delete('/admin/album/delete', { params })
+}
+
+export const getAlbumPhotoList = (params) => {
+  return request.get('/admin/album/photo/list', { params })
+}
+
+export const addAlbumPhoto = (data) => {
+  return request.post('/admin/album/photo/add', data)
+}
+
+export const updateAlbumPhoto = (data) => {
+  return request.put('/admin/album/photo/update', data)
+}
+
+export const deleteAlbumPhoto = (params) => {
+  return request.delete('/admin/album/photo/delete', { params })
+}

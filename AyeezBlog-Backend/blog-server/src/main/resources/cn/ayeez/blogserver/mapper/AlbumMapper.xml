@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.AlbumMapper">
+
+    <select id="listAlbums" resultType="cn.ayeez.blogpojo.entity.Album">
+        SELECT id, title, description, sort, created_at, updated_at
+        FROM blog_album
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="getAlbumById" resultType="cn.ayeez.blogpojo.entity.Album">
+        SELECT id, title, description, sort, created_at, updated_at
+        FROM blog_album
+        WHERE id = #{id}
+    </select>
+
+    <select id="listPhotosByAlbumIds" resultType="cn.ayeez.blogpojo.entity.AlbumPhoto">
+        SELECT id, album_id, image_url, caption, sort, created_at, updated_at
+        FROM (
+            SELECT p.*,
+                   ROW_NUMBER() OVER (PARTITION BY p.album_id ORDER BY p.sort ASC, p.id ASC) AS rn
+            FROM blog_album_photo p
+            WHERE p.album_id IN
+            <foreach collection="albumIds" item="albumId" open="(" separator="," close=")">
+                #{albumId}
+            </foreach>
+        ) t
+        WHERE t.rn &lt;= #{limitPerAlbum}
+        ORDER BY t.album_id ASC, t.sort ASC, t.id ASC
+    </select>
+
+    <select id="listPhotosByAlbumId" resultType="cn.ayeez.blogpojo.entity.AlbumPhoto">
+        SELECT id, album_id, image_url, caption, sort, created_at, updated_at
+        FROM blog_album_photo
+        WHERE album_id = #{albumId}
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="countPhotosByAlbumId" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM blog_album_photo
+        WHERE album_id = #{albumId}
+    </select>
+
+    <insert id="insertAlbum" parameterType="cn.ayeez.blogpojo.entity.Album" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_album (title, description, sort)
+        VALUES (#{title}, #{description}, #{sort})
+    </insert>
+
+    <update id="updateAlbum" parameterType="cn.ayeez.blogpojo.entity.Album">
+        UPDATE blog_album
+        SET title = #{title},
+            description = #{description},
+            sort = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteAlbumById">
+        DELETE FROM blog_album WHERE id = #{id}
+    </delete>
+
+    <insert id="insertPhoto" parameterType="cn.ayeez.blogpojo.entity.AlbumPhoto" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_album_photo (album_id, image_url, caption, sort)
+        VALUES (#{albumId}, #{imageUrl}, #{caption}, #{sort})
+    </insert>
+
+    <update id="updatePhoto" parameterType="cn.ayeez.blogpojo.entity.AlbumPhoto">
+        UPDATE blog_album_photo
+        SET album_id = #{albumId},
+            image_url = #{imageUrl},
+            caption = #{caption},
+            sort = #{sort}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deletePhotoById">
+        DELETE FROM blog_album_photo WHERE id = #{id}
+    </delete>
+
+    <select id="selectMaxAlbumSort" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(sort), -1) FROM blog_album
+    </select>
+
+    <select id="selectMaxPhotoSort" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(sort), -1) FROM blog_album_photo WHERE album_id = #{albumId}
+    </select>
+</mapper>
