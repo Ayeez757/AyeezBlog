@@ -11,6 +11,7 @@ import AboutAnime from '@/views/AboutAnime.vue'
 import AboutAnimeCards from '@/views/AboutAnimeCards.vue'
 import Logs from '@/views/Logs.vue'
 import LogsView from '@/views/LogsView.vue'
+import Albums from '@/views/Albums.vue'
 
 const routers = [
   { path: '/login', name: 'Login', component: Login, meta: { requiresAuth: false } },
@@ -19,6 +20,7 @@ const routers = [
   { path: '/category', name: 'Category', component: Category, meta: { requiresAuth: true } },
   { path: '/tag', name: 'Tag', component: Tag, meta: { requiresAuth: true } },
   { path: '/links', name: 'Links', component: Links, meta: { requiresAuth: true } },
+  { path: '/albums', name: 'Albums', component: Albums, meta: { requiresAuth: true } },
   { path: '/about-anime/cards', name: 'AboutAnimeCards', component: AboutAnimeCards, meta: { requiresAuth: true } },
   { path: '/about-anime', name: 'AboutAnime', component: AboutAnime, meta: { requiresAuth: true } },
   { path: '/logs', name: 'Logs', component: Logs, meta: { requiresAuth: true } },

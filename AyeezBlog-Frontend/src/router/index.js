@@ -9,6 +9,8 @@ import FriendsCircle from '@/views/FriendsCircle.vue';
 import Comments from '@/views/Comments.vue';
 import Logs from '@/views/Logs.vue';
 import PostDetail from '@/views/PostDetail.vue';
+import Albums from '@/views/Albums.vue';
+import AlbumDetail from '@/views/AlbumDetail.vue';
 
 
 const routes = [
@@ -19,6 +21,12 @@ const routes = [
   { path: '/fc', name: 'FriendsCircle', component: FriendsCircle },
   { path: '/comments', name: 'Comments', component: Comments },
   { path: '/logs', name: 'Logs', component: Logs },
+  { path: '/albums', name: 'Albums', component: Albums },
+  {
+    path: '/albums/:id',
+    name: 'AlbumDetail',
+    component: AlbumDetail
+  },
   {
     path: '/posts/:id',
     name: 'PostDetail',

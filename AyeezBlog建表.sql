@@ -236,6 +236,33 @@ create table if not exists blog_about_anime
     updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
 ) comment '关于页追番列表' collate = utf8mb4_unicode_ci;
 
+-- 相册表（前台展示 + 管理端维护）
+create table if not exists blog_album
+(
+    id          bigint unsigned auto_increment primary key,
+    title       varchar(128)                        not null comment '相册标题',
+    description varchar(512)                        null comment '相册描述',
+    sort        int      default 0                 not null comment '相册排序，升序',
+    created_at  datetime default CURRENT_TIMESTAMP not null,
+    updated_at  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
+) comment '相册主表' collate = utf8mb4_unicode_ci;
+
+-- 相册图片表（同一相册下多张图）
+create table if not exists blog_album_photo
+(
+    id          bigint unsigned auto_increment primary key,
+    album_id    bigint unsigned                    not null comment '相册ID',
+    image_url   varchar(512)                       not null comment '图片URL',
+    caption     varchar(255)                       null comment '图片文案',
+    sort        int      default 0                 not null comment '图片排序，升序',
+    created_at  datetime default CURRENT_TIMESTAMP not null,
+    updated_at  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    index idx_blog_album_photo_album_id (album_id),
+    constraint fk_blog_album_photo_album
+        foreign key (album_id) references blog_album (id)
+            on update cascade on delete cascade
+) comment '相册图片表' collate = utf8mb4_unicode_ci;
+
 ALTER TABLE blog_post
     ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '置顶' AFTER category_id,
     ADD COLUMN featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT '推荐' AFTER pinned,

@@ -11,6 +11,7 @@
       <el-menu-item index="/category">分类管理</el-menu-item>
       <el-menu-item index="/tag">标签管理</el-menu-item>
       <el-menu-item index="/links">友链管理</el-menu-item>
+      <el-menu-item index="/albums">相册管理</el-menu-item>
       <el-menu-item index="/about-anime">追番列表</el-menu-item>
       <el-menu-item index="/about-anime/cards">追番卡片视图</el-menu-item>
       <el-menu-item index="/logs">日志管理</el-menu-item>
