@@ -51,6 +51,11 @@
             </ul>
           </div>
         </aside>
+        <div
+          v-if="headings.length && isMobileReaderTocOpen"
+          class="reader-toc-backdrop"
+          @click="isMobileReaderTocOpen = false"
+        ></div>
 
         <!-- 文章内容（右侧） -->
         <div class="reader-main">
@@ -152,6 +157,18 @@
 
     <!-- 桌面端右下角悬浮球 -->
     <div class="float-buttons" v-if="!isReadingMode">
+      <div v-if="showReaderGuide" class="reader-guide" role="status" aria-live="polite">
+        <button
+          class="reader-guide__close"
+          type="button"
+          aria-label="关闭阅读模式引导"
+          @click="dismissReaderGuide"
+        >
+          ×
+        </button>
+        <p class="reader-guide__title">推荐使用阅读模式</p>
+        <p class="reader-guide__desc">点击右侧「阅」按钮，全屏沉浸式阅读文章</p>
+      </div>
       <button class="float-btn" @click="scrollToComments">
         评
       </button>
@@ -198,7 +215,9 @@ export default {
       __readerLenisContent: null,
       __readerLenisToc: null
       ,
-      __destroyedSmoothScrollByReader: false
+      __destroyedSmoothScrollByReader: false,
+      showReaderGuide: false,
+      readerGuideStorageKey: 'post-detail-reader-guide-shown-v1'
     };
   },
   computed: {
@@ -476,8 +495,33 @@ export default {
 
     // 进入/退出阅读模式（全屏覆盖层，禁用页面滚动）
     toggleReadingMode() {
+      if (this.showReaderGuide) {
+        this.markReaderGuideAsSeen();
+      }
       if (this.isReadingMode) this.exitReadingMode();
       else this.enterReadingMode();
+    },
+
+    initReaderGuide() {
+      if (typeof window === 'undefined' || !window.localStorage) return;
+      try {
+        const isSeen = window.localStorage.getItem(this.readerGuideStorageKey) === '1';
+        this.showReaderGuide = !isSeen;
+      } catch (e) {
+        this.showReaderGuide = false;
+      }
+    },
+
+    markReaderGuideAsSeen() {
+      this.showReaderGuide = false;
+      if (typeof window === 'undefined' || !window.localStorage) return;
+      try {
+        window.localStorage.setItem(this.readerGuideStorageKey, '1');
+      } catch (e) {}
+    },
+
+    dismissReaderGuide() {
+      this.markReaderGuideAsSeen();
     },
 
     enterReadingMode() {
@@ -673,6 +717,7 @@ export default {
   },
   async mounted() {
     await this.$nextTick();
+    this.initReaderGuide();
     const el = this.$refs.twikooPost;
     if (!el) {
       console.warn('Twikoo 容器未找到');
@@ -1029,6 +1074,76 @@ export default {
   z-index: 1000;
 }
 
+.reader-guide {
+  position: absolute;
+  right: 64px;
+  bottom: -2px;
+  width: min(360px, calc(100vw - 140px));
+  padding: 18px 44px 18px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, #12344a 0%, #2e789d 45%, #4fb4d8 100%);
+  color: #ffffff;
+  line-height: 1.45;
+  box-shadow: 0 16px 36px rgba(14, 40, 58, 0.5);
+  animation: readerGuidePulse 1.8s ease-in-out infinite;
+}
+
+.reader-guide::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -9px;
+  width: 16px;
+  height: 16px;
+  background: #3a95ba;
+  border-right: 1px solid rgba(255, 255, 255, 0.35);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.reader-guide__close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  padding: 0;
+}
+
+.reader-guide__close:hover {
+  color: #fff;
+}
+
+.reader-guide__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.reader-guide__desc {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+@keyframes readerGuidePulse {
+  0%,
+  100% {
+    transform: translateX(0);
+    box-shadow: 0 16px 36px rgba(14, 40, 58, 0.5);
+  }
+  50% {
+    transform: translateX(-2px);
+    box-shadow: 0 20px 44px rgba(14, 40, 58, 0.62);
+  }
+}
+
 .float-btn {
   width: 34px;
   height: 34px;
@@ -1120,7 +1235,7 @@ export default {
   position: fixed;
   inset: 0;
   z-index: 3000;
-  background: #ffffff;
+  background: #f8fafc;
   color: #111827;
 }
 
@@ -1494,7 +1609,7 @@ export default {
 @media (max-width: 768px) {
   /* 阅读模式：全屏优先 */
   .reader-shell {
-    padding: 56px 0 0;
+    padding: 58px 0 0;
     gap: 0;
     flex-direction: column;
   }
@@ -1504,40 +1619,62 @@ export default {
   }
 
   .reader-content-scroller {
-    padding: 0 16px;
+    padding: 0 12px 18px;
   }
 
   .reader-article {
     max-width: 100%;
     margin: 0;
     padding-right: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    padding: 14px 14px 16px;
   }
 
   .reader-title {
-    font-size: 22px;
+    font-size: 21px;
+    line-height: 1.35;
+    margin-bottom: 8px;
+  }
+
+  .reader-meta,
+  .reader-description {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .reader-hr {
+    margin: 12px 0 14px;
+  }
+
+  .reader-post-content {
+    font-size: 15px;
+    line-height: 1.8;
   }
 
   /* 手机目录：默认隐藏，可通过按钮展开/收起 */
   .reader-toc {
     position: fixed;
-    top: 56px;
+    top: 58px;
     left: 0;
     bottom: 0;
-    width: 78vw;
-    max-width: 320px;
+    width: 80vw;
+    max-width: 300px;
     z-index: 3002;
 
     background: #ffffff;
     opacity: 1;
     padding: 12px 10px 12px 12px;
-    padding-right: 12px;
+    padding-right: 10px;
 
     border-right: 1px solid #e5e7eb;
-    border-radius: 0 12px 12px 0;
-    box-shadow: 0 16px 40px rgba(17, 24, 39, 0.12);
+    border-radius: 0 14px 14px 0;
+    box-shadow: 0 14px 30px rgba(17, 24, 39, 0.14);
 
     transform: translateX(-110%);
-    transition: transform 0.2s ease;
+    transition: transform 0.22s ease;
     pointer-events: none;
   }
 
@@ -1546,8 +1683,35 @@ export default {
     pointer-events: auto;
   }
 
+  .reader-toc-backdrop {
+    position: fixed;
+    inset: 58px 0 0;
+    z-index: 3001;
+    background: rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(1px);
+  }
+
   .reader-toc-mobile-toggle {
     display: block;
+    top: 10px;
+    left: 10px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    font-size: 13px;
+    border-color: #d1d5db;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 6px 14px rgba(17, 24, 39, 0.08);
+  }
+
+  .reader-exit {
+    top: 10px;
+    right: 10px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    font-size: 13px;
+    border-color: #d1d5db;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 6px 14px rgba(17, 24, 39, 0.08);
   }
 }
 </style>
