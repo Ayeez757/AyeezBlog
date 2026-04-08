@@ -118,7 +118,7 @@
       </div>
 
       <div v-if="!isLoading && !loadError" class="archive-footer">
-        <a class="archive-footer__link" href="https://blog.ayeez.cn/archives" target="_blank" rel="noopener">
+        <a class="archive-footer__link" href="https://butterfly.ayeez.cn/archives" target="_blank" rel="noopener">
           想看旧站归档？点这里
         </a>
       </div>
