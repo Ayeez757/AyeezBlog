@@ -762,6 +762,27 @@ export default {
   position: fixed;
   right: 16px; /* 默认回退：避免窄屏重叠 */
   left: auto;
+  scrollbar-color: #8fa3b5 #1f1f1f; /* Firefox: thumb track */
+  scrollbar-width: thin; /* Firefox */
+}
+
+.toc-sidebar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.toc-sidebar::-webkit-scrollbar-track {
+  background: #1f1f1f;
+  border-radius: 999px;
+}
+
+.toc-sidebar::-webkit-scrollbar-thumb {
+  background: #8fa3b5;
+  border-radius: 999px;
+  border: 2px solid #1f1f1f;
+}
+
+.toc-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #b2c1cf;
 }
 
 .toc-title {
