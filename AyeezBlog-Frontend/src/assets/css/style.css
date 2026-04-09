@@ -3,6 +3,9 @@ body {
   width: 100%;
   overflow-x: clip; /* 裁剪横向溢出且不破坏 sticky */
   overscroll-behavior-x: none;
+  /* 强制统一各浏览器（尤其 Chrome）的英文字体为 Segoe UI 等系统 UI 字体 */
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
 }
 
 #app {
