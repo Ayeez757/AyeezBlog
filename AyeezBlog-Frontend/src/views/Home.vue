@@ -82,6 +82,9 @@
         class="post-card row-reveal-item"
         :data-post-id="post.id"
         :data-row-key="getPostRowKey(index)"
+        role="link"
+        tabindex="0"
+        :aria-label="`打开文章：${post.title}`"
         :class="[
           {
             'scan-active': isActive(post.id) || hoveredCardId === post.id,
@@ -89,7 +92,11 @@
             'row-revealed': isHomeRowRevealed(getPostRowKey(index))
           }
         ]"
-        @mouseenter="hoveredCardId = post.id" @mouseleave="hoveredCardId = null" @click="goToPost(post.id)">
+        @mouseenter="hoveredCardId = post.id"
+        @mouseleave="hoveredCardId = null"
+        @click="goToPost(post.id)"
+        @keydown.enter.prevent="goToPost(post.id)"
+        @keydown.space.prevent="goToPost(post.id)">
         <div class="post-cover-wrap">
           <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
           <div v-if="post.cardBadges && post.cardBadges.length" class="post-badges">
@@ -891,6 +898,8 @@ export default {
   border: 2px solid #ffffff00;
   position: relative;
   /* 为伪元素定位做准备 */
+  cursor: pointer;
+  outline: none;
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 0.55s ease, transform 0.55s ease;
@@ -920,6 +929,13 @@ export default {
   /* 绿色边框 */
   box-shadow: 0 6px 15px rgba(0, 184, 40, 0.4);
   /* 增强阴影效果 */
+}
+
+/* 键盘/点击聚焦时的样式（可见聚焦框） */
+.post-card:focus-visible {
+  transform: translateY(-5px);
+  border: 2px solid #00b828;
+  box-shadow: 0 6px 15px rgba(0, 184, 40, 0.55);
 }
 
 /* 扫描线动画 */
