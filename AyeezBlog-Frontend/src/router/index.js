@@ -1,16 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
-// 引入页面组件
 import Home from '@/views/Home.vue';
-import About from '@/views/About.vue';
-import Archive from '@/views/Archive.vue';
-import Links from '@/views/Links.vue';
-import FriendsCircle from '@/views/FriendsCircle.vue';
-import Comments from '@/views/Comments.vue';
-import Logs from '@/views/Logs.vue';
-import PostDetail from '@/views/PostDetail.vue';
-import Albums from '@/views/Albums.vue';
-import AlbumDetail from '@/views/AlbumDetail.vue';
+// 非首页页面拆包（首页加载完后再预取，见 Home.vue）
+const About = () => import('@/views/About.vue');
+const Archive = () => import('@/views/Archive.vue');
+const Links = () => import('@/views/Links.vue');
+const FriendsCircle = () => import('@/views/FriendsCircle.vue');
+const Comments = () => import('@/views/Comments.vue');
+const Logs = () => import('@/views/Logs.vue');
+const PostDetail = () => import('@/views/PostDetail.vue');
+const Albums = () => import('@/views/Albums.vue');
+const AlbumDetail = () => import('@/views/AlbumDetail.vue');
 
 
 const routes = [

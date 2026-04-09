@@ -178,9 +178,11 @@ export default {
       window.addEventListener('scroll', this.updateActivePosts, { passive: true });
       window.addEventListener('resize', this.handleHomeResize, { passive: true });
       this.setupHomeRowReveal();
+      // 首页完成后：空闲时间预取其它页面 chunk（减少后续跳转首次卡顿）
+      this.warmupRouteChunks();
     }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('scroll', this.updateActivePosts);
     window.removeEventListener('resize', this.handleHomeResize);
     if (this.cardObserver) {
@@ -357,6 +359,34 @@ export default {
       const columns = this.getPostColumns();
       for (let i = 0; i < postCards.length; i += columns) {
         this.cardObserver.observe(postCards[i]);
+      }
+    },
+
+    warmupRouteChunks() {
+      // 省流模式/慢网：不预取，避免浪费流量影响首屏体验
+      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const saveData = !!conn?.saveData;
+      const effectiveType = conn?.effectiveType;
+      const isSlow = effectiveType === '2g' || effectiveType === 'slow-2g';
+      if (saveData || isSlow) return;
+
+      const prefetch = () => {
+        // 触发下载并缓存路由 chunk（由 router/index.js 的动态 import 生成）
+        import('@/views/About.vue');
+        import('@/views/Archive.vue');
+        import('@/views/Links.vue');
+        import('@/views/FriendsCircle.vue');
+        import('@/views/Comments.vue');
+        import('@/views/Logs.vue');
+        import('@/views/Albums.vue');
+        import('@/views/AlbumDetail.vue');
+        import('@/views/PostDetail.vue');
+      };
+
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(prefetch, { timeout: 2500 });
+      } else {
+        setTimeout(prefetch, 900);
       }
     },
 
