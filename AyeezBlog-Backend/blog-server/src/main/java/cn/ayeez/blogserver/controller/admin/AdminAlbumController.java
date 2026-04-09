@@ -34,6 +34,11 @@ public class AdminAlbumController {
         return albumService.deleteAlbum(id);
     }
 
+    @PostMapping("/default-cover/set")
+    public Result setDefaultCoverAlbum(@RequestParam Long id) {
+        return albumService.setDefaultCoverAlbum(id);
+    }
+
     @GetMapping("/photo/list")
     public Result listPhotos(@RequestParam Long albumId) {
         return Result.success(albumService.listAdminPhotos(albumId));

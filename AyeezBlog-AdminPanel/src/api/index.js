@@ -200,6 +200,10 @@ export const deleteAlbum = (params) => {
   return request.delete('/admin/album/delete', { params })
 }
 
+export const setDefaultCoverAlbum = (params) => {
+  return request.post('/admin/album/default-cover/set', null, { params })
+}
+
 export const getAlbumPhotoList = (params) => {
   return request.get('/admin/album/photo/list', { params })
 }

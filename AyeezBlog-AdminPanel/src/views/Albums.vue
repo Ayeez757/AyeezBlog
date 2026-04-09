@@ -13,11 +13,26 @@
             <el-table-column prop="title" label="相册标题" min-width="200" />
             <el-table-column prop="description" label="描述" min-width="260" />
             <el-table-column prop="sort" label="排序" width="90" />
+            <el-table-column label="默认封面来源" width="140">
+              <template #default="scope">
+                <el-tag v-if="scope.row.defaultCoverSource === 1" type="success" size="small">已启用</el-tag>
+                <span v-else style="color: #999;">未启用</span>
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="280">
               <template #default="scope">
                 <div class="row-actions">
                   <el-button size="small" type="primary" @click="openAlbumEditDialog(scope.row)">编辑</el-button>
                   <el-button size="small" @click="openPhotoTab(scope.row)">管理图片</el-button>
+                  <el-button
+                    size="small"
+                    type="success"
+                    plain
+                    :disabled="scope.row.defaultCoverSource === 1"
+                    @click="setAsDefaultCoverSource(scope.row)"
+                  >
+                    设为默认封面
+                  </el-button>
                   <el-button size="small" type="danger" @click="removeAlbum(scope.row)">删除</el-button>
                 </div>
               </template>
@@ -116,6 +131,7 @@ import {
   deleteAlbumPhoto,
   getAlbumList,
   getAlbumPhotoList,
+  setDefaultCoverAlbum,
   updateAlbum,
   updateAlbumPhoto
 } from '@/api'
@@ -234,6 +250,19 @@ export default {
             this.selectedAlbumId = null
             this.photoList = []
           }
+          await this.loadAlbums()
+        })
+        .catch(() => {})
+    },
+    setAsDefaultCoverSource(row) {
+      this.$confirm(`将相册 "${row.title}" 设为文章默认封面来源？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(async () => {
+          await setDefaultCoverAlbum({ id: row.id })
+          this.$message.success('已设置为默认封面来源相册')
           await this.loadAlbums()
         })
         .catch(() => {})

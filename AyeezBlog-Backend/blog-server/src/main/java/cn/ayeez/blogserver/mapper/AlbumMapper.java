@@ -25,6 +25,10 @@ public interface AlbumMapper {
 
     void deleteAlbumById(@Param("id") Long id);
 
+    void clearDefaultCoverSource();
+
+    int markAlbumAsDefaultCoverSource(@Param("id") Long id);
+
     void insertPhoto(AlbumPhoto photo);
 
     void updatePhoto(AlbumPhoto photo);

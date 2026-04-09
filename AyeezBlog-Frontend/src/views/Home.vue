@@ -98,7 +98,7 @@
         @keydown.enter.prevent="goToPost(post.id)"
         @keydown.space.prevent="goToPost(post.id)">
         <div class="post-cover-wrap">
-          <img :src="post.cover || defaultCover" :alt="post.title" class="post-cover" />
+          <img :src="post.cover || post.fallbackCover || defaultCover" :alt="post.title" class="post-cover" />
           <div v-if="post.cardBadges && post.cardBadges.length" class="post-badges">
             <span
               v-for="b in post.cardBadges"
@@ -129,7 +129,7 @@
 </template>
 
 <script>
-import { fetchPosts } from '@/api'; // 引入 API 方法
+import { fetchPosts, fetchAlbums, fetchAlbumById } from '@/api'; // 引入 API 方法
 import LoadingSpinner from '@/components/LoadingSpinner.vue'; // 引入加载动画组件
 import { getPostCardBadges } from '@/utils/postCardBadges';
 
@@ -146,6 +146,8 @@ export default {
       pageSize: 12,
       total: 0,
       defaultCover: 'https://qiniu.ayeez.cn/bg.jpg',
+      defaultCoverPool: [],
+      defaultCoverPoolPromise: null,
 
       // 悬停卡片 ID
       hoveredCardId: null,
@@ -209,11 +211,13 @@ export default {
     // 加载文章数据
     async loadPosts() {
       try {
+        await this.ensureDefaultCoverPool();
         const response = await fetchPosts(this.currentPage, this.pageSize);
         const rows = response.data.rows || [];
-        this.posts = rows.map((p) => ({
+        this.posts = rows.map((p, index) => ({
           ...p,
-          cardBadges: getPostCardBadges(p)
+          cardBadges: getPostCardBadges(p),
+          fallbackCover: this.pickDefaultCoverForPost(p, index)
         }));
         this.total = response.data.total; // 总条数
         // 等文章渲染完后，初始化一次滚动高亮状态（主要用于手机端）
@@ -226,6 +230,52 @@ export default {
       } catch (error) {
         console.error('加载文章失败:', error);
       }
+    },
+    async ensureDefaultCoverPool() {
+      if (this.defaultCoverPool.length) return;
+      if (!this.defaultCoverPoolPromise) {
+        this.defaultCoverPoolPromise = this.loadDefaultCoverPool();
+      }
+      await this.defaultCoverPoolPromise;
+    },
+    async loadDefaultCoverPool() {
+      try {
+        const albumsResp = await fetchAlbums();
+        const albums = albumsResp && Array.isArray(albumsResp.data) ? albumsResp.data : [];
+        if (!albums.length) return;
+
+        const targetAlbum = albums.find((album) => Number(album.defaultCoverSource) === 1);
+        if (!targetAlbum) return;
+
+        const detailResp = await fetchAlbumById(targetAlbum.id);
+        const photos = detailResp && detailResp.data && Array.isArray(detailResp.data.photos)
+          ? detailResp.data.photos
+          : [];
+        const photoUrls = photos
+          .map((item) => item && item.imageUrl)
+          .filter((url) => typeof url === 'string' && url);
+
+        const coverImages = Array.isArray(targetAlbum.coverImages) ? targetAlbum.coverImages : [];
+        const merged = [...photoUrls, ...coverImages]
+          .filter((url) => typeof url === 'string' && url);
+        this.defaultCoverPool = Array.from(new Set(merged));
+      } catch (error) {
+        console.error('加载默认封面相册失败:', error);
+        this.defaultCoverPool = [];
+      }
+    },
+    pickDefaultCoverForPost(post, index) {
+      if (!Array.isArray(this.defaultCoverPool) || !this.defaultCoverPool.length) {
+        return this.defaultCover;
+      }
+      // 使用文章 id 和列表下标生成稳定随机，避免重复渲染时频繁换图
+      const seedText = `${post && post.id ? post.id : ''}-${index}`;
+      let hash = 0;
+      for (let i = 0; i < seedText.length; i++) {
+        hash = (hash * 31 + seedText.charCodeAt(i)) >>> 0;
+      }
+      const randomIndex = hash % this.defaultCoverPool.length;
+      return this.defaultCoverPool[randomIndex] || this.defaultCover;
     },
 
     // 上一页
