@@ -11,6 +11,7 @@ public class AlbumSummary {
     private String title;
     private String description;
     private Integer sort;
+    private Integer defaultCoverSource;
     private Integer photoCount;
     private List<String> coverImages = new ArrayList<>();
 }

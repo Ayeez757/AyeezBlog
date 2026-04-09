@@ -46,6 +46,7 @@ public class AlbumServiceImpl implements AlbumService {
             row.setTitle(album.getTitle());
             row.setDescription(album.getDescription());
             row.setSort(album.getSort());
+            row.setDefaultCoverSource(album.getDefaultCoverSource());
             row.setCoverImages(coverMap.getOrDefault(album.getId(), new ArrayList<>()));
             row.setPhotoCount(albumMapper.countPhotosByAlbumId(album.getId()));
             result.add(row);
@@ -90,7 +91,14 @@ public class AlbumServiceImpl implements AlbumService {
         if (validate != null) return validate;
         Integer maxSort = albumMapper.selectMaxAlbumSort();
         album.setSort((maxSort == null || maxSort < 0) ? 0 : maxSort + 1);
+        if (album.getDefaultCoverSource() == null) {
+            album.setDefaultCoverSource(0);
+        }
         albumMapper.insertAlbum(album);
+        if (album.getDefaultCoverSource() != null && album.getDefaultCoverSource() == 1) {
+            albumMapper.clearDefaultCoverSource();
+            albumMapper.markAlbumAsDefaultCoverSource(album.getId());
+        }
         return Result.success();
     }
 
@@ -102,7 +110,14 @@ public class AlbumServiceImpl implements AlbumService {
         if (album.getSort() == null) {
             album.setSort(0);
         }
+        if (album.getDefaultCoverSource() == null) {
+            album.setDefaultCoverSource(0);
+        }
         albumMapper.updateAlbum(album);
+        if (album.getDefaultCoverSource() != null && album.getDefaultCoverSource() == 1) {
+            albumMapper.clearDefaultCoverSource();
+            albumMapper.markAlbumAsDefaultCoverSource(album.getId());
+        }
         return Result.success();
     }
 
@@ -111,6 +126,18 @@ public class AlbumServiceImpl implements AlbumService {
     public Result deleteAlbum(Long id) {
         if (id == null) return Result.error(400, "相册ID不能为空");
         albumMapper.deleteAlbumById(id);
+        return Result.success();
+    }
+
+    @Override
+    @Transactional
+    public Result setDefaultCoverAlbum(Long id) {
+        if (id == null) return Result.error(400, "相册ID不能为空");
+        Album target = albumMapper.getAlbumById(id);
+        if (target == null) return Result.error(404, "相册不存在");
+        albumMapper.clearDefaultCoverSource();
+        int affected = albumMapper.markAlbumAsDefaultCoverSource(id);
+        if (affected <= 0) return Result.error(500, "设置默认封面相册失败");
         return Result.success();
     }
 

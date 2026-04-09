@@ -5,7 +5,7 @@ spring:
     name: blog-server
   #数据库的链接信息
   datasource:
-    url: jdbc:mysql://${hm.db.host}:3306/ayeezblog
+    url: jdbc:mysql://${hm.db.host}:${hm.db.port:3306}/ayeezblog
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${hm.db.username}
     password: ${hm.db.password}

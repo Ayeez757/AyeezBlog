@@ -21,6 +21,8 @@ public interface AlbumService {
 
     Result deleteAlbum(Long id);
 
+    Result setDefaultCoverAlbum(Long id);
+
     List<AlbumPhoto> listAdminPhotos(Long albumId);
 
     Result addPhoto(AlbumPhoto photo);

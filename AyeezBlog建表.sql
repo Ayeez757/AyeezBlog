@@ -243,6 +243,7 @@ create table if not exists blog_album
     title       varchar(128)                        not null comment '相册标题',
     description varchar(512)                        null comment '相册描述',
     sort        int      default 0                 not null comment '相册排序，升序',
+    default_cover_source tinyint(1) default 0      not null comment '是否为文章默认封面来源相册：0否1是',
     created_at  datetime default CURRENT_TIMESTAMP not null,
     updated_at  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
 ) comment '相册主表' collate = utf8mb4_unicode_ci;

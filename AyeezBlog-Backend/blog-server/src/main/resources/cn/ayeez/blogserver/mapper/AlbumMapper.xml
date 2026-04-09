@@ -5,13 +5,13 @@
 <mapper namespace="cn.ayeez.blogserver.mapper.AlbumMapper">
 
     <select id="listAlbums" resultType="cn.ayeez.blogpojo.entity.Album">
-        SELECT id, title, description, sort, created_at, updated_at
+        SELECT id, title, description, sort, default_cover_source, created_at, updated_at
         FROM blog_album
         ORDER BY sort ASC, id ASC
     </select>
 
     <select id="getAlbumById" resultType="cn.ayeez.blogpojo.entity.Album">
-        SELECT id, title, description, sort, created_at, updated_at
+        SELECT id, title, description, sort, default_cover_source, created_at, updated_at
         FROM blog_album
         WHERE id = #{id}
     </select>
@@ -45,21 +45,35 @@
     </select>
 
     <insert id="insertAlbum" parameterType="cn.ayeez.blogpojo.entity.Album" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO blog_album (title, description, sort)
-        VALUES (#{title}, #{description}, #{sort})
+        INSERT INTO blog_album (title, description, sort, default_cover_source)
+        VALUES (#{title}, #{description}, #{sort}, COALESCE(#{defaultCoverSource}, 0))
     </insert>
 
     <update id="updateAlbum" parameterType="cn.ayeez.blogpojo.entity.Album">
         UPDATE blog_album
         SET title = #{title},
             description = #{description},
-            sort = #{sort}
+            sort = #{sort},
+            default_cover_source = COALESCE(#{defaultCoverSource}, 0)
         WHERE id = #{id}
     </update>
 
     <delete id="deleteAlbumById">
         DELETE FROM blog_album WHERE id = #{id}
     </delete>
+
+    <update id="clearDefaultCoverSource">
+        UPDATE blog_album
+        SET default_cover_source = 0
+        WHERE default_cover_source = 1
+    </update>
+
+    <update id="markAlbumAsDefaultCoverSource">
+        UPDATE blog_album
+        SET default_cover_source = 1
+        WHERE id = #{id}
+    </update>
+
 
     <insert id="insertPhoto" parameterType="cn.ayeez.blogpojo.entity.AlbumPhoto" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO blog_album_photo (album_id, image_url, caption, sort)
