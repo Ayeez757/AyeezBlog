@@ -1,6 +1,7 @@
 hm:
   db:
     host: mysql
+    username: ${HM_DB_USER}
     password: ${HM_DB_PASSWORD}
   qiniu:
     access-key: ${QINIU_ACCESS_KEY:}
