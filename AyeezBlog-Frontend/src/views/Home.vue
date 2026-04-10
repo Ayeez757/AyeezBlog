@@ -5,6 +5,59 @@
 
 
   <div class="home">
+    <!-- 赛博流光背景：左到右横向流动，右侧更密集 -->
+    <div class="cyber-flow-overlay" aria-hidden="true">
+      <svg class="cyber-flow-svg" viewBox="0 0 1000 560" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="flowGradientSoft" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(142,255,132,0)" />
+            <stop offset="32%" stop-color="rgba(142,255,132,0.7)" />
+            <stop offset="68%" stop-color="rgba(142,255,132,0.7)" />
+            <stop offset="100%" stop-color="rgba(142,255,132,0)" />
+          </linearGradient>
+          <linearGradient id="flowGradientStrong" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(96,255,120,0)" />
+            <stop offset="28%" stop-color="rgba(96,255,120,0.86)" />
+            <stop offset="72%" stop-color="rgba(96,255,120,0.86)" />
+            <stop offset="100%" stop-color="rgba(96,255,120,0)" />
+          </linearGradient>
+        </defs>
+
+        <g class="flow-soft-group">
+          <rect x="-280" y="92" width="240" height="1.7" fill="url(#flowGradientSoft)">
+            <animateTransform attributeName="transform" type="translate" from="0 0" to="1360 0" dur="12.8s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.2;0.82;1" dur="12.8s" repeatCount="indefinite" />
+          </rect>
+          <rect x="-360" y="206" width="260" height="1.7" fill="url(#flowGradientSoft)">
+            <animateTransform attributeName="transform" type="translate" from="0 0" to="1400 0" dur="11.6s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.2;0.82;1" dur="11.6s" repeatCount="indefinite" />
+          </rect>
+          <rect x="-420" y="352" width="290" height="1.7" fill="url(#flowGradientSoft)">
+            <animateTransform attributeName="transform" type="translate" from="0 0" to="1420 0" dur="12.1s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.2;0.82;1" dur="12.1s" repeatCount="indefinite" />
+          </rect>
+        </g>
+
+        <g class="flow-strong-group">
+          <rect x="580" y="72" width="260" height="1.9" fill="url(#flowGradientStrong)">
+            <animateTransform attributeName="transform" type="translate" from="-240 0" to="260 0" dur="6.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.22;0.84;1" dur="6.4s" repeatCount="indefinite" />
+          </rect>
+          <rect x="700" y="172" width="250" height="2.1" fill="url(#flowGradientStrong)">
+            <animateTransform attributeName="transform" type="translate" from="-260 0" to="240 0" dur="5.3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.22;0.84;1" dur="5.3s" repeatCount="indefinite" />
+          </rect>
+          <rect x="760" y="298" width="220" height="2.1" fill="url(#flowGradientStrong)">
+            <animateTransform attributeName="transform" type="translate" from="-250 0" to="220 0" dur="4.8s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.22;0.84;1" dur="4.8s" repeatCount="indefinite" />
+          </rect>
+          <rect x="740" y="414" width="230" height="2.1" fill="url(#flowGradientStrong)">
+            <animateTransform attributeName="transform" type="translate" from="-260 0" to="240 0" dur="4.7s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.22;0.84;1" dur="4.7s" repeatCount="indefinite" />
+          </rect>
+        </g>
+      </svg>
+    </div>
 
     <!-- 左上角搓的拐角线 -->
     <div class="left-top-line"></div>
@@ -575,6 +628,28 @@ export default {
   color: white;
   display: flex;
   flex-direction: column;
+}
+
+.cyber-flow-overlay {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.49;
+}
+
+.cyber-flow-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.flow-soft-group {
+  opacity: 0.39;
+}
+
+.flow-strong-group {
+  opacity: 0.56;
 }
 
 /* 左侧标语样式 */
@@ -1150,6 +1225,11 @@ export default {
    移动端适配（手机端样式）
    ========================= */
 @media (max-width: 768px) {
+  .cyber-flow-overlay {
+    height: 100vh;
+    opacity: 0.42;
+  }
+
   .home {
     padding: 16px;
   }
@@ -1306,6 +1386,12 @@ export default {
 
   .pagination {
     margin-top: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cyber-flow-svg animateTransform {
+    display: none;
   }
 }
 </style>
