@@ -123,7 +123,23 @@ cd AyeezBlog
 
 #### 3. Start backend (`blog-server`)
 
-Update database and Qiniu settings in `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` first, then start backend.
+Configure database connection first. Note: the backend config has **no default values** for `hm.db.username` / `hm.db.password`. If you don't provide them, the backend will fail to start (errors like *Could not resolve placeholder 'hm.db.username'*).
+
+You can do either:
+
+- **Option A (recommended)**: set environment variables (Windows PowerShell example)
+
+```powershell
+$env:HM_DB_HOST="localhost"
+$env:HM_DB_USER="root"
+$env:HM_DB_PASSWORD="your_db_password"
+```
+
+- **Option B**: edit `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` and fill `hm.db.host / hm.db.username / hm.db.password`.
+
+Notes:
+
+- **Qiniu** is only required if you use admin upload token or cover AI (the base CRUD APIs work without it).
 
 **Optional — AI**: For DeepSeek excerpts, set `hm.deepseek.api-key` and `hm.deepseek.summary-enabled=true`. For Jimeng covers, set `hm.volcengine.access-key`, `hm.volcengine.secret-key`, and `hm.volcengine.cover-enabled=true`, and ensure Qiniu is configured (see **Configuration**). If unset, the rest of the app works as before.
 
@@ -151,8 +167,12 @@ cd AyeezBlog-AdminPanel
 npm install
 npm run dev
 ```
-Visit: `http://localhost:5173`  
-If both frontend and admin run together, use another port, e.g. `npm run dev -- --port 5174`.
+Visit: `http://localhost:5173/admin/`
+
+Port note:
+
+- The admin panel is fixed to port `5173` in `vite.config.js`, while the public frontend defaults to `5173`.
+- If you run both at the same time, change the **frontend** port (e.g. `npm run dev -- --port 5174`) or change the admin `server.port`.
 
 ### Docker Deployment
 
@@ -182,43 +202,18 @@ docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.
 
 ### Backend config (`application.yml`)
 
-| Key | Description | Example | Required in deployment |
-| --- | --- | --- | --- |
-| `hm.db.host` | MySQL host for composing JDBC URL | `mysql` / `localhost` | Yes |
-| `hm.db.password` | MySQL password | `your_db_password` | Yes |
-| `hm.qiniu.access-key` | Qiniu AccessKey | `your_qiniu_access_key` | Yes |
-| `hm.qiniu.secret-key` | Qiniu SecretKey | `your_qiniu_secret_key` | Yes |
-| `hm.qiniu.bucket` | Qiniu bucket name | `ayeez-blog` | Yes |
-| `hm.qiniu.domain` | Qiniu public domain | `https://your-cdn-domain.com` | Yes |
-| `hm.qiniu.upload-url` | Qiniu upload host (bucket region) | `https://up-z2.qiniup.com` | Yes |
-| `hm.qiniu.token-expires` | Upload token TTL (seconds) | `1800` | Optional |
-| `spring.datasource.url` | MySQL connection URL | `localhost:3306` | Yes |
-| `spring.datasource.username` | MySQL username | `root` | Yes |
-| `spring.datasource.password` | MySQL password | `${hm.db.password}` | Yes |
-| `server.port` | Backend port | `8080` | Optional |
-| `aliyun.oss.endpoint` | OSS endpoint | `https://oss-cn-beijing.aliyuncs.com` | Yes |
-| `aliyun.oss.bucketName` | OSS bucket name | `javaweb-ayeez` | Yes |
-| `aliyun.oss.region` | OSS region | `cn-beijing` | Yes |
-| `hm.deepseek.api-key` | DeepSeek API key for Spring AI (`dev` profile can inject via env var `DEEPSEEK_API_KEY`) | empty disables model calls | Yes, if using AI |
-| `hm.deepseek.summary-enabled` | Enable excerpt generation (auto on save when blank + admin endpoint) | `false` / `true` | Optional |
-| `hm.deepseek.verbose-log` | Whether to print DeepSeek system/user prompts and raw model output to INFO (debug only; set false in production) | `false` / `true` | Optional |
-| `spring.ai.openai.api-key` | Bound to `hm.deepseek.api-key` | `${hm.deepseek.api-key:}` | Yes, if using AI |
-| `spring.ai.openai.base-url` | OpenAI-compatible base URL | `https://api.deepseek.com` | Usually unchanged |
-| `spring.ai.openai.chat.options.model` | Chat model | `deepseek-chat` | Optional |
-| `spring.ai.openai.chat.options.temperature` | Sampling temperature | `0.3` | Optional |
-| `blog.ai.summary.enabled` | Feature toggle (defaults from `hm.deepseek.summary-enabled`) | `false` | Optional |
-| `blog.ai.summary.max-content-chars` | Max characters of body sent to the model | `12000` | Optional |
-| `blog.ai.summary.max-description-length` | Max length of generated excerpt (≤ DB `description` column) | `240` | Optional |
-| `hm.volcengine.access-key` | Volcengine API Access Key ID (`dev` profile can inject via env var `VOLCENGINE_ACCESS_KEY`) | empty disables cover AI | Yes, if using cover AI |
-| `hm.volcengine.secret-key` | Volcengine Secret Access Key (pair with access key; `dev` profile can inject via env var `VOLCENGINE_SECRET_KEY`) | same | Yes, if using cover AI |
-| `hm.volcengine.cover-enabled` | Enable cover generation | `false` / `true` | Optional |
-| `hm.volcengine.verbose-http-log` | Whether to print Jimeng full request/URL/response body (no secret) to INFO (debug only) | `false` / `true` | Optional |
-| `blog.ai.cover.enabled` | Cover feature flag (from `hm.volcengine.cover-enabled` by default) | `false` | Optional |
-| `blog.ai.cover.req-key` | Jimeng capability `req_key` | `jimeng_high_aes_general_v21_L` | Optional |
-| `blog.ai.cover.width` / `height` | Output dimensions (px) | `1664` / `928` | Must match product limits |
-| `blog.ai.cover.region` | Signing region | `cn-north-1` | Usually unchanged |
-| `blog.ai.cover.max-total-prompt-chars` | Max length of combined positive prompt | `1200` | Optional |
-| `blog.ai.cover.max-user-prompt-chars` | Max length of admin “image instructions” field | `300` | Optional |
+This section keeps only the essential keys. For detailed notes, examples, and optional parameters, see the inline comments in:
+
+- `AyeezBlog-Backend/blog-server/src/main/resources/application.yml`
+
+| Key | Description |
+| --- | --- |
+| `hm.db.host` / `hm.db.username` / `hm.db.password` | MySQL connection (required; backend won't start without these) |
+| `hm.db.port` | MySQL port (defaults to 3306) |
+| `server.port` | Backend port (defaults to 8080) |
+| `qiniu.*` | Qiniu config (required only for admin upload token / cover AI; optional otherwise) |
+| `hm.deepseek.*` | Excerpt generation (optional) |
+| `hm.volcengine.*` | Cover generation (optional; typically requires Qiniu) |
 
 ### AI post excerpts (Spring AI + DeepSeek)
 

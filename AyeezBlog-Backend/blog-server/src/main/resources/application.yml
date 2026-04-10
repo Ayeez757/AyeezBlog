@@ -1,5 +1,37 @@
-
-#配置数据库的连接信息
+#
+# =========================
+# 本地开发 / 部署配置说明
+# =========================
+#
+# 1) 数据库（必填）
+# - 本项目 datasource 使用 hm.db.* 进行占位符注入；hm.db.username / hm.db.password 没有默认值，
+#   不配置会启动失败（典型报错：Could not resolve placeholder 'hm.db.username'）。
+# - 可选：hm.db.port 默认 3306（见 spring.datasource.url 的 :${hm.db.port:3306}）。
+#
+# 2) 环境变量（可选）
+# - 你可以选择“直接改本文件里的 hm.db.* / hm.deepseek.* / hm.volcengine.* / hm.qiniu.*”
+#   或者通过环境变量注入（见 application-dev.yml）。
+# - 注意：application-dev.yml 的数据库用户名变量名是 HM_DB_USER（不是 HM_DB_USERNAME）。
+#
+#   Windows PowerShell 示例：
+#   $env:HM_DB_HOST="localhost"
+#   $env:HM_DB_USER="root"
+#   $env:HM_DB_PASSWORD="your_password"
+#
+# 3) 七牛（按需）
+# - 管理端“获取上传 token（/admin/upload/qiniu/token）”与“AI 生成封面后转存七牛”需要 qiniu.* 配置齐全；
+#   仅跑文章/分类/标签等基础接口可不配。
+# - 这里的 qiniu.* 实际读取自 qiniu.*（见 QiniuProperties prefix="qiniu"），但为了兼容环境变量注入，
+#   本文件把 qiniu.* 的值写成从 hm.qiniu.* 取（hm.qiniu.* 通常由 application-dev.yml 从环境变量注入）。
+#
+# 4) AI（按需）
+# - 简介生成：配置 hm.deepseek.api-key，启用 hm.deepseek.summary-enabled=true
+# - 封面生成：配置 hm.volcengine.access-key / hm.volcengine.secret-key，启用 hm.volcengine.cover-enabled=true
+#   并确保七牛可用（因为生成的图片会转存到七牛后返回 URL）
+#
+# =========================
+# Spring / Datasource
+# =========================
 spring:
   application:
     name: blog-server
@@ -13,7 +45,11 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 100MB
-  # DeepSeek（OpenAI 兼容 API）；密钥建议用环境变量 hm.deepseek.api-key
+# =========================
+# DeepSeek（OpenAI 兼容 API）
+# =========================
+# - spring.ai.openai.api-key 默认绑定 hm.deepseek.api-key（空则不请求模型）
+# - 简介功能开关在 blog.ai.summary.enabled（默认引用 hm.deepseek.summary-enabled）
   ai:
     openai:
       api-key: ${hm.deepseek.api-key:}
@@ -50,13 +86,25 @@ logging:
     cn.ayeez.blogserver.service.ai: DEBUG
     cn.ayeez.blogserver.controller.admin.AdminAiController: DEBUG
 
+# =========================
+# Aliyun OSS（当前项目代码中未见使用点，如后续使用再按需配置）
+# =========================
 aliyun:
   oss:
     endpoint: https://oss-cn-beijing.aliyuncs.com
     bucketName: javaweb-ayeez
     region: cn-beijing
 
-# 七牛云图床（管理端直传需要后端下发 uploadToken）
+# =========================
+# 七牛云图床（按需）
+# =========================
+# 需要场景：
+# - 管理端直传：GET /admin/upload/qiniu/token
+# - AI 封面：生成图片后转存七牛
+#
+# 配置项说明：
+# - qiniu.domain：外链域名（最终拼接成公开访问 URL，建议不带末尾 /）
+# - qiniu.uploadUrl：上传入口（按七牛空间所在区域选择）
 qiniu:
   accessKey: ${hm.qiniu.access-key:}
   secretKey: ${hm.qiniu.secret-key:}
@@ -68,7 +116,10 @@ qiniu:
   # token 有效期（秒）
   tokenExpires: ${hm.qiniu.token-expires:1800}
 
-# 是否在保存文章时，在描述为空时自动调用模型生成简介
+# =========================
+# AI 开关（按需）
+# =========================
+# - enabled 默认引用 hm.deepseek.summary-enabled / hm.volcengine.cover-enabled
 blog:
   ai:
     summary:
