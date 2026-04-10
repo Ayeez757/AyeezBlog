@@ -223,6 +223,8 @@ export default {
   computed: {
     renderedMarkdown() {
       const md = new MarkdownIt({
+        // 默认即为 true；显式写出：正文以 Markdown 为主时可混用 HTML（如 <font>、<span>）
+        html: true,
         highlight: function (str, lang) {
           if (lang && hljs.getLanguage(lang)) {
             try {
@@ -290,10 +292,18 @@ export default {
       const { body, attributes } = fm(this.post.content || '');
       this.frontMatter = attributes || {};
 
-      // 提取标题列表
-      this.extractHeadings(body);
+      const fmt = String(
+        attributes?.format ?? attributes?.contentFormat ?? ''
+      ).toLowerCase();
 
-      // 渲染正文
+      // 整篇 HTML：不经 Markdown 解析，避免 *、缩进等被当成 Markdown
+      if (fmt === 'html') {
+        const html = this.ensureHtmlHeadingAnchors(body || '');
+        this.extractHeadingsFromHtml(html);
+        return html;
+      }
+
+      this.extractHeadingsFromMarkdown(body);
       return md.render(body);
     }
   },
@@ -362,10 +372,87 @@ export default {
       }
     },
 
-    // 提取标题：按 # 的真实数量作为层级（H1~H6），排除代码块中的 #
-    extractHeadings(markdown) {
+    _headingSlugFromText(text) {
+      return String(text || '')
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-一-龥]/g, '');
+    },
+
+    _htmlHeadingPlainText(inner) {
+      return String(inner || '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    },
+
+    /** 为无 id 的 h1~h6 注入 id，与 Markdown 目录逻辑一致 */
+    ensureHtmlHeadingAnchors(html) {
+      if (!html || typeof html !== 'string') return '';
+      const used = new Set();
+
+      let index = 0;
+      return html.replace(
+        /<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi,
+        (full, level, attrs, inner) => {
+          const attrStr = attrs || '';
+          if (/\bid\s*=/i.test(attrStr)) {
+            const idMatch = attrStr.match(/\bid\s*=\s*["']([^"']+)["']/i);
+            if (idMatch) used.add(idMatch[1]);
+            return full;
+          }
+
+          index += 1;
+          let base = this._headingSlugFromText(this._htmlHeadingPlainText(inner));
+          if (!base) base = `heading-${index}`;
+
+          let id = base;
+          let n = 0;
+          while (used.has(id)) {
+            n += 1;
+            id = `${base}-${n}`;
+          }
+          used.add(id);
+
+          const a = attrStr.trim();
+          const openCore = a ? `${a} id="${id}"` : `id="${id}"`;
+          return `<h${level} ${openCore}>${inner}</h${level}>`;
+        }
+      );
+    },
+
+    extractHeadingsFromHtml(html) {
       const headings = [];
-      const lines = markdown.split('\n');
+      if (!html) {
+        this.headings = [];
+        return;
+      }
+      const re = /<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi;
+      let m;
+      while ((m = re.exec(html)) !== null) {
+        const level = parseInt(m[1], 10);
+        const attrs = m[2] || '';
+        const inner = m[3];
+        const idMatch = attrs.match(/\bid\s*=\s*["']([^"']+)["']/i);
+        const title = this._htmlHeadingPlainText(inner);
+        const anchor =
+          (idMatch && idMatch[1]) ||
+          this._headingSlugFromText(title) ||
+          `heading-${headings.length + 1}`;
+
+        headings.push({
+          level,
+          title: title || anchor,
+          anchor
+        });
+      }
+      this.headings = headings;
+    },
+
+    // 提取标题：按 # 的真实数量作为层级（H1~H6），排除代码块中的 #
+    extractHeadingsFromMarkdown(markdown) {
+      const headings = [];
+      const lines = (markdown || '').split('\n');
       let inCodeBlock = false;
 
       lines.forEach(line => {
@@ -384,10 +471,7 @@ export default {
 
         const level = m[1].length; // 1 ~ 6
         const title = m[2].trim();
-        const anchor = title
-          .toLowerCase()
-          .replace(/\s+/g, '-')          // 空格 -> -
-          .replace(/[^\w\-一-龥]/g, '');  // 去掉大部分标点
+        const anchor = this._headingSlugFromText(title);
 
         headings.push({ level, title, anchor });
       });
