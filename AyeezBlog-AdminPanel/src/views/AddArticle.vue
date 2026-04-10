@@ -297,7 +297,9 @@ export default {
     this.clearAiHintTimers();
   },
   async created() {
-    this.md = new MarkdownIt();
+    this.md = new MarkdownIt({
+      html: true // 与前台一致：Markdown 正文中可混用 HTML
+    });
     if (this.isEdit) {
       await this.loadArticle();
     }
