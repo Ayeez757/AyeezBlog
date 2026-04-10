@@ -158,6 +158,7 @@ onMounted(() => {
   dotEl.style.top = `${-DOT_SIZE / 2}px`;
   dotEl.style.left = `${-DOT_SIZE / 2}px`;
   dotEl.style.background = DOT_COLOR;
+  dotEl.style.border = '1.5px solid rgba(255, 255, 255, 0.95)';
   dotEl.style.transform = `translate3d(${renderX}px, ${renderY}px, 0)`;
 
   window.addEventListener('pointermove', onPointerMove, { passive: true });
@@ -213,16 +214,18 @@ onMounted(() => {
 
 .magnetic-cursor-dot {
   position: fixed;
-  top: -2.5px;
-  left: -2.5px;
-  width: 5px;
-  height: 5px;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
-  background: #17f700;
+  background: #39ff14;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
   opacity: 1;
   box-shadow:
-    0 0 6px rgba(23, 247, 0, 0.9),
-    0 0 14px rgba(23, 247, 0, 0.55);
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 10px rgba(57, 255, 20, 0.95),
+    0 0 22px rgba(57, 255, 20, 0.6);
   pointer-events: none;
   z-index: 100000;
   will-change: transform;

@@ -31,7 +31,14 @@ body {
   touch-action: pan-y;
 }
 
-/* 磁力框选光标：保留系统原生光标（不隐藏） */
+/* 磁力框选光标：隐藏系统原生光标，仅显示自定义光标 */
+@media (pointer: fine) {
+  html,
+  body,
+  body * {
+    cursor: none !important;
+  }
+}
 
 /* 自定义滚动条样式 */
 ::-webkit-scrollbar {
