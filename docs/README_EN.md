@@ -9,8 +9,9 @@ Progress demo: https://dev-blog.ayeez.cn
 - [中文文档](../README.md)
 
 <p align="center">
-  <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
-    <img alt="Project version" src="https://img.shields.io/github/package-json/v/ayeez757/AyeezBlog?filename=AyeezBlog-Frontend%2Fpackage.json&label=AyeezBlog%20version">
+  <!-- Version badge: Shields fetches /api/logs/current (same “current” marker as the on-site changelog) -->
+  <a href="https://dev-blog.ayeez.cn/logs/">
+    <img alt="Project version" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdev-blog.ayeez.cn%2Fapi%2Flogs%2Fcurrent&query=%24.data.version&label=AyeezBlog%20version">
   </a>
   <a href="https://github.com/ayeez757/AyeezBlog/blob/master/LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/ayeez757/AyeezBlog">
