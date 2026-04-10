@@ -12,8 +12,9 @@
 
 
 <p align="center">
-    <a href="https://github.com/Ayeez757/AyeezBlog/blob/master/AyeezBlog-Frontend/package.json">
-    <img alt="项目版本" src="https://img.shields.io/github/package-json/v/ayeez757/AyeezBlog?filename=AyeezBlog-Frontend%2Fpackage.json&label=AyeezBlog%20version">
+    <!-- 版本：shields 拉取线上 /api/logs/current，与站内「当前日志版本」一致（非 package.json） -->
+    <a href="https://dev-blog.ayeez.cn/logs/">
+    <img alt="项目版本" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdev-blog.ayeez.cn%2Fapi%2Flogs%2Fcurrent&query=%24.data.version&label=AyeezBlog%20version">
   </a>
   <a href="https://github.com/ayeez757/AyeezBlog/blob/master/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ayeez757/AyeezBlog"></a>
   <!-- Spring Boot 版本（从 parent.version 手动获取） -->
