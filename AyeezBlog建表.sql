@@ -125,7 +125,7 @@ create index idx_class_id
 
 
 
-create table user
+create table `user`
 (
     id       bigint auto_increment comment '用户ID'
         primary key,
@@ -139,12 +139,32 @@ create table user
 
 
 -- 插入默认管理员用户（密码为 admin 的 BCrypt 哈希，强度 10）
-insert into user (username, password, role, status)
+insert into `user` (username, password, role, status)
 values ('admin', '$2a$10$eBH3YL6wptUNHJidoKGlzeVue1QUxgDEpHOfr0zefa6eM1IxuNfga', 1, 1);
 
--- 插入一篇默认欢迎使用AyeezBlog博客测试文章
-insert into blog_post (id, title, content, cover, create_time, update_time, description)
-values ('welcome', '欢迎使用AyeezBlog博客系统', '欢迎使用AyeezBlog博客系统，这是默认的欢迎文章。', null, now(), now(), '这是默认的欢迎文章');
+-- 插入默认友链分组 + 默认友链
+insert ignore into friend_link_class (id, class_name, class_desc, sort)
+values (1, '默认', '默认分组', 0);
+
+insert ignore into friend_link (id, class_id, name, link, avatar, descr, rss, sort)
+values (1, 1, '阿叶Ayeez博客', 'https://blog.ayeez.cn', null, '默认友链（作者博客）', null, 0);
+
+-- 插入一篇默认欢迎文章（包含 Front Matter）
+insert into blog_post (
+  id, title, content, cover, create_time, update_time, description,
+  category_id, pinned, featured, editing, water
+)
+values (
+  'fe3410',
+  '欢迎访问阿叶Ayeez博客~',
+  '---\nabbrlink: fe3410\ncategories:\n  - 博客\ncover: ''''\ndate: ''2026-04-05''\ndescription: |-\n  （默认欢迎文章）\n  阿叶Ayeez博客是一个基于Vue 3与Spring Boot构建的开源博客系统，提供前后端分离架构、Markdown写作、评论互动与后台管理等功能，支持容器化部署与AI辅助创作。\nediting: false\nfeatured: false\npinned: true\ntags:\n  - 博客\ntitle: 欢迎访问阿叶Ayeez博客~\nupdated: ''2026-04-05''\nwater: false\n---\n\n# 欢迎使用阿叶Ayeez的博客\n\n![](https://qiniu.ayeez.cn/20260228215441383.jpg)\n\n\n本博客链接：[https://blog.ayeez.cn](https://blog.ayeez.cn)  \n旧博客链接（已停止维护）：[https://butterfly.ayeez.cn](https://butterfly.ayeez.cn)\n\n\n\n\n## 项目简介\n\n**AyeezBlog** 是一个开源的博客系统，采用前后端分离架构设计。前台基于 Vue 3 构建，聚焦阅读体验与内容展示；管理端面向内容管理场景，便于文章、分类、标签等信息的统一维护；后端基于 Spring Boot 提供稳定、清晰的 RESTful API 能力，兼顾扩展性与可维护性。\n\n项目以“内容创作 + 阅读互动 + 后台管理”作为核心方向，支持 Markdown 文章体系、评论互动、分类标签组织、归档与友链等博客常用能力。整体技术栈覆盖前端工程化、后端安全与数据访问、缓存、容器化部署和自动化流程，适用于个人博客、技术社区与中小型内容站点的搭建和二次开发。\n\n核心页面功能：\n\n- 首页（文章流）\n- 文章详情页（Markdown）\n- 归档页\n- 留言页\n- 友链页\n- 更新日志页\n\n## 技术栈选用\n\n\n| 层次              | 技术                                                                                            | 说明         |\n| --------------- | --------------------------------------------------------------------------------------------- | ---------- |\n| **前端**          | Vue 3 + Vite + Vue Router + Axios                                                             | 前台展示界面     |\n| **管理端**         | Vue 3 + Element Plus + ECharts                                                                | 后台管理界面     |\n| **后端**          | Java 21 + Spring Boot 3.2.0 + Spring Security + JWT + MyBatis + Spring AI（可选 DeepSeek）+ Redis | 业务逻辑与数据接口  |\n| **数据库**         | MySQL                                                                                         | 持久化存储      |\n| **部署**          | Docker + Docker Compose + Nginx                                                               | 容器化部署，反向代理 |\n| **CI/CD**       | GitHub Actions                                                                                | 自动化测试与构建   |\n| **服务器（当前实际部署）** | ubantu22.04                                                                                   | 服务器系统      |\n| **其他第三方工具**     | twikoo（评论）                                                                                    |            |\n| **接入大模型**       | deepseek+即梦ai                                                                                 |            |\n\n\n## 功能特性\n\n### 前台展示\n\n- **首页与文章流**：公告卡片、社交链接、文章卡片流展示；文章按更新时间分页查询并支持上一页/下一页切换\n- **文章详情阅读体验**：按文章 ID 路由访问（后端随机短链接）、Markdown 正文渲染、Front Matter 解析、`highlight.js` 代码高亮、代码块语言标识与一键复制\n- **目录与快速导航**：自动提取标题生成 TOC、目录按层级折叠/展开、目录锚点平滑跳转、悬浮按钮支持回顶/跳评论/开关目录\n- **评论体系**：Twikoo 文章评论（按路径隔离）+ 独立留言页（`/comments`）+ 全站评论聚合（文章/留言/友链）+ 最新流与按页面树形两种查看模式\n- **归档体系**：时间轴浏览全部文章，支持关键词搜索、年份/月筛选、正序/倒序排序\n- **社交与内容页**：友链页分组卡片展示与友链留言区、网站更新日志时间线、关于页与朋友圈页预留入口（含旧站跳转）\n- **多端适配**：首页、文章页、留言页、日志页完成移动端响应式优化\n\n### 后台管理\n\n- **登录与访问控制**：后台登录鉴权、token 本地持久化、路由守卫未登录自动跳转登录页\n- **文章管理全流程**：文章列表分页与关键词搜索、文章新增/编辑/删除、按 ID 回显详情并保存修改\n- **写作与解析能力**：写作表单支持标题/描述/封面/短链/日期/更新时间，Markdown 编辑区与预览区同屏，自动解析 Front Matter（标题/标签/分类/日期等）\n- **AI 文章简介（可选）**：描述区域提供「根据正文生成简介」按钮；在后端开启开关且配置 DeepSeek API Key 后，保存文章时若描述为空可自动生成简介（不覆盖已有描述）\n- **AI 文章封面（可选）**：封面区域提供「AI 生成封面（即梦）」；使用火山引擎即梦（智能视觉 CVProcess）按统一风格出图后**转存七牛**，自动填入封面链接（需配置火山 Access Key/Secret、开启开关且七牛可用）\n- **分类管理**：分类列表查询、新增、编辑、删除，并支持查看分类下文章与快速跳转编辑\n- **标签管理**：标签列表查询、新增、编辑、删除，并支持查看标签下文章与快速跳转编辑\n- **后台首页**：已预留首页入口，可继续扩展统计看板\n\n### 后端能力\n\n- **文章接口体系**：公共文章列表/详情接口 + 管理端文章增删改查完整接口\n- **分类与标签接口体系**：分类与标签均支持增删改查，并提供分类下文章查询、标签下文章查询接口\n- **认证与安全**：管理员登录认证并返回登录信息/token，基于 Spring Security + JWT + Token 过滤器实现安全基础能力\n- **统一数据返回**：`Result` 统一响应结构与 `PageResult` 标准分页结构\n- **数据有效性与事务**：分类/标签写操作含基础参数判空与重名校验，并通过事务保证写入一致性\n- **后端基础设施**：CORS 跨域支持、MyBatis + Mapper XML 数据访问\n- **AI 与 Spring AI**：集成 `spring-ai-starter-model-openai`，通过 DeepSeek 官方 OpenAI 兼容接口（`https://api.deepseek.com`）生成文章描述；管理端 `POST /admin/ai/article-description`；与文章新增/更新流程可选联动\n- **AI 封面（即梦）**：调用火山引擎即梦文生图接口生成图片，下载后服务端上传七牛；管理端 `POST /admin/ai/article-cover`，返回持久 `coverUrl`\n\n\n## 系统架构\n\n- **客户端**：浏览器通过 HTTP/HTTPS 访问 Nginx。\n- **Nginx**：分发静态资源，代理 API 请求到后端容器，支持 Gzip 压缩和 SSL 终止。\n- **后端服务**：Spring Boot 应用提供 RESTful API，连接 MySQL 和 Redis。\n- **数据库**：MySQL 存储业务数据，Redis 缓存热点数据（如文章详情、用户会话）。\n- **文件存储**：图片等静态资源可存储在本地或云对象存储。\n\n## API 文档\n\nApifox：\n- 开发环境：[https://tix3ut2jpw.apifox.cn](https://tix3ut2jpw.apifox.cn)\n\n## 许可证\n\n本项目基于 [Apache License 2.0 许可证](LICENSE) 开源，这意味着您可以自由使用、修改和分发，但需保留原版权声明。\n\n---\n\n## 联系方式\n\n- 作者：[阿叶Ayeez]\n- 邮箱：[[3406608593@qq.com](mailto:3406608593@qq.com)]\n- 博客：本博客 [https://blog.ayeez.cn](https://blog.ayeez.cn)；旧博客（已停止维护） [https://butterfly.ayeez.cn](https://butterfly.ayeez.cn)\n- GitHub Issues： [https://github.com/Ayeez757/AyeezBlog/issues](https://github.com/Ayeez757/AyeezBlog/issues)\n- QQ交流群（不仅限于本博客，欢迎加入）：421300955\n\n---\n\n\n\n[![Star History Chart](https://api.star-history.com/chart?repos=ayeez757/ayeezblog&type=date&legend=top-left)](https://www.star-history.com/?repos=ayeez757%2Fayeezblog&type=date&legend=top-left)\n',
+  '',
+  now(),
+  now(),
+  '（默认欢迎文章）\n阿叶Ayeez博客是一个基于Vue 3与Spring Boot构建的开源博客系统，提供前后端分离架构、Markdown写作、评论互动与后台管理等功能，支持容器化部署与AI辅助创作。',
+  null,
+  1, 0, 0, 0
+);
 
 -- 站点访问统计：总访问量（PV）
 create table if not exists blog_site_stats
@@ -264,8 +284,5 @@ create table if not exists blog_album_photo
             on update cascade on delete cascade
 ) comment '相册图片表' collate = utf8mb4_unicode_ci;
 
-ALTER TABLE blog_post
-    ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '置顶' AFTER category_id,
-    ADD COLUMN featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT '推荐' AFTER pinned,
-    ADD COLUMN editing TINYINT(1) NOT NULL DEFAULT 0 COMMENT '正在编辑' AFTER featured,
-    ADD COLUMN water TINYINT(1) NOT NULL DEFAULT 0 COMMENT '水' AFTER editing;
+-- 注意：blog_post 表在上方 CREATE TABLE 时已包含 pinned/featured/editing/water 字段
+-- 这里不再重复 ALTER，避免脚本执行时报 Duplicate column name

@@ -164,7 +164,23 @@ cd AyeezBlog
 
 #### 3. 启动后端（blog-server）
 
-先修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` 中的数据库与七牛配置，再启动后端。
+先配置数据库连接再启动后端。注意：后端默认配置里 **数据库账号/密码没有默认值**，如果不配置会直接启动失败（报错类似 *Could not resolve placeholder 'hm.db.username'*）。
+
+你可以二选一：
+
+- **方式 A（推荐）**：通过环境变量配置数据库连接（Windows PowerShell 示例）
+
+```powershell
+$env:HM_DB_HOST="localhost"
+$env:HM_DB_USERNAME="root"
+$env:HM_DB_PASSWORD="你的数据库密码"
+```
+
+- **方式 B**：直接修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml`，把 `hm.db.host / hm.db.username / hm.db.password` 填成你的本地配置。
+
+说明：
+
+- **七牛（qiniu）配置**：仅在后台需要“获取上传 token/AI 生成封面后转存七牛”等功能时才需要；只跑文章/分类/标签等基础功能可以不配。
 
 **可选 — AI**：若需 DeepSeek 生成描述，请配置 `hm.deepseek.api-key` 与 `hm.deepseek.summary-enabled=true`；若需即梦生成封面，请配置 `hm.volcengine.access-key`、`hm.volcengine.secret-key` 与 `hm.volcengine.cover-enabled=true`，并保证七牛已配置（详见下文「配置说明」）。未配置时其余功能不受影响。
 
@@ -199,7 +215,7 @@ npm run dev
 
 访问：`http://localhost:5173`  
 
-说明：项目已在 `vite.config.js` 中将 `/post`、`/logs` 代理到 `http://localhost:8080`，无需手动改 `src/api/index.js`。
+说明：项目已在 `vite.config.js` 中配置本地开发代理（例如 `/api`、`/post`、`/logs`、`/links/list`、`/twikoo-proxy` → `http://localhost:8080` 或第三方服务），无需手动改请求地址。
 
   
 
@@ -219,7 +235,12 @@ npm run dev
 
   
 
-访问：`http://localhost:5173/admin/`（如与前台同时运行，请指定其他端口，例如 `npm run dev -- --port 5174`）
+访问：`http://localhost:5173/admin/`
+
+端口提示：
+
+- 管理端在 `vite.config.js` 中固定了 `5173`，而前台 Vite 默认也会用 `5173`，**两者同时启动会端口冲突**。
+- 建议同时运行时把 **前台** 换端口（例如 `npm run dev -- --port 5174`），或把管理端 `vite.config.js` 的 `server.port` 改成其他端口。
 
 默认用户：admin
 
@@ -232,47 +253,16 @@ npm run dev
 
 ### 后端配置 (application.yml)
 
-本项目默认通过 `application.yml` 管理后端配置。启动前请先按你的环境修改数据库与七牛图床配置。
+配置说明仅保留关键项；更完整的填写示例、可选项与环境变量映射已写入 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` 的注释中（建议直接打开该文件照注释填）。
 
-| 配置项 | 说明 | 示例值 | 部署必改 |
-| --- | --- | --- | --- |
-| `hm.db.host` | MySQL 主机名/IP（用于拼接 `spring.datasource.url`） | `mysql` 或 `localhost` | ✅ |
-| `hm.db.password` | MySQL 密码 | `your_db_password` | ✅ |
-| `hm.qiniu.access-key` | 七牛 AccessKey | `your_qiniu_access_key` | ✅ |
-| `hm.qiniu.secret-key` | 七牛 SecretKey | `your_qiniu_secret_key` | ✅ |
-| `hm.qiniu.bucket` | 七牛空间名 | `ayeez-blog` | ✅ |
-| `hm.qiniu.domain` | 七牛访问域名 | `https://your-cdn-domain.com` | ✅ |
-| `hm.qiniu.upload-url` | 七牛上传地址（按空间区域） | `https://up-z2.qiniup.com` | ✅ |
-| `hm.qiniu.token-expires` | 上传凭证有效期（秒） | `1800` | 按需 |
-| `spring.datasource.url` | JDBC 数据库连接地址 | `jdbc:mysql://localhost:3306/ayeezblog` | ✅ |
-| `spring.datasource.username` | 数据库用户名 | `root` | ✅ |
-| `spring.datasource.password` | 数据库密码（来自 `${hm.db.password}`） | `${hm.db.password}` | ✅ |
-| `server.port` | 后端服务端口 | `8080` | 按需 |
-| `spring.servlet.multipart.max-file-size` | 单个文件上传上限 | `10MB` | 按需 |
-| `spring.servlet.multipart.max-request-size` | 单次请求上传上限 | `100MB` | 按需 |
-| `aliyun.oss.endpoint` | OSS 地域节点 | `https://oss-cn-beijing.aliyuncs.com` | ✅ |
-| `aliyun.oss.bucketName` | OSS Bucket 名称 | `javaweb-ayeez` | ✅ |
-| `aliyun.oss.region` | OSS 地域 | `cn-beijing` | ✅ |
-| `hm.deepseek.api-key` | DeepSeek API Key（供 Spring AI 调用；`dev` profile 下可由环境变量 `DEEPSEEK_API_KEY` 注入） | 留空则不请求模型 | 使用 AI 时 ✅ |
-| `hm.deepseek.summary-enabled` | 是否启用简介生成（保存时空描述自动填充 + 管理端生成接口） | `false` / `true` | 按需 |
-| `hm.deepseek.verbose-log` | 是否在 INFO 打印 DeepSeek 系统/用户提示词与模型原始输出（仅排查用，线上建议 false） | `false` / `true` | 按需 |
-| `spring.ai.openai.api-key` | 与 `hm.deepseek.api-key` 绑定，一般无需单独改 | `${hm.deepseek.api-key:}` | 使用 AI 时 ✅ |
-| `spring.ai.openai.base-url` | OpenAI 兼容服务地址 | `https://api.deepseek.com` | 一般不改 |
-| `spring.ai.openai.chat.options.model` | 对话模型 | `deepseek-chat` | 按需 |
-| `spring.ai.openai.chat.options.temperature` | 采样温度 | `0.3` | 按需 |
-| `blog.ai.summary.enabled` | 业务开关（默认引用 `hm.deepseek.summary-enabled`） | `false` | 按需 |
-| `blog.ai.summary.max-content-chars` | 送入模型的正文最大字符数 | `12000` | 按需 |
-| `blog.ai.summary.max-description-length` | 生成简介最大长度（勿超过库表 `description` 字段） | `240` | 按需 |
-| `hm.volcengine.access-key` | 火山引擎控制台 **API 访问密钥** Access Key ID（`dev` profile 下可由环境变量 `VOLCENGINE_ACCESS_KEY` 注入） | 留空则不生成封面 | 使用封面 AI 时 ✅ |
-| `hm.volcengine.secret-key` | 火山引擎 Secret Access Key（与 Access Key 成对；`dev` profile 下可由环境变量 `VOLCENGINE_SECRET_KEY` 注入） | 同上 | 使用封面 AI 时 ✅ |
-| `hm.volcengine.cover-enabled` | 是否启用封面 AI | `false` / `true` | 按需 |
-| `hm.volcengine.verbose-http-log` | 是否在 INFO 打印即梦完整请求 JSON/URL/响应体（不含密钥；仅排查用） | `false` / `true` | 按需 |
-| `blog.ai.cover.enabled` | 封面功能开关（默认引用 `hm.volcengine.cover-enabled`） | `false` | 按需 |
-| `blog.ai.cover.req-key` | 即梦能力标识 `req_key`（以控制台/文档为准） | `jimeng_high_aes_general_v21_L` | 按需 |
-| `blog.ai.cover.width` / `height` | 输出宽高（像素） | `1664` / `928` | 需与能力支持范围一致 |
-| `blog.ai.cover.region` | 签名用区域 | `cn-north-1` | 一般不改 |
-| `blog.ai.cover.max-total-prompt-chars` | 拼合后正向提示词总长度上限 | `1200` | 按需 |
-| `blog.ai.cover.max-user-prompt-chars` | 管理端「生图补充说明」长度上限 | `300` | 按需 |
+| 配置项 | 说明 |
+| --- | --- |
+| `hm.db.host` / `hm.db.username` / `hm.db.password` | MySQL 连接信息（必填，否则后端无法启动） |
+| `hm.db.port` | MySQL 端口（默认 3306，可不填） |
+| `server.port` | 后端端口（默认 8080） |
+| `qiniu.*` | 七牛配置（仅在管理端需要“获取上传 token”/AI 封面转存时必填；不使用可不配） |
+| `hm.deepseek.*` | 简介生成（可选） |
+| `hm.volcengine.*` | 封面生成（可选；通常还需要七牛可用） |
 
 
 

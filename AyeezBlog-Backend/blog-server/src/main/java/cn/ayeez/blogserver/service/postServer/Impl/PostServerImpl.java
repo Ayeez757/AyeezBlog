@@ -103,7 +103,6 @@ public class PostServerImpl implements PostService {
         if(postMapper.get(postBody.getId())!=null && !postBody.getId().isEmpty()){
             postMapper.add(postBody);
         }else{
-            //TODO 反复查数据库性能低下，后续可用redis优化（不过优先度不高，因为uuid一般不撞）
             int retryCount = 0;
             String id = AbbrlinkUtil.getShortUrl();
             while (postMapper.get(id) != null && retryCount < 10) {
