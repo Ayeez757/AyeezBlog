@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { resolveScrollBehaviorWithLenis } from '@/plugins/smoothScroll';
 
 import Home from '@/views/Home.vue';
 // 非首页页面拆包（首页加载完后再预取，见 Home.vue）
@@ -39,17 +40,8 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition;
-    }
-
-    // 点击首页文章卡片进入详情页时，始终从顶部开始
-    if (to.name === 'PostDetail') {
-      return { top: 0, left: 0 };
-    }
-
-    return { top: 0, left: 0 };
+  scrollBehavior(_to, _from, savedPosition) {
+    return resolveScrollBehaviorWithLenis(savedPosition);
   }
 });
 
