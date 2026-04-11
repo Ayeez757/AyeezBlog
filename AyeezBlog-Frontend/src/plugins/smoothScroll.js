@@ -1,7 +1,36 @@
+import { nextTick } from 'vue';
 import Lenis from 'lenis';
 
 let lenisInstance = null;
 let rafId = null;
+
+export function getLenis() {
+  return lenisInstance;
+}
+
+/**
+ * Lenis 接管 window 滚动时，Vue Router 的 scrollBehavior 只改原生 scrollTop，
+ * 视觉上仍会停在旧位置。在路由切换后把 Lenis 滚到目标位置，并返回 false 避免二次应用。
+ */
+export function resolveScrollBehaviorWithLenis(savedPosition) {
+  if (!lenisInstance) {
+    if (savedPosition) return savedPosition;
+    return { top: 0, left: 0 };
+  }
+
+  return new Promise((resolve) => {
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        const top =
+          savedPosition != null && typeof savedPosition.top === 'number'
+            ? savedPosition.top
+            : 0;
+        lenisInstance.scrollTo(top, { immediate: true });
+        resolve(false);
+      });
+    });
+  });
+}
 
 export function initSmoothScroll() {
   if (lenisInstance) {
