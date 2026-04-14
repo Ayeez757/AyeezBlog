@@ -1,0 +1,4 @@
+# JMeter raw data and generated reports
+jmeter.log
+performance/jmeter/results/*.jtl
+performance/jmeter/reports/
