@@ -28,7 +28,7 @@
         <h2 class="section-title">个人简介</h2>
         <ul class="info-list">
           <li><strong>很高兴认识你</strong></li>
-          <li>25 级软件工程在读大学生（大一），平时专注后端开发与工程实践。</li>
+          <li>25 级软件工程在读大学生（大一）</li>
           <li>喜欢瞎折腾的小趴菜,拥有众多兴趣爱好</li>
           <li>
             <strong>兴趣爱好：</strong>
