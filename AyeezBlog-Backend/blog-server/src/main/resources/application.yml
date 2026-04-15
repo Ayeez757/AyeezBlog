@@ -45,11 +45,31 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 100MB
-# =========================
-# DeepSeek（OpenAI 兼容 API）
-# =========================
-# - spring.ai.openai.api-key 默认绑定 hm.deepseek.api-key（空则不请求模型）
-# - 简介功能开关在 blog.ai.summary.enabled（默认引用 hm.deepseek.summary-enabled）
+    # RabbitMQ 配置
+  rabbitmq:
+    host: ${hm.rabbitmq.host:localhost}
+    port: ${hm.rabbitmq.port:5672}
+    username: ${hm.rabbitmq.username:guest}
+    password: ${hm.rabbitmq.password:guest}
+    virtual-host: ${hm.rabbitmq.virtual-host:/}
+    listener:
+      simple:
+        acknowledge-mode: manual
+        concurrency: 3
+        max-concurrency: 10
+        prefetch: 50
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000
+        max-attempts: 3
+        max-interval: 10000
+        multiplier: 2.0
+  # =========================
+  # DeepSeek（OpenAI 兼容 API）
+  # =========================
+  # - spring.ai.openai.api-key 默认绑定 hm.deepseek.api-key（空则不请求模型）
+  # - 简介功能开关在 blog.ai.summary.enabled（默认引用 hm.deepseek.summary-enabled）
   ai:
     openai:
       api-key: ${hm.deepseek.api-key:}

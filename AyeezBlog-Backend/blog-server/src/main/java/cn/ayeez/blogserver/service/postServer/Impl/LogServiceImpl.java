@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * 日志版本服务实现
+ */
 @Service
 @Slf4j
 public class LogServiceImpl implements LogService {
