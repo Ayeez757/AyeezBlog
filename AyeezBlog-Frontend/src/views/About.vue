@@ -28,29 +28,33 @@
         <h2 class="section-title">个人简介</h2>
         <ul class="info-list">
           <li><strong>很高兴认识你</strong></li>
-          <li>25级软件工程在读大学生（大一）</li>
-          <li>热爱计算机，喜欢开发</li>
-          <li>喜欢瞎折腾，拥有众多兴趣爱好</li>
+          <li>25 级软件工程在读大学生（大一），平时专注后端开发与工程实践。</li>
+          <li>喜欢瞎折腾的小趴菜,拥有众多兴趣爱好</li>
           <li>
-            例如：
+            <strong>兴趣爱好：</strong>
             <span class="accent-text">
-              画画，弹钢琴，做饭，乒乓球，中长跑，排球，我的世界（游戏），中式建筑，生电（我的世界），魔方，骑行，桌球，国际象棋，
-              摄影，手工木作，股市赌狗，编织，喝茶，写博客等
+              画画、弹钢琴、做饭、乒乓球、中长跑、排球、我的世界（含生电）、中式建筑、魔方、骑行、桌球、国际象棋、摄影、手工木作、喝茶、写博客等。
             </span>
           </li>
           <li>
-            <strong>技术栈:</strong>
+            <strong>核心开发与框架：</strong>
             <span class="accent-text">
-              Java、Springboot、MySQL、Redis、Maven、mybatis、nginx、docker、HTML、CSS、Git、Astro、Uniapp
+              Java SE/EE、Spring Boot 3.x、Spring、MyBatis、MyBatis Plus。
             </span>
           </li>
           <li>
-            <strong>涉及:</strong>
+            <strong>中间件与数据存储：</strong>
             <span class="accent-text">
-              c、c++、python、javascript、vue、MongoDB
+              MySQL、Redis、RabbitMQ、MQTT。
             </span>
           </li>
-          <li><strong>IP:</strong> 广东</li>
+          <li>
+            <strong>运维、测试与工具：</strong>
+            <span class="accent-text">
+              Docker、Linux、Nginx、JMeter、Git、Maven、Gradle、CI/CD。
+            </span>
+          </li>
+          <li><strong>IP：</strong>广东</li>
         </ul>
 
         <!-- 完全不完全统计：直接放进个人简介卡片内部 -->
