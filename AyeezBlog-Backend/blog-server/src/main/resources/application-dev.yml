@@ -1,4 +1,6 @@
 hm:
+  jwt:
+    secret-key: ${HM_JWT_SECRET_KEY:}
   db:
     host: mysql
     username: ${HM_DB_USER}

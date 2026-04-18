@@ -1,0 +1,35 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ayeezblog-mysql-perf-local
+    environment:
+      MYSQL_ROOT_PASSWORD: change_me
+      MYSQL_DATABASE: ayeezblog
+      TZ: Asia/Shanghai
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./AyeezBlog建表.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+  backend:
+    build:
+      context: ./AyeezBlog-Backend
+      dockerfile: Dockerfile.perf-local
+    image: ayeezblog-backend:perf-local
+    container_name: ayeezblog-backend-perf-local
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    environment:
+      # Keep dev for env var mapping (hm.db.*), add perf-local for load-test tuning.
+      SPRING_PROFILES_ACTIVE: dev,perf-local
+      # Spring AI requires a non-empty API key at startup (even if you won't call AI endpoints).
+      # Set a placeholder to allow the app to boot for performance testing.
+      SPRING_AI_OPENAI_API_KEY: perf-local-placeholder
+      HM_DB_HOST: mysql
+      HM_DB_USER: root
+      HM_DB_PASSWORD: change_me
+      # Recommended: keep heap below container memory
+      JAVA_TOOL_OPTIONS: -Xms3g -Xmx3g
+    mem_limit: 4g
+    cpus: 2.0

@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    hikari:
+      # Default is 10; too small under high-concurrency read traffic.
+      maximum-pool-size: 50
+      minimum-idle: 10
+      connection-timeout: 2000
+      validation-timeout: 1000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+server:
+  tomcat:
+    # Goal: reduce "Connection refused" by increasing accept backlog and worker capacity.
+    threads:
+      max: 400
+      min-spare: 50
+    accept-count: 1000
+    max-connections: 20000
+
+mybatis:
+  configuration:
+    # Disable SQL stdout logging for performance tests.
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    root: WARN
+    # Avoid log spam from hot paths during load.
+    cn.ayeez.blogserver.controller.user: WARN
+    cn.ayeez.blogserver.service: WARN
+
+blog:
+  ai:
+    summary:
+      verbose-log: false
+    cover:
+      verbose-http-log: false
+

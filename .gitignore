@@ -2,3 +2,15 @@
 jmeter.log
 performance/jmeter/results/*.jtl
 performance/jmeter/reports/
+performance/jmeter/results/
+performance/jmeter/data/
+performance/jmeter/**/*.jtl
+performance/jmeter/**/*.csv
+**/test-data/
+**/test-output/
+**/tmp-test-data/
+
+# Local secrets (never commit)
+AyeezBlog-Backend/blog-server/.env.local
+AyeezBlog-Backend/blog-server/src/main/resources/application-local-secret.yml
+**/.jwt-secret
