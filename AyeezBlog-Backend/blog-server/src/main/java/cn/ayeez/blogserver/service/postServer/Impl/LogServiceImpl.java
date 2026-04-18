@@ -21,7 +21,9 @@ import java.util.stream.Collectors;
 
 /**
  * 日志版本服务实现
+ * @author Ayeez
  */
+
 @Service
 @Slf4j
 public class LogServiceImpl implements LogService {
@@ -200,4 +202,5 @@ public class LogServiceImpl implements LogService {
                 .collect(Collectors.toList());
     }
 }
+
 

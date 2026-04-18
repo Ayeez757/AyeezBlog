@@ -7,6 +7,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 
@@ -16,12 +17,31 @@ import java.util.Map;
 public class JwtUtil {
 
 
-    // 建议使用至少256位（32字节）的密钥
-    private static final String SECRET_KEY_STRING = "6Zi/5Y+25piv5Liq6LaF57qn5aSn5biF6YC8"; // 至少32字符
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes());
+    // 建议使用至少256位（32字节）的密钥。优先读取环境变量 HM_JWT_SECRET_KEY，
+    // 其次读取 JVM 参数 -Dhm.jwt.secret-key=...
+    private static final String ENV_SECRET_KEY = "HM_JWT_SECRET_KEY";
+    private static final String PROPERTY_SECRET_KEY = "hm.jwt.secret-key";
+    private static final SecretKey SECRET_KEY = loadSecretKey();
 
     // 默认过期时间：24小时（单位：毫秒）
     private static final long EXPIRATION = 60 * 60 * 1000L; // 1小时
+
+    private static SecretKey loadSecretKey() {
+        String secret = System.getenv(ENV_SECRET_KEY);
+        if (secret == null || secret.isBlank()) {
+            secret = System.getProperty(PROPERTY_SECRET_KEY);
+        }
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT secret is missing. Please set environment variable " + ENV_SECRET_KEY
+                            + " or JVM property -D" + PROPERTY_SECRET_KEY);
+        }
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < 32) {
+            throw new IllegalStateException("JWT secret is too short. Use at least 32 bytes.");
+        }
+        return Keys.hmacShaKeyFor(secretBytes);
+    }
 
     /**
      * 生成 JWT Token

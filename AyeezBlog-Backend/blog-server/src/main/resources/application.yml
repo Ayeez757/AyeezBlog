@@ -35,6 +35,8 @@
 spring:
   application:
     name: blog-server
+  config:
+    import: optional:classpath:application-local-secret.yml
   #数据库的链接信息
   datasource:
     url: jdbc:mysql://${hm.db.host}:${hm.db.port:3306}/ayeezblog

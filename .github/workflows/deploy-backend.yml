@@ -32,6 +32,7 @@ jobs:
           SSH_HOST: ${{ secrets.SERVER_HOST }}
           SSH_USER: ${{ secrets.SERVER_USER }}
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          HM_JWT_SECRET_KEY: ${{ secrets.HM_JWT_SECRET_KEY }}
           DB_USER: ${{ secrets.HM_DB_USER }}
           DB_PASSWORD: ${{ secrets.HM_DB_PASSWORD }}
           QINIU_ACCESS_KEY: ${{ secrets.QINIU_ACCESS_KEY }}
@@ -94,6 +95,7 @@ jobs:
               --name ayeezblog-backend \\
               --network ayeez \\
               -e HM_DB_HOST=mysql \\
+              -e "HM_JWT_SECRET_KEY=${HM_JWT_SECRET_KEY}" \\
               -e "HM_DB_USER=${DB_USER}" \\
               -e "HM_DB_PASSWORD=${DB_PASSWORD}" \\
               -e "QINIU_ACCESS_KEY=${QINIU_ACCESS_KEY}" \\
