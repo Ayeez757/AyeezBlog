@@ -64,8 +64,17 @@
         </where>
         ORDER BY pinned DESC,
         <choose>
-            <when test="orderBy != null and orderBy != ''">
-                ${orderBy}
+            <when test="orderBy == 'create_time'">
+                create_time
+            </when>
+            <when test="orderBy == 'update_time'">
+                update_time
+            </when>
+            <when test="orderBy == 'title'">
+                title
+            </when>
+            <when test="orderBy == 'id'">
+                id
             </when>
             <otherwise>
                 create_time

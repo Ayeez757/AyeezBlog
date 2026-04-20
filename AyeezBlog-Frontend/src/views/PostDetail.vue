@@ -189,6 +189,7 @@
 import { fetchPostById } from '@/api';
 import { loadTwikoo, getTwikooEnvId } from '@/utils/twikoo';
 import MarkdownIt from 'markdown-it';
+import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
 import fm from 'front-matter';
 import 'highlight.js/styles/github-dark.css';
@@ -223,8 +224,8 @@ export default {
   computed: {
     renderedMarkdown() {
       const md = new MarkdownIt({
-        // 默认即为 true；显式写出：正文以 Markdown 为主时可混用 HTML（如 <font>、<span>）
-        html: true,
+        // 禁用 Markdown 原生 HTML，降低 XSS 风险
+        html: false,
         highlight: function (str, lang) {
           if (lang && hljs.getLanguage(lang)) {
             try {
@@ -298,13 +299,14 @@ export default {
 
       // 整篇 HTML：不经 Markdown 解析，避免 *、缩进等被当成 Markdown
       if (fmt === 'html') {
-        const html = this.ensureHtmlHeadingAnchors(body || '');
-        this.extractHeadingsFromHtml(html);
-        return html;
+        const htmlWithAnchors = this.ensureHtmlHeadingAnchors(body || '');
+        const sanitizedHtml = DOMPurify.sanitize(htmlWithAnchors);
+        this.extractHeadingsFromHtml(sanitizedHtml);
+        return sanitizedHtml;
       }
 
       this.extractHeadingsFromMarkdown(body);
-      return md.render(body);
+      return DOMPurify.sanitize(md.render(body));
     }
   },
   watch: {

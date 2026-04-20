@@ -217,6 +217,7 @@
 <script>
 import axios from 'axios';
 import MarkdownIt from 'markdown-it';
+import DOMPurify from 'dompurify';
 import fm from 'front-matter';
 import yaml from 'js-yaml';
 import { addPost, getPostDetail, updatePost, getQiniuUploadToken, generateArticleDescription, generateArticleCover } from '../api/index';
@@ -298,13 +299,16 @@ export default {
   },
   async created() {
     this.md = new MarkdownIt({
-      html: true // 与前台一致：Markdown 正文中可混用 HTML
+      html: false
     });
     if (this.isEdit) {
       await this.loadArticle();
     }
   },
   methods: {
+    sanitizeHtml(html) {
+      return DOMPurify.sanitize(html || '');
+    },
     clearAiHintTimers() {
       if (this._aiCoverHintTimer) {
         clearInterval(this._aiCoverHintTimer);
@@ -528,7 +532,7 @@ export default {
         this.parseFrontMatter();
         if (!this.renderedHtml) {
           const parsed = fm(this.markdownContent || '');
-          this.renderedHtml = this.md.render(parsed.body || '');
+          this.renderedHtml = this.sanitizeHtml(this.md.render(parsed.body || ''));
         }
       } catch (error) {
         console.error('获取文章详情失败:', error);
@@ -582,7 +586,7 @@ export default {
         this.parsedFrontMatter.categories = this.normalizeToArray(this.form.category);
 
         const after = fm(this.markdownContent);
-        this.renderedHtml = this.md.render(after.body || '');
+        this.renderedHtml = this.sanitizeHtml(this.md.render(after.body || ''));
         this.$nextTick(() => {
           this.suppressParseToForm = false;
         });
@@ -634,7 +638,7 @@ export default {
           });
         }
 
-        this.renderedHtml = this.md.render(body);
+        this.renderedHtml = this.sanitizeHtml(this.md.render(body));
       } catch (error) {
         console.error('Front-Matter 解析失败:', error);
         this.$message.error('Front-Matter 格式错误，请检查内容');
