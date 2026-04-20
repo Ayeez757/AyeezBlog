@@ -37,6 +37,7 @@ public class JwtUtil {
                             + " or JVM property -D" + PROPERTY_SECRET_KEY);
         }
         byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        // 检查密钥长度
         if (secretBytes.length < 32) {
             throw new IllegalStateException("JWT secret is too short. Use at least 32 bytes.");
         }
