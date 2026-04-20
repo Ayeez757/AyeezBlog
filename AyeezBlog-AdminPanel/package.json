@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "axios": "^1.13.5",
+    "dompurify": "^3.4.0",
     "element-plus": "^2.13.2",
     "front-matter": "^4.0.2",
     "js-yaml": "^4.1.0",
