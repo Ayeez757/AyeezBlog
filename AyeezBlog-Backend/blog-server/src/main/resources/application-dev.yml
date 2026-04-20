@@ -1,6 +1,7 @@
 hm:
   jwt:
-    secret-key: ${HM_JWT_SECRET_KEY:}
+    # Development fallback only. In production, set HM_JWT_SECRET_KEY explicitly.
+    secret-key: ${HM_JWT_SECRET_KEY:dev-secret-key-change-this-at-least-32bytes}
   db:
     host: mysql
     username: ${HM_DB_USER}
