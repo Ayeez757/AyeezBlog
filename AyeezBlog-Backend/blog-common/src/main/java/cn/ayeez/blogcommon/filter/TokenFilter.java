@@ -2,6 +2,7 @@ package cn.ayeez.blogcommon.filter;
 
 
 import cn.ayeez.blogcommon.util.JwtUtil;
+import cn.ayeez.blogcommon.util.JwtRevocationStore;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,6 +54,11 @@ public class TokenFilter implements Filter {
 
         try {
             JwtUtil.parseToken(token);
+            if (JwtRevocationStore.isRevoked(token)) {
+                log.info("token已吊销，请重新登录");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
         } catch (Exception e) {
             log.info("token解析失败，请重新登录");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

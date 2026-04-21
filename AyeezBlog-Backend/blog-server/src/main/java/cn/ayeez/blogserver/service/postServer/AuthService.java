@@ -13,4 +13,12 @@ public interface AuthService {
      * @return 登录成功后返回登录信息，失败返回 null
      */
     LoginInfo login(Auth auth);
+
+    /**
+     * 管理员登出：吊销当前 JWT。
+     *
+     * @param token 请求头中的 token
+     * @return 是否吊销成功
+     */
+    boolean logout(String token);
 }

@@ -15,11 +15,14 @@
       <el-menu-item index="/about-anime">追番列表</el-menu-item>
       <el-menu-item index="/about-anime/cards">追番卡片视图</el-menu-item>
       <el-menu-item index="/logs">日志管理</el-menu-item>
+      <el-menu-item index="__logout__">退出登录</el-menu-item>
     </el-menu>
   </div>
 </template>
 
 <script>
+import { logoutApi } from '@/api/index';
+
 export default {
   props: {
     isMobile: {
@@ -32,7 +35,19 @@ export default {
     }
   },
   methods: {
-    handleSelect(index) {
+    async handleSelect(index) {
+      if (index === '__logout__') {
+        try {
+          await logoutApi();
+        } catch (error) {
+          // 即便接口失败也清理本地态，避免前端假登录
+          console.warn('登出接口调用失败，已执行本地退出', error);
+        } finally {
+          localStorage.removeItem('token');
+          this.$router.push('/login');
+        }
+        return;
+      }
       // 路由跳转
       this.$router.push(index);
       if (this.isMobile) {
