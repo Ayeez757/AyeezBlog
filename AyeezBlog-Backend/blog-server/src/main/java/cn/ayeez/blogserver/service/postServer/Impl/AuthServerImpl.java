@@ -1,5 +1,6 @@
 package cn.ayeez.blogserver.service.postServer.Impl;
 
+import cn.ayeez.blogcommon.util.JwtRevocationStore;
 import cn.ayeez.blogpojo.bo.Auth;
 import cn.ayeez.blogpojo.dto.response.LoginInfo;
 import cn.ayeez.blogserver.mapper.AuthMapper;
@@ -65,5 +66,14 @@ public class AuthServerImpl implements AuthService {
         claims.put("username", user.getUsername());
         String jwt = JwtUtil.generateToken(claims);
         return new LoginInfo(user.getId(), user.getUsername(), user.getNickname(), jwt);
+    }
+
+    @Override
+    public boolean logout(String token) {
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+        JwtRevocationStore.revokeToken(token);
+        return true;
     }
 }
