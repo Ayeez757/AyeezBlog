@@ -147,7 +147,7 @@ insert ignore into friend_link_class (id, class_name, class_desc, sort)
 values (1, '默认', '默认分组', 0);
 
 insert ignore into friend_link (id, class_id, name, link, avatar, descr, rss, sort)
-values (1, 1, '阿叶Ayeez博客', 'https://blog.ayeez.cn', null, '默认友链（作者博客）', null, 0);
+values (1, 1, '阿叶Ayeez博客', 'https://blog.ayeez.cn', 'https://qiniu.ayeez.cn/avatar.jpg', '是博客作者呀~', null, 0);
 
 -- 插入一篇默认欢迎文章（包含 Front Matter）
 insert into blog_post (
