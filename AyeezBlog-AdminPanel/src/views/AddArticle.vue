@@ -217,9 +217,12 @@
 <script>
 import axios from 'axios';
 import MarkdownIt from 'markdown-it';
+import markdownItTexmath from 'markdown-it-texmath';
+import katex from 'katex';
 import DOMPurify from 'dompurify';
 import fm from 'front-matter';
 import yaml from 'js-yaml';
+import 'katex/dist/katex.min.css';
 import { addPost, getPostDetail, updatePost, getQiniuUploadToken, generateArticleDescription, generateArticleCover } from '../api/index';
 
 export default {
@@ -301,6 +304,7 @@ export default {
     this.md = new MarkdownIt({
       html: false
     });
+    this.md.use(markdownItTexmath, { engine: katex, delimiters: 'dollars' });
     if (this.isEdit) {
       await this.loadArticle();
     }
@@ -1128,6 +1132,11 @@ export default {
   max-height: 220px;
   object-fit: contain;
   border-radius: 6px;
+}
+
+.md-preview :deep(.katex-display) {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .md-preview :deep(ul),

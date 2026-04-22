@@ -189,10 +189,13 @@
 import { fetchPostById } from '@/api';
 import { loadTwikoo, getTwikooEnvId } from '@/utils/twikoo';
 import MarkdownIt from 'markdown-it';
+import markdownItTexmath from 'markdown-it-texmath';
+import katex from 'katex';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
 import fm from 'front-matter';
 import 'highlight.js/styles/github-dark.css';
+import 'katex/dist/katex.min.css';
 import Lenis from 'lenis';
 import { initSmoothScroll, destroySmoothScroll } from '@/plugins/smoothScroll';
 
@@ -235,6 +238,7 @@ export default {
           return ''; // 不高亮时走默认转义
         }
       });
+      md.use(markdownItTexmath, { engine: katex, delimiters: 'dollars' });
 
       // 自定义代码块渲染：增加头部信息 & 复制按钮
       const defaultFence =
@@ -987,6 +991,12 @@ export default {
   font-size: 16px;
 }
 
+/* KaTeX 块级公式过长时允许横向滚动 */
+:deep(.post-content .katex-display) {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 /* 点击目录时防止标题被页头遮挡 */
 :deep(.post-content h1),
 :deep(.post-content h2),
@@ -1528,6 +1538,11 @@ export default {
   color: #111827;
   font-size: 16px;
   line-height: 1.85;
+}
+
+.reader-post-content :deep(.katex-display) {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .reader-post-content :deep(p) {
