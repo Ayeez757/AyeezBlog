@@ -43,4 +43,10 @@ public interface SiteStatsMapper {
      * 查询最近 N 天（含当天）的历史曲线数据（不保证每天都有记录）。
      */
     List<SiteTrafficHistoryPoint> getDailyHistory(@Param("days") int days);
+
+    /**
+     * 查询指定日期区间（含起止）历史曲线数据（不保证每天都有记录）。
+     */
+    List<SiteTrafficHistoryPoint> getDailyHistoryByRange(@Param("startDate") LocalDate startDate,
+                                                         @Param("endDate") LocalDate endDate);
 }

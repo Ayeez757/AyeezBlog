@@ -77,4 +77,23 @@
         ORDER BY pv.stat_date
     </select>
 
+    <select id="getDailyHistoryByRange" resultType="cn.ayeez.blogpojo.dto.response.SiteTrafficHistoryPoint">
+        SELECT
+            DATE_FORMAT(x.stat_date, '%Y-%m-%d') AS date,
+            COALESCE(pv.page_views, 0) AS pageViews,
+            COALESCE(uv.unique_visitors, 0) AS uniqueVisitors
+        FROM (
+                 SELECT pv.stat_date
+                 FROM blog_site_pv_daily pv
+                 WHERE pv.stat_date BETWEEN #{startDate} AND #{endDate}
+                 UNION
+                 SELECT uv.stat_date
+                 FROM blog_site_uv_daily uv
+                 WHERE uv.stat_date BETWEEN #{startDate} AND #{endDate}
+             ) x
+                 LEFT JOIN blog_site_pv_daily pv ON pv.stat_date = x.stat_date
+                 LEFT JOIN blog_site_uv_daily uv ON uv.stat_date = x.stat_date
+        ORDER BY x.stat_date
+    </select>
+
 </mapper>
