@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.TalkMapper">
+
+    <select id="pages" resultType="cn.ayeez.blogpojo.entity.Talk">
+        SELECT
+            id,
+            content,
+            images,
+            published,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+        FROM blog_talk
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND content LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="published != null">
+                AND published = #{published}
+            </if>
+        </where>
+        ORDER BY
+        <choose>
+            <when test="orderBy == 'updated_at'">
+                updated_at
+            </when>
+            <when test="orderBy == 'id'">
+                id
+            </when>
+            <otherwise>
+                created_at
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="orderType != null and orderType.toLowerCase() == 'asc'">
+                ASC
+            </when>
+            <otherwise>
+                DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="get" resultType="cn.ayeez.blogpojo.entity.Talk">
+        SELECT
+            id,
+            content,
+            images,
+            published,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+        FROM blog_talk
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="cn.ayeez.blogpojo.entity.Talk" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_talk (content, images, published)
+        VALUES (#{content}, #{images}, COALESCE(#{published}, 0))
+    </insert>
+
+    <update id="update" parameterType="cn.ayeez.blogpojo.entity.Talk">
+        UPDATE blog_talk
+        SET content = #{content},
+            images = #{images},
+            published = COALESCE(#{published}, published)
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM blog_talk WHERE id = #{id}
+    </delete>
+</mapper>
+

@@ -12,6 +12,8 @@ const Logs = () => import('@/views/Logs.vue');
 const PostDetail = () => import('@/views/PostDetail.vue');
 const Albums = () => import('@/views/Albums.vue');
 const AlbumDetail = () => import('@/views/AlbumDetail.vue');
+const Talks = () => import('@/views/Talks.vue');
+const TalkDetail = () => import('@/views/TalkDetail.vue');
 
 
 const routes = [
@@ -27,6 +29,13 @@ const routes = [
     path: '/albums/:id',
     name: 'AlbumDetail',
     component: AlbumDetail
+  },
+  { path: '/talks', name: 'Talks', component: Talks },
+  {
+    path: '/talks/:id',
+    name: 'TalkDetail',
+    component: TalkDetail,
+    props: true
   },
   {
     path: '/posts/:id',

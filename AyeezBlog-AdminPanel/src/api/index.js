@@ -45,6 +45,38 @@ export const deletePost = (params) => {
   return request.delete('/admin/post/delete', { params })
 }
 
+// =====================
+// 说说（朋友圈）
+// =====================
+export const getTalkList = (params) => {
+  return request.get('/admin/talk/list', { params })
+}
+
+export const addTalk = (data) => {
+  return request.post('/admin/talk/add', data)
+}
+
+export const getTalkDetail = (params) => {
+  return request.get('/admin/talk/get', { params })
+}
+
+export const updateTalk = (data) => {
+  return request.put('/admin/talk/update', data)
+}
+
+export const deleteTalk = (params) => {
+  return request.delete('/admin/talk/delete', { params })
+}
+
+// 说说页侧边栏配置
+export const getTalkSidebar = () => {
+  return request.get('/admin/talk/sidebar/get')
+}
+
+export const updateTalkSidebar = (data) => {
+  return request.put('/admin/talk/sidebar/update', data)
+}
+
 // 七牛上传：获取 uploadToken（管理端直传七牛）
 export const getQiniuUploadToken = (params) => {
   return request.get('/admin/upload/qiniu/token', { params })

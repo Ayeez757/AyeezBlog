@@ -74,6 +74,29 @@ export const fetchAlbums = () => request('GET', '/api/album/list');
 // 相册详情（前台）
 export const fetchAlbumById = (id) => request('GET', `/api/album/get?id=${id}`);
 
+// 说说（朋友圈）
+export const fetchTalks = (
+  page = 1,
+  pageSize = 10,
+  orderBy = 'created_at',
+  orderType = 'desc',
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+    orderBy,
+    orderType,
+  });
+  return request('GET', `/api/talk/list?${params.toString()}`);
+};
+
+export const fetchTalkById = (id) => {
+  return request('GET', `/api/talk/get?id=${id}`);
+};
+
+// 说说侧边栏配置
+export const fetchTalkSidebar = () => request('GET', '/api/talk/sidebar/get');
+
 // 上报一次访问
 export const trackSiteVisit = (visitorKey, path = '/') => {
   const params = new URLSearchParams({ path });
