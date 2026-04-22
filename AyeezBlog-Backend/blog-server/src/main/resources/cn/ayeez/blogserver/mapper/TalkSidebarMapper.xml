@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.ayeez.blogserver.mapper.TalkSidebarMapper">
+
+    <select id="get" resultType="cn.ayeez.blogpojo.entity.TalkSidebar">
+        SELECT
+            id,
+            status,
+            mood,
+            doing,
+            notes,
+            todos,
+            updated_at AS updatedAt
+        FROM blog_talk_sidebar
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="cn.ayeez.blogpojo.entity.TalkSidebar">
+        INSERT INTO blog_talk_sidebar (id, status, mood, doing, notes, todos)
+        VALUES (#{id}, #{status}, #{mood}, #{doing}, #{notes}, #{todos})
+    </insert>
+
+    <update id="update" parameterType="cn.ayeez.blogpojo.entity.TalkSidebar">
+        UPDATE blog_talk_sidebar
+        SET status = #{status},
+            mood = #{mood},
+            doing = #{doing},
+            notes = #{notes},
+            todos = #{todos}
+        WHERE id = #{id}
+    </update>
+</mapper>
+

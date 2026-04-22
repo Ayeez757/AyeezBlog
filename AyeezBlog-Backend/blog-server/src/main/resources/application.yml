@@ -88,7 +88,7 @@ mybatis:
     #开启驼峰命名映射
     map-underscore-to-camel-case: true
   # 添加Mapper位置配置
-  mapper-locations: classpath:mapper/*.xml
+  mapper-locations: classpath*:cn/**/mapper/*.xml,classpath*:mapper/*.xml
   type-aliases-package: cn.ayeez.blogpojo.entity
 
 # PageHelper分页配置

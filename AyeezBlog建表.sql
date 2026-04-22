@@ -286,3 +286,20 @@ create table if not exists blog_album_photo
 
 -- 注意：blog_post 表在上方 CREATE TABLE 时已包含 pinned/featured/editing/water 字段
 -- 这里不再重复 ALTER，避免脚本执行时报 Duplicate column name
+
+create table if not exists blog_talk
+(
+    id         bigint unsigned auto_increment primary key,
+    content    text                                not null comment '说说正文',
+    images     text                                null comment '图片 JSON 数组字符串',
+    published  tinyint(1) default 0                not null comment '是否发布：0草稿/下线 1已发布',
+    created_at datetime default CURRENT_TIMESTAMP   not null,
+    updated_at datetime default CURRENT_TIMESTAMP   not null on update CURRENT_TIMESTAMP
+)
+    comment '说说/朋友圈' collate = utf8mb4_unicode_ci;
+
+create index if not exists idx_blog_talk_created_at
+    on blog_talk (created_at desc);
+
+create index if not exists idx_blog_talk_published_created_at
+    on blog_talk (published, created_at desc);

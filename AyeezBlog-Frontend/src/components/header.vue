@@ -100,13 +100,14 @@ export default {
                 { name: "关于", section: "about" },
                 { name: "归档", section: "archive" },
                 { name: "友链", section: "links" },
+                { name: "说说", section: "talks" },
                 // { name: "朋友圈", section: "fc" },
                 { name: "留言", section: "comments" },
                 { name: "相册", section: "albums" },
                 { name: "日志", section: "logs" },
                 // { name: "联系", section: "contact" },
                 { name: "GitHub", href: githubUrl, external: true },
-                { name: "管理", href: adminUrl, external: false }
+                { name: "管理端", href: adminUrl, external: false }
             ];
         }
     },

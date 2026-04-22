@@ -12,6 +12,9 @@ import AboutAnimeCards from '@/views/AboutAnimeCards.vue'
 import Logs from '@/views/Logs.vue'
 import LogsView from '@/views/LogsView.vue'
 import Albums from '@/views/Albums.vue'
+import Talk from '@/views/Talk.vue'
+import AddTalk from '@/views/AddTalk.vue'
+import TalkSidebar from '@/views/TalkSidebar.vue'
 
 const routers = [
   { path: '/login', name: 'Login', component: Login, meta: { requiresAuth: false } },
@@ -21,12 +24,16 @@ const routers = [
   { path: '/tag', name: 'Tag', component: Tag, meta: { requiresAuth: true } },
   { path: '/links', name: 'Links', component: Links, meta: { requiresAuth: true } },
   { path: '/albums', name: 'Albums', component: Albums, meta: { requiresAuth: true } },
+  { path: '/talk', name: 'Talk', component: Talk, meta: { requiresAuth: true } },
+  { path: '/talk-sidebar', name: 'TalkSidebar', component: TalkSidebar, meta: { requiresAuth: true } },
   { path: '/about-anime/cards', name: 'AboutAnimeCards', component: AboutAnimeCards, meta: { requiresAuth: true } },
   { path: '/about-anime', name: 'AboutAnime', component: AboutAnime, meta: { requiresAuth: true } },
   { path: '/logs', name: 'Logs', component: Logs, meta: { requiresAuth: true } },
   { path: '/logs/content', name: 'LogsView', component: LogsView, meta: { requiresAuth: true } },
   { path: '/add-article', name: 'AddArticle', component: AddArticle, meta: { requiresAuth: true } },
   { path: '/edit-article/:id', name: 'EditArticle', component: AddArticle, meta: { requiresAuth: true } },
+  { path: '/add-talk', name: 'AddTalk', component: AddTalk, meta: { requiresAuth: true } },
+  { path: '/edit-talk/:id', name: 'EditTalk', component: AddTalk, meta: { requiresAuth: true } }
 ];
 
 const router = createRouter({

@@ -22,7 +22,9 @@ public class CorsConfig {
         // 说明：CORS 校验的是浏览器发起请求时的 Origin（协议+域名+端口），与 Docker network 无关。
         config.setAllowedOrigins(Arrays.asList(
                 "https://blog.ayeez.cn",
-                "http://blog.ayeez.cn"
+                "http://blog.ayeez.cn",
+                "http://localhost:5174"
+
         ));
 
         // 允许的请求头（按需增删；当前管理端用自定义 token 请求头）
