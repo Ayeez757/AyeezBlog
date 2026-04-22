@@ -7,11 +7,20 @@
       </div>
 
       <div class="head-right">
-        <el-select v-model="days" size="small" class="days-select" @change="loadDashboard">
-          <el-option :value="7" label="最近 7 天" />
-          <el-option :value="14" label="最近 14 天" />
-          <el-option :value="30" label="最近 30 天" />
-        </el-select>
+        <el-date-picker
+          v-model="dateRange"
+          size="small"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          value-format="YYYY-MM-DD"
+          format="YYYY-MM-DD"
+          unlink-panels
+          :shortcuts="rangeShortcuts"
+          class="date-range"
+          @change="loadDashboard"
+        />
         <el-button type="primary" size="small" :loading="loadingDashboard" @click="loadDashboard">
           刷新流量
         </el-button>
@@ -116,11 +125,24 @@ const TWIKOO_HOSTNAME = (() => {
   }
 })()
 
+const pad2 = (n) => (n < 10 ? `0${n}` : `${n}`)
+const formatYmd = (d) => {
+  const x = d instanceof Date ? d : new Date(d)
+  if (Number.isNaN(x.getTime())) return ''
+  return `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-${pad2(x.getDate())}`
+}
+const lastNDaysRange = (n) => {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - (n - 1))
+  return [formatYmd(start), formatYmd(end)]
+}
+
 export default {
   name: 'Home',
   data() {
     return {
-      days: 14,
+      dateRange: [],
 
       loadingDashboard: false,
       loadingComments: false,
@@ -136,6 +158,21 @@ export default {
       legendSelectedDaily: ['PV（日）', 'UV（日）'],
 
       latestComments: [],
+
+      rangeShortcuts: [
+        {
+          text: '最近 7 天',
+          value: () => lastNDaysRange(7),
+        },
+        {
+          text: '最近 14 天',
+          value: () => lastNDaysRange(14),
+        },
+        {
+          text: '最近 30 天',
+          value: () => lastNDaysRange(30),
+        },
+      ],
     }
   },
   computed: {
@@ -150,6 +187,8 @@ export default {
     },
   },
   mounted() {
+    // 默认：最近 14 天
+    this.dateRange = lastNDaysRange(14)
     this.loadDashboard()
     this.loadLatestComments()
     window.addEventListener('resize', this.handleResize)
@@ -163,7 +202,12 @@ export default {
     async loadDashboard() {
       this.loadingDashboard = true
       try {
-        const data = await getAdminDashboardStats({ days: this.days })
+        const [startDate, endDate] = Array.isArray(this.dateRange) ? this.dateRange : []
+        const params =
+          startDate && endDate
+            ? { startDate, endDate }
+            : { days: 14 }
+        const data = await getAdminDashboardStats(params)
         this.pageViews = data?.pageViews || 0
         this.uniqueVisitors = data?.uniqueVisitors || 0
         this.history = Array.isArray(data?.history) ? data.history : []
@@ -491,8 +535,8 @@ export default {
   gap: 10px;
 }
 
-.days-select {
-  width: 140px;
+.date-range {
+  width: 280px;
 }
 
 .metric-row {

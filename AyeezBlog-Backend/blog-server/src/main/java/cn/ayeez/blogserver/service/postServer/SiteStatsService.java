@@ -3,6 +3,7 @@ package cn.ayeez.blogserver.service.postServer;
 import cn.ayeez.blogpojo.dto.response.SiteTrafficHistoryPoint;
 import cn.ayeez.blogpojo.dto.response.SiteVisitStats;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface SiteStatsService {
@@ -30,4 +31,13 @@ public interface SiteStatsService {
      * @return 历史曲线数据
      */
     List<SiteTrafficHistoryPoint> getDailyHistory(int days);
+
+    /**
+     * 获取指定日期区间的流量历史数据（按天 PV/UV，包含起止日期）。
+     *
+     * @param startDate 起始日期（包含）
+     * @param endDate   结束日期（包含）
+     * @return 历史曲线数据
+     */
+    List<SiteTrafficHistoryPoint> getDailyHistory(LocalDate startDate, LocalDate endDate);
 }

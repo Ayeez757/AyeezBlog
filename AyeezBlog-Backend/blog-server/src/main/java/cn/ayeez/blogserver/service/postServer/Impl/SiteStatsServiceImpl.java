@@ -105,4 +105,46 @@ public class SiteStatsServiceImpl implements SiteStatsService {
         }
         return out;
     }
+
+    @Override
+    public List<SiteTrafficHistoryPoint> getDailyHistory(LocalDate startDate, LocalDate endDate) {
+        LocalDate start = (startDate == null) ? LocalDate.now() : startDate;
+        LocalDate end = (endDate == null) ? LocalDate.now() : endDate;
+
+        if (start.isAfter(end)) {
+            LocalDate tmp = start;
+            start = end;
+            end = tmp;
+        }
+
+        List<SiteTrafficHistoryPoint> dbRows = siteStatsMapper.getDailyHistoryByRange(start, end);
+        Map<String, SiteTrafficHistoryPoint> map = new HashMap<>();
+        if (dbRows != null) {
+            for (SiteTrafficHistoryPoint p : dbRows) {
+                if (p != null && p.getDate() != null) {
+                    map.put(p.getDate(), p);
+                }
+            }
+        }
+
+        long days = start.datesUntil(end.plusDays(1)).count();
+        if (days <= 0) {
+            days = 1;
+        }
+
+        List<SiteTrafficHistoryPoint> out = new ArrayList<>();
+        for (long i = 0; i < days; i++) {
+            LocalDate d = start.plusDays(i);
+            String date = d.toString();
+            SiteTrafficHistoryPoint p = map.get(date);
+            if (p == null) {
+                out.add(new SiteTrafficHistoryPoint(date, 0L, 0L));
+            } else {
+                if (p.getPageViews() == null) p.setPageViews(0L);
+                if (p.getUniqueVisitors() == null) p.setUniqueVisitors(0L);
+                out.add(p);
+            }
+        }
+        return out;
+    }
 }
