@@ -97,7 +97,8 @@ export default {
       this.error = ''
       try {
         const resp = await getTalkSidebar()
-        const d = resp?.data || {}
+        // request 响应拦截器已返回 data，这里兼容 data/data.data 两种结构
+        const d = (resp && typeof resp === 'object' && 'data' in resp) ? (resp.data || {}) : (resp || {})
         this.form.status = d.status || ''
         this.form.mood = d.mood || ''
         this.form.doing = d.doing || ''
