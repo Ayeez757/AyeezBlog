@@ -303,3 +303,17 @@ create index if not exists idx_blog_talk_created_at
 
 create index if not exists idx_blog_talk_published_created_at
     on blog_talk (published, created_at desc);
+
+
+create table if not exists blog_talk_sidebar
+(
+    id         bigint unsigned primary key,
+    status     varchar(64)                      null comment '我的状态：在线/忙碌/离线等',
+    mood       varchar(64)                      null comment '心情',
+    doing      varchar(128)                     null comment '在做',
+    notes      text                             null comment '碎碎念 JSON 数组字符串',
+    todos      text                             null comment '待办 JSON 数组字符串',
+    updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
+)
+    comment '说说页侧边栏配置（单例）' collate = utf8mb4_unicode_ci;
+

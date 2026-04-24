@@ -23,7 +23,8 @@ public class CorsConfig {
         config.setAllowedOrigins(Arrays.asList(
                 "https://blog.ayeez.cn",
                 "http://blog.ayeez.cn",
-                "http://localhost:5174"
+                "http://localhost:5174",
+                "https://ayeez.cn"
 
         ));
 
