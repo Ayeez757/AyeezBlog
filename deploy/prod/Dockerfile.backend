@@ -1,0 +1,25 @@
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+
+COPY pom.xml ./
+COPY blog-common/pom.xml blog-common/pom.xml
+COPY blog-pojo/pom.xml blog-pojo/pom.xml
+COPY blog-server/pom.xml blog-server/pom.xml
+
+RUN mvn -B -ntp -DskipTests dependency:go-offline
+
+COPY blog-common/src blog-common/src
+COPY blog-pojo/src blog-pojo/src
+COPY blog-server/src blog-server/src
+
+RUN mvn -B -ntp -DskipTests clean package && cp blog-server/target/blog-server-0.0.1-SNAPSHOT.jar /workspace/app.jar
+
+FROM eclipse-temurin:21-jre-jammy
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+WORKDIR /app
+COPY --from=build /workspace/app.jar /app/app.jar
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

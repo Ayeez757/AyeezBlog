@@ -1,0 +1,85 @@
+services:
+  mysql:
+    image: mysql:9.6.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      HM_DB_USER: ${HM_DB_USER}
+      HM_DB_PASSWORD: ${HM_DB_PASSWORD}
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ayeez
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${HM_DB_USER} -p$${HM_DB_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: ../../AyeezBlog-Backend
+      dockerfile: ../deploy/prod/Dockerfile.backend
+    image: ayeezblog:latest
+    container_name: ayeezblog-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SPRING_PROFILES_ACTIVE: dev
+      HM_DB_HOST: mysql
+      HM_DB_USER: ${HM_DB_USER}
+      HM_DB_PASSWORD: ${HM_DB_PASSWORD}
+      HM_JWT_SECRET_KEY: ${HM_JWT_SECRET_KEY}
+      QINIU_ACCESS_KEY: ${QINIU_ACCESS_KEY:-}
+      QINIU_SECRET_KEY: ${QINIU_SECRET_KEY:-}
+      QINIU_BUCKET: ${QINIU_BUCKET:-}
+      QINIU_DOMAIN: ${QINIU_DOMAIN:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      VOLCENGINE_ACCESS_KEY: ${VOLCENGINE_ACCESS_KEY:-}
+      VOLCENGINE_SECRET_KEY: ${VOLCENGINE_SECRET_KEY:-}
+    ports:
+      - "8080:8080"
+    networks:
+      - ayeez
+
+  nginx:
+    image: nginx:1.29.5
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - html:/usr/share/nginx/html
+      - config:/etc/nginx
+    networks:
+      - ayeez
+
+networks:
+  ayeez:
+    external: true
+    name: ayeez
+
+volumes:
+  mysql_data:
+    external: true
+    name: ${MYSQL_VOLUME_NAME}
+  html:
+    external: true
+    name: html
+  config:
+    external: true
+    name: config
