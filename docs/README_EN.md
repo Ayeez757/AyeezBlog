@@ -190,8 +190,9 @@ Key files:
 - compose: `deploy/prod/docker-compose.yml`
 - backend build image: `deploy/prod/Dockerfile.backend`
 - env template: `deploy/prod/.env.example`
-- runtime baseline: `docs/部署运行基线.md`
-- cutover/rollback: `docs/切换与回滚手册.md`
+- runtime baseline: `docs/PRODUCTION_RUNTIME_BASELINE.md`
+- cutover/rollback: `docs/CUTOVER_AND_ROLLBACK_RUNBOOK.md`
+- docker compose deployment guide: `docs/DOCKER_COMPOSE_PRODUCTION_DEPLOYMENT_GUIDE.md`
 
 Required GitHub Secrets:
 
