@@ -8,10 +8,6 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
       HM_DB_USER: ${HM_DB_USER}
       HM_DB_PASSWORD: ${HM_DB_PASSWORD}
-    command:
-      - --default-authentication-plugin=mysql_native_password
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
     ports:
       - "3306:3306"
     volumes:
