@@ -71,6 +71,8 @@ jobs:
           username: ${{ env.SERVER_USER }}
           port: ${{ env.SERVER_PORT }}
           key: ${{ env.SERVER_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 15m
           script: |
             set -eu
             BASE_DIR="${SERVER_BASE_DIR:-/opt/ayeezblog}"
@@ -98,6 +100,8 @@ jobs:
           username: ${{ env.SERVER_USER }}
           port: ${{ env.SERVER_PORT }}
           key: ${{ env.SERVER_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 60m
           envs: SERVER_BASE_DIR,HM_JWT_SECRET_KEY,HM_DB_USER,HM_DB_PASSWORD,MYSQL_ROOT_PASSWORD,QINIU_ACCESS_KEY,QINIU_SECRET_KEY,QINIU_BUCKET,QINIU_DOMAIN,DEEPSEEK_API_KEY,VOLCENGINE_ACCESS_KEY,VOLCENGINE_SECRET_KEY,MYSQL_VOLUME_NAME,CHANGED_BACKEND,CHANGED_DEPLOY
           script: |
             set -eu
