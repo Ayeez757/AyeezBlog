@@ -57,7 +57,6 @@
 | **后端**          | Java 21 + Spring Boot 3.2.0 + Spring Security + JWT + MyBatis + Spring AI（可选 DeepSeek）+ Redis | 业务逻辑与数据接口  |
 | **数据库**         | MySQL                                                                     | 持久化存储      |
 | **部署**          | Docker + Docker Compose + Nginx                                           | 容器化部署，反向代理 |
-| **CI/CD**       | GitHub Actions                                                            | 自动化测试与构建   |
 | **服务器（当前实际部署）** | ubantu22.04                                                               | 服务器系统      |
 | **其他第三方工具**     | twikoo（评论）                                                                |            |
 
@@ -172,7 +171,7 @@ cd AyeezBlog
 
 ```powershell
 $env:HM_DB_HOST="localhost"
-$env:HM_DB_USERNAME="root"
+$env:HM_DB_USER="root"
 $env:HM_DB_PASSWORD="你的数据库密码"
 ```
 
@@ -270,6 +269,22 @@ npm run dev
 
 ---
 
+## 线上部署（Docker Compose）
+
+面向开源用户的线上部署文档请查看：
+
+- [Docker Compose 线上部署指南](./docs/Docker-Compose线上部署指南.md)
+
+该文档包含从 0 到 1 的完整步骤：
+
+- 服务器准备
+- 代码上传
+- `.env` 配置
+- 一键 `docker compose up -d --build`
+- 上线验证与常见故障排查
+
+---
+
 ## API 文档
 
 Apifox：
@@ -282,7 +297,7 @@ Apifox：
 
 数据库设计已拆分到独立文档，点击查看：
 
-- [数据库设计文档](./docs/DATABASE_DESIGN.md)
+- [数据库设计文档](./docs/数据库设计.md)
 
 
 ---
@@ -333,7 +348,7 @@ GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ay
 
 ---
 
-*最后更新：2026-04-03
+*最后更新：2026-04-25
 
 
 [![Star History Chart](https://api.star-history.com/chart?repos=ayeez757/ayeezblog&type=date&legend=top-left)](https://www.star-history.com/?repos=ayeez757%2Fayeezblog&type=date&legend=top-left)

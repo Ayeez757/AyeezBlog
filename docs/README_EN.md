@@ -174,27 +174,90 @@ Port note:
 - The admin panel is fixed to port `5173` in `vite.config.js`, while the public frontend defaults to `5173`.
 - If you run both at the same time, change the **frontend** port (e.g. `npm run dev -- --port 5174`) or change the admin `server.port`.
 
-### Docker Deployment
+### Production Deployment (Current)
 
-#### 1. Update configs
-- Copy env template: `cp .env.example .env`
-- Check Nginx config: `nginx/nginx.conf`
+The project currently uses a **single production environment**:
 
-#### 2. Build and run
-```bash
-docker-compose up -d --build
-```
+- branch: `master`
+- runtime profile: `SPRING_PROFILES_ACTIVE=dev`
+- orchestration: Docker Compose
+- public entrypoint: nginx container (`80/443`)
+- database: mysql container with existing production volume reused
 
-#### 3. Access
-- Frontend: `http://your-domain`
-- Admin: `http://your-domain/admin`
-- API: `http://your-domain/api`
-- MySQL: `localhost:3306` (`root`, password in `.env`)
+Key files:
 
-#### 4. First-time DB initialization
-```bash
-docker exec -i blog-mysql mysql -uroot -p${MYSQL_ROOT_PASSWORD} blog < sql/init.sql
-```
+- workflow: `.github/workflows/cicd-deploy.yml`
+- compose: `deploy/prod/docker-compose.yml`
+- backend build image: `deploy/prod/Dockerfile.backend`
+- env template: `deploy/prod/.env.example`
+- runtime baseline: `docs/部署运行基线.md`
+- cutover/rollback: `docs/切换与回滚手册.md`
+
+Required GitHub Secrets:
+
+- `SERVER_HOST`
+- `SERVER_USER`
+- `SERVER_SSH_KEY`
+- `HM_DB_USER`
+- `HM_DB_PASSWORD`
+- `HM_JWT_SECRET_KEY`
+
+Optional (defaulted in workflow):
+
+- `SERVER_PORT` (default `22`)
+- `SERVER_BASE_DIR` (default `/opt/ayeezblog`)
+- `MYSQL_ROOT_PASSWORD` (optional for app runtime)
+
+Optional third-party integrations:
+
+- `QINIU_ACCESS_KEY`
+- `QINIU_SECRET_KEY`
+- `QINIU_BUCKET`
+- `QINIU_DOMAIN`
+- `DEEPSEEK_API_KEY`
+- `VOLCENGINE_ACCESS_KEY`
+- `VOLCENGINE_SECRET_KEY`
+
+Deployment flow on `master` push:
+
+1. Detect changed paths (backend/frontend/adminpanel/deploy).
+2. Upload `AyeezBlog-Backend` and `deploy` to server.
+3. Generate `deploy/prod/.env` on server from GitHub Secrets.
+4. Run compose build/up for required services.
+5. Build frontend/adminpanel and rsync static files into nginx `html` volume.
+
+Data safety rules:
+
+- never run `docker compose down -v` in production
+- never delete production MySQL volume
+- never commit `.env` / private keys / plaintext passwords
+
+First-time cutover from legacy containers:
+
+1. backup MySQL first
+2. remove legacy containers only (not volumes):
+   - `docker rm -f mysql ayeezblog-backend nginx`
+3. run compose:
+   - `docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env up -d mysql backend nginx`
+4. verify:
+   - `docker compose ... ps`
+   - `curl -I https://blog.ayeez.cn`
+   - admin login and API calls
+
+Common issues:
+
+1) `Run Command Timeout` during `mvn dependency:go-offline`
+- reason: first build downloads many dependencies
+- fix: increase action `command_timeout` (already applied)
+
+2) `container name ... is already in use`
+- reason: legacy containers still exist
+- fix: remove old containers, then run compose again
+
+3) mysql restart loop with:
+- `unknown variable 'default-authentication-plugin=mysql_native_password'`
+- reason: MySQL 9 image no longer supports this parameter
+- fix: remove that startup parameter (already applied in compose)
 
 ---
 
@@ -243,19 +306,7 @@ Apifox:
 The database design has been moved to a separate document:
 
 - [Database Design (English)](./DATABASE_DESIGN_EN.md)
-- [Database Design (Chinese)](./DATABASE_DESIGN.md)
-
----
-
-## CI/CD
-
-GitHub Actions currently handles:
-
-1. **Code push checks**: unit tests and style checks
-2. **Image build**: build Docker images for services
-3. **Deployment**: pull and restart services on server via SSH
-
-Workflow files are in `.github/workflows/`.
+- [Database Design (Chinese)](./数据库设计.md)
 
 ---
 
@@ -300,4 +351,4 @@ This project is open-sourced under the [Apache License 2.0](../LICENSE).
 
 ---
 
-*Last updated: 2026-04-03*
+*Last updated: 2026-04-25*
