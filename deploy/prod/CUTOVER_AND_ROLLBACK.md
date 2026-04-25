@@ -1,0 +1,45 @@
+# Cutover And Rollback Runbook
+
+## 1) Pre-cutover checks
+
+1. Backup database logically:
+   - `docker exec mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --all-databases --single-transaction --set-gtid-purged=OFF' > /root/mysql-backup-pre-compose.sql`
+2. Verify required Docker resources exist:
+   - `docker volume ls | rg "html|config|00bf7a5c3317bc4d650e5815dbfd74b4866867e2d46cba4e75958b8434e28e08"`
+   - `docker network ls | rg "^.*ayeez\\b"`
+3. Prepare env file once:
+   - `cp deploy/prod/.env.example deploy/prod/.env`
+   - edit real secret values in `deploy/prod/.env`.
+
+## 2) Controlled cutover (single environment)
+
+Run from repo root on the server:
+
+1. Pull/build images early:
+   - `docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env build backend`
+2. Recreate services in low-traffic window:
+   - `docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env up -d mysql`
+   - `docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env up -d backend`
+   - `docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env up -d nginx`
+3. Validate immediately:
+   - `docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env ps`
+   - `curl -I http://127.0.0.1`
+   - `curl -I https://blog.ayeez.cn`
+   - `curl -sS http://127.0.0.1:8080/api/logs/current`
+
+## 3) Rollback (no data-volume deletion)
+
+If runtime checks fail after cutover:
+
+1. Stop compose-managed services:
+   - `docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env stop nginx backend mysql`
+2. Start legacy containers with last known-good commands/images.
+3. Re-validate:
+   - `docker ps --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"`
+   - `curl -I https://blog.ayeez.cn`
+
+## 4) Safety rules
+
+- Never run `down -v` in production.
+- Never remove data volumes in rollback.
+- Keep old workflow files available for manual fallback until compose deployment stays stable.

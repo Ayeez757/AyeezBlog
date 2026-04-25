@@ -1,11 +1,6 @@
-name: 部署管理端
+name: 部署管理端 (Legacy Manual Only)
 
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - 'AyeezBlog-AdminPanel/**'
-      - '.github/workflows/deploy-adminpanel.yml'
   workflow_dispatch:
 
 jobs:

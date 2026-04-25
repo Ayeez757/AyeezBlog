@@ -1,0 +1,196 @@
+name: CI/CD Deploy (Single Production)
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - "AyeezBlog-Backend/**"
+      - "AyeezBlog-Frontend/**"
+      - "AyeezBlog-AdminPanel/**"
+      - "deploy/**"
+      - ".github/workflows/cicd-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      adminpanel: ${{ steps.filter.outputs.adminpanel }}
+      deploy: ${{ steps.filter.outputs.deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - "AyeezBlog-Backend/**"
+            frontend:
+              - "AyeezBlog-Frontend/**"
+            adminpanel:
+              - "AyeezBlog-AdminPanel/**"
+            deploy:
+              - "deploy/**"
+              - ".github/workflows/cicd-deploy.yml"
+
+  deploy-stack:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      SERVER_BASE_DIR: ${{ secrets.SERVER_BASE_DIR || '/opt/ayeezblog' }}
+      HM_JWT_SECRET_KEY: ${{ secrets.HM_JWT_SECRET_KEY }}
+      HM_DB_USER: ${{ secrets.HM_DB_USER }}
+      HM_DB_PASSWORD: ${{ secrets.HM_DB_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '' }}
+      QINIU_ACCESS_KEY: ${{ secrets.QINIU_ACCESS_KEY }}
+      QINIU_SECRET_KEY: ${{ secrets.QINIU_SECRET_KEY }}
+      QINIU_BUCKET: ${{ secrets.QINIU_BUCKET }}
+      QINIU_DOMAIN: ${{ secrets.QINIU_DOMAIN }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      VOLCENGINE_ACCESS_KEY: ${{ secrets.VOLCENGINE_ACCESS_KEY }}
+      VOLCENGINE_SECRET_KEY: ${{ secrets.VOLCENGINE_SECRET_KEY }}
+      MYSQL_VOLUME_NAME: 00bf7a5c3317bc4d650e5815dbfd74b4866867e2d46cba4e75958b8434e28e08
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure source sync target
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          port: ${{ env.SERVER_PORT }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          script: |
+            set -eu
+            BASE_DIR="${SERVER_BASE_DIR:-/opt/ayeezblog}"
+            mkdir -p "$BASE_DIR"
+
+      - name: Upload source to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          port: ${{ env.SERVER_PORT }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          source: "AyeezBlog-Backend,deploy"
+          target: ${{ env.SERVER_BASE_DIR }}
+          overwrite: true
+          strip_components: 0
+
+      - name: Compose deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          CHANGED_BACKEND: ${{ needs.detect-changes.outputs.backend }}
+          CHANGED_DEPLOY: ${{ needs.detect-changes.outputs.deploy }}
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          port: ${{ env.SERVER_PORT }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          envs: SERVER_BASE_DIR,HM_JWT_SECRET_KEY,HM_DB_USER,HM_DB_PASSWORD,MYSQL_ROOT_PASSWORD,QINIU_ACCESS_KEY,QINIU_SECRET_KEY,QINIU_BUCKET,QINIU_DOMAIN,DEEPSEEK_API_KEY,VOLCENGINE_ACCESS_KEY,VOLCENGINE_SECRET_KEY,MYSQL_VOLUME_NAME,CHANGED_BACKEND,CHANGED_DEPLOY
+          script: |
+            set -eu
+            BASE_DIR="${SERVER_BASE_DIR:-/opt/ayeezblog}"
+            SOURCE_DIR="$BASE_DIR"
+            cd "$SOURCE_DIR"
+
+            cat > deploy/prod/.env <<EOF
+            TZ=Asia/Shanghai
+            MYSQL_VOLUME_NAME=${MYSQL_VOLUME_NAME}
+            MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            HM_DB_USER=${HM_DB_USER}
+            HM_DB_PASSWORD=${HM_DB_PASSWORD}
+            HM_JWT_SECRET_KEY=${HM_JWT_SECRET_KEY}
+            QINIU_ACCESS_KEY=${QINIU_ACCESS_KEY}
+            QINIU_SECRET_KEY=${QINIU_SECRET_KEY}
+            QINIU_BUCKET=${QINIU_BUCKET}
+            QINIU_DOMAIN=${QINIU_DOMAIN}
+            DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+            VOLCENGINE_ACCESS_KEY=${VOLCENGINE_ACCESS_KEY}
+            VOLCENGINE_SECRET_KEY=${VOLCENGINE_SECRET_KEY}
+            EOF
+
+            SERVICES="backend"
+            if [ "${CHANGED_DEPLOY}" = "true" ]; then
+              SERVICES="mysql backend nginx"
+            fi
+
+            docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env up -d --build ${SERVICES}
+            docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env ps
+
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: AyeezBlog-Frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./AyeezBlog-Frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./AyeezBlog-Frontend
+        run: npm run build
+
+      - name: Sync to nginx html volume
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete --exclude=admin/
+          path: AyeezBlog-Frontend/dist/
+          remote_path: /var/lib/docker/volumes/html/_data/
+          remote_host: ${{ secrets.SERVER_HOST }}
+          remote_user: ${{ secrets.SERVER_USER }}
+          remote_key: ${{ secrets.SERVER_SSH_KEY }}
+
+  deploy-adminpanel:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.adminpanel == 'true' || needs.detect-changes.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: AyeezBlog-AdminPanel/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./AyeezBlog-AdminPanel
+        run: npm ci
+
+      - name: Build admin panel
+        working-directory: ./AyeezBlog-AdminPanel
+        run: npm run build
+
+      - name: Sync admin to nginx html volume
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete
+          path: AyeezBlog-AdminPanel/dist/
+          remote_path: /var/lib/docker/volumes/html/_data/admin/
+          remote_host: ${{ secrets.SERVER_HOST }}
+          remote_user: ${{ secrets.SERVER_USER }}
+          remote_key: ${{ secrets.SERVER_SSH_KEY }}
