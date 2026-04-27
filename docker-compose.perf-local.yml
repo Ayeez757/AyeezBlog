@@ -23,6 +23,7 @@ services:
     environment:
       # Keep dev for env var mapping (hm.db.*), add perf-local for load-test tuning.
       SPRING_PROFILES_ACTIVE: dev,perf-local
+      RUNTIME_CONFIG_PATH: /app/config/runtime-config.yml
       # Spring AI requires a non-empty API key at startup (even if you won't call AI endpoints).
       # Set a placeholder to allow the app to boot for performance testing.
       SPRING_AI_OPENAI_API_KEY: perf-local-placeholder
@@ -33,3 +34,5 @@ services:
       JAVA_TOOL_OPTIONS: -Xms3g -Xmx3g
     mem_limit: 4g
     cpus: 2.0
+    volumes:
+      - ./AyeezBlog-Backend/blog-server/src/main/resources/runtime-config.yml:/app/config/runtime-config.yml:rw

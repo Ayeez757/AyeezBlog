@@ -1,8 +1,11 @@
+## 考核题目文档：[第三轮后端考核说明（热重载技术方向）](https://github.com/gduf-cs-tribe/2025-backend-recruit-03/blob/main/docs/level3/arceca.md)
+## 本项目考核交付文档：[配置文件热重载考核交付文档](./docs/配置文件热重载考核交付文档.md)
 
 
 # 阿叶Ayeez的博客
 
 - [中文](./README.md) | [English](./docs/README_EN.md)
+
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
@@ -259,6 +262,7 @@ npm run dev
 | `hm.db.host` / `hm.db.username` / `hm.db.password` | MySQL 连接信息（必填，否则后端无法启动） |
 | `hm.db.port` | MySQL 端口（默认 3306，可不填） |
 | `server.port` | 后端端口（默认 8080） |
+| `RUNTIME_CONFIG_PATH` 或 `-Druntime.config.path` | 运行时热重载配置文件路径（Docker 推荐设置为 `/app/config/runtime-config.yml`） |
 | `qiniu.*` | 七牛配置（仅在管理端需要“获取上传 token”/AI 封面转存时必填；不使用可不配） |
 | `hm.deepseek.*` | 简介生成（可选） |
 | `hm.volcengine.*` | 封面生成（可选；通常还需要七牛可用） |
@@ -274,6 +278,12 @@ npm run dev
 面向开源用户的线上部署文档请查看：
 
 - [Docker Compose 线上部署指南](./docs/Docker-Compose线上部署指南.md)
+
+热重载配置文件（Docker）：
+
+- 线上 compose 默认挂载 `deploy/prod/runtime-config.yml` 到容器内 `/app/config/runtime-config.yml`；
+- 后端通过环境变量 `RUNTIME_CONFIG_PATH=/app/config/runtime-config.yml` 读取并监听该文件；
+- 修改 `deploy/prod/runtime-config.yml` 后，容器内可自动触发配置热重载（无需重启后端进程）。
 
 该文档包含从 0 到 1 的完整步骤：
 
