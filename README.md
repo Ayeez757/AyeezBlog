@@ -1,8 +1,11 @@
+## 考核题目文档：[第三轮后端考核说明（热重载技术方向）](https://github.com/gduf-cs-tribe/2025-backend-recruit-03/blob/main/docs/level3/arceca.md)
+## 本项目考核交付文档：[配置文件热重载考核交付文档](./docs/配置文件热重载考核交付文档.md)
 
 
 # 阿叶Ayeez的博客
 
 - [中文](./README.md) | [English](./docs/README_EN.md)
+
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
