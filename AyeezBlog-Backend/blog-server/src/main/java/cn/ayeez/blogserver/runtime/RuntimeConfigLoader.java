@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * RuntimeConfigLoader 负责“把文件变成可用配置对象”。
@@ -157,6 +158,33 @@ public class RuntimeConfigLoader {
      */
     public String getLastLoadedFrom() {
         return lastLoadedFrom;
+    }
+
+    /**
+     * 返回当前可用于 WatchService 监听的配置文件路径。
+     * <p>
+     * 仅当配置来自文件系统时可监听；若当前仅能从 classpath 加载，则返回 empty。
+     * </p>
+     *
+     * @return 可监听的配置文件路径
+     */
+    public Optional<Path> getWatchableConfigPath() {
+        String explicitPath = System.getProperty("runtime.config.path");
+        if (explicitPath != null && !explicitPath.trim().isEmpty()) {
+            Path path = Paths.get(explicitPath.trim()).toAbsolutePath().normalize();
+            if (path.toFile().exists()) {
+                return Optional.of(path);
+            }
+            return Optional.empty();
+        }
+
+        for (Path candidate : getDevelopmentCandidatePaths()) {
+            Path normalized = candidate.toAbsolutePath().normalize();
+            if (normalized.toFile().exists()) {
+                return Optional.of(normalized);
+            }
+        }
+        return Optional.empty();
     }
 
     /**
