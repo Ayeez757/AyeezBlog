@@ -37,7 +37,6 @@ jobs:
               - "AyeezBlog-AdminPanel/**"
             deploy_other:
               - "deploy/**"
-              - ".github/workflows/cicd-deploy.yml"
               - "!deploy/prod/runtime-config.yml"
             runtime_config:
               - "deploy/prod/runtime-config.yml"
