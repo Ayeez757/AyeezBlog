@@ -18,7 +18,8 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       adminpanel: ${{ steps.filter.outputs.adminpanel }}
-      deploy: ${{ steps.filter.outputs.deploy }}
+      deploy_other: ${{ steps.filter.outputs.deploy_other }}
+      runtime_config: ${{ steps.filter.outputs.runtime_config }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,13 +35,16 @@ jobs:
               - "AyeezBlog-Frontend/**"
             adminpanel:
               - "AyeezBlog-AdminPanel/**"
-            deploy:
+            deploy_other:
               - "deploy/**"
               - ".github/workflows/cicd-deploy.yml"
+              - "!deploy/prod/runtime-config.yml"
+            runtime_config:
+              - "deploy/prod/runtime-config.yml"
 
   deploy-stack:
     needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.deploy == 'true'
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.deploy_other == 'true' || needs.detect-changes.outputs.runtime_config == 'true'
     runs-on: ubuntu-latest
     env:
       SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -94,7 +98,8 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           CHANGED_BACKEND: ${{ needs.detect-changes.outputs.backend }}
-          CHANGED_DEPLOY: ${{ needs.detect-changes.outputs.deploy }}
+          CHANGED_DEPLOY_OTHER: ${{ needs.detect-changes.outputs.deploy_other }}
+          CHANGED_RUNTIME_CONFIG: ${{ needs.detect-changes.outputs.runtime_config }}
         with:
           host: ${{ env.SERVER_HOST }}
           username: ${{ env.SERVER_USER }}
@@ -102,7 +107,7 @@ jobs:
           key: ${{ env.SERVER_SSH_KEY }}
           timeout: 60s
           command_timeout: 60m
-          envs: SERVER_BASE_DIR,HM_JWT_SECRET_KEY,HM_DB_USER,HM_DB_PASSWORD,MYSQL_ROOT_PASSWORD,QINIU_ACCESS_KEY,QINIU_SECRET_KEY,QINIU_BUCKET,QINIU_DOMAIN,DEEPSEEK_API_KEY,VOLCENGINE_ACCESS_KEY,VOLCENGINE_SECRET_KEY,MYSQL_VOLUME_NAME,CHANGED_BACKEND,CHANGED_DEPLOY
+          envs: SERVER_BASE_DIR,HM_JWT_SECRET_KEY,HM_DB_USER,HM_DB_PASSWORD,MYSQL_ROOT_PASSWORD,QINIU_ACCESS_KEY,QINIU_SECRET_KEY,QINIU_BUCKET,QINIU_DOMAIN,DEEPSEEK_API_KEY,VOLCENGINE_ACCESS_KEY,VOLCENGINE_SECRET_KEY,MYSQL_VOLUME_NAME,CHANGED_BACKEND,CHANGED_DEPLOY_OTHER,CHANGED_RUNTIME_CONFIG
           script: |
             set -eu
             BASE_DIR="${SERVER_BASE_DIR:-/opt/ayeezblog}"
@@ -125,8 +130,15 @@ jobs:
             VOLCENGINE_SECRET_KEY=${VOLCENGINE_SECRET_KEY}
             EOF
 
+            # 仅修改 runtime-config.yml 时，不执行 compose up，避免重启容器。
+            if [ "${CHANGED_RUNTIME_CONFIG}" = "true" ] && [ "${CHANGED_BACKEND}" != "true" ] && [ "${CHANGED_DEPLOY_OTHER}" != "true" ]; then
+              echo "Detected runtime config only change. Skip compose up to keep containers running."
+              docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env ps
+              exit 0
+            fi
+
             SERVICES="backend"
-            if [ "${CHANGED_DEPLOY}" = "true" ]; then
+            if [ "${CHANGED_DEPLOY_OTHER}" = "true" ]; then
               SERVICES="mysql backend nginx"
             fi
 
@@ -135,7 +147,7 @@ jobs:
 
   deploy-frontend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.deploy == 'true'
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -168,7 +180,7 @@ jobs:
 
   deploy-adminpanel:
     needs: detect-changes
-    if: needs.detect-changes.outputs.adminpanel == 'true' || needs.detect-changes.outputs.deploy == 'true'
+    if: needs.detect-changes.outputs.adminpanel == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
