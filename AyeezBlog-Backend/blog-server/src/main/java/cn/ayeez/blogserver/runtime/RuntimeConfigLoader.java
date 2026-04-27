@@ -89,8 +89,8 @@ public class RuntimeConfigLoader {
      * @return 可读取的资源对象
      */
     private Resource resolveResource() {
-        // 1) 支持通过 JVM 参数显式指定路径：-Druntime.config.path=...
-        String explicitPath = System.getProperty("runtime.config.path");
+        // 1) 支持通过 JVM 参数或环境变量显式指定路径（Docker 推荐使用环境变量）
+        String explicitPath = resolveExplicitRuntimeConfigPath();
         if (explicitPath != null && !explicitPath.trim().isEmpty()) {
             FileSystemResource explicitResource = new FileSystemResource(explicitPath.trim());
             if (explicitResource.exists()) {
@@ -169,7 +169,7 @@ public class RuntimeConfigLoader {
      * @return 可监听的配置文件路径
      */
     public Optional<Path> getWatchableConfigPath() {
-        String explicitPath = System.getProperty("runtime.config.path");
+        String explicitPath = resolveExplicitRuntimeConfigPath();
         if (explicitPath != null && !explicitPath.trim().isEmpty()) {
             Path path = Paths.get(explicitPath.trim()).toAbsolutePath().normalize();
             if (path.toFile().exists()) {
@@ -206,5 +206,22 @@ public class RuntimeConfigLoader {
         candidates.add(cwd.resolve(Paths.get("AyeezBlog-Backend", "blog-server", "src", "main", "resources", RUNTIME_CONFIG_NAME)));
         candidates.add(cwd.resolve(RUNTIME_CONFIG_NAME));
         return candidates;
+    }
+
+    /**
+     * 解析显式配置路径，优先 JVM 参数，次选环境变量。
+     *
+     * @return 显式配置路径，若未设置则返回 null
+     */
+    private String resolveExplicitRuntimeConfigPath() {
+        String fromJvmProperty = System.getProperty("runtime.config.path");
+        if (fromJvmProperty != null && !fromJvmProperty.trim().isEmpty()) {
+            return fromJvmProperty.trim();
+        }
+        String fromEnv = System.getenv("RUNTIME_CONFIG_PATH");
+        if (fromEnv != null && !fromEnv.trim().isEmpty()) {
+            return fromEnv.trim();
+        }
+        return null;
     }
 }

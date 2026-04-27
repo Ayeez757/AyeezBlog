@@ -33,6 +33,7 @@ services:
     environment:
       TZ: ${TZ:-Asia/Shanghai}
       SPRING_PROFILES_ACTIVE: dev
+      RUNTIME_CONFIG_PATH: ${RUNTIME_CONFIG_PATH:-/app/config/runtime-config.yml}
       HM_DB_HOST: mysql
       HM_DB_USER: ${HM_DB_USER}
       HM_DB_PASSWORD: ${HM_DB_PASSWORD}
@@ -46,6 +47,8 @@ services:
       VOLCENGINE_SECRET_KEY: ${VOLCENGINE_SECRET_KEY:-}
     ports:
       - "8080:8080"
+    volumes:
+      - ./runtime-config.yml:/app/config/runtime-config.yml:rw
     networks:
       - ayeez
 

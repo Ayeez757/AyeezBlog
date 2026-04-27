@@ -93,6 +93,26 @@ docker volume create "$(awk -F= '/^MYSQL_VOLUME_NAME=/{print $2}' deploy/prod/.e
 > - `config` 用于 Nginx 配置目录  
 > - `MYSQL_VOLUME_NAME` 用于 MySQL 数据持久化
 
+### 3.3 配置运行时热重载文件（Docker）
+
+在项目目录创建（或编辑）：
+
+- `deploy/prod/runtime-config.yml`
+
+示例：
+
+```yaml
+postPageSize: 10
+strictModeEnabled: false
+```
+
+`deploy/prod/docker-compose.yml` 已将该文件挂载到容器内：
+
+- 宿主机：`deploy/prod/runtime-config.yml`
+- 容器内：`/app/config/runtime-config.yml`
+
+后端通过环境变量 `RUNTIME_CONFIG_PATH=/app/config/runtime-config.yml` 读取并监听该文件。
+
 ---
 
 ## 4. 启动服务
@@ -144,6 +164,16 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 curl -I http://127.0.0.1
 curl -I http://127.0.0.1:8080
 ```
+
+### 6.3 热重载验证（容器内）
+
+修改 `deploy/prod/runtime-config.yml` 并保存，不重启后端，直接验证：
+
+```bash
+curl http://127.0.0.1:8080/post/runtime/config
+```
+
+若配置值变化已反映在返回中，说明 Docker 部署下热重载生效。
 
 ---
 
