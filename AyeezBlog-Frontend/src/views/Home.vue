@@ -197,6 +197,7 @@ export default {
       posts: [],
       currentPage: 1,
       pageSize: 12,
+      effectivePageSize: 12,
       total: 0,
       defaultCover: 'https://qiniu.ayeez.cn/bg.jpg',
       defaultCoverPool: [],
@@ -222,7 +223,8 @@ export default {
   computed: {
     // 计算总页数
     totalPages() {
-      return Math.ceil(this.total / this.pageSize);
+      const size = Number(this.effectivePageSize) > 0 ? Number(this.effectivePageSize) : 1;
+      return Math.max(1, Math.ceil(this.total / size));
     }
   },
   async mounted() {
@@ -266,13 +268,27 @@ export default {
       try {
         await this.ensureDefaultCoverPool();
         const response = await fetchPosts(this.currentPage, this.pageSize);
-        const rows = response.data.rows || [];
+        const payload = response?.data || response || {};
+        const rows = payload.rows || [];
         this.posts = rows.map((p, index) => ({
           ...p,
           cardBadges: getPostCardBadges(p),
           fallbackCover: this.pickDefaultCoverForPost(p, index)
         }));
-        this.total = response.data.total; // 总条数
+        this.total = Number(payload.total) || 0; // 总条数
+
+        // 后端可能在 strictMode 下覆盖分页大小，前端分页条必须按“实际生效值”计算。
+        const serverPageSize = Number(payload.pageSize);
+        if (serverPageSize > 0) {
+          this.effectivePageSize = serverPageSize;
+        } else if (Array.isArray(rows) && rows.length > 0) {
+          // 后端未返回 pageSize 时，使用本次实际返回行数作为兜底。
+          // 你的场景里 strictMode 会强制分页大小，这里可确保分页条立即与后端结果一致。
+          this.effectivePageSize = rows.length;
+        } else {
+          // 未返回且 rows 为空时回退到前端请求值，保持兼容。
+          this.effectivePageSize = Number(this.pageSize) > 0 ? Number(this.pageSize) : 1;
+        }
         // 等文章渲染完后，初始化一次滚动高亮状态（主要用于手机端）
         this.$nextTick(() => {
           this.updateActivePosts();
