@@ -5,13 +5,6 @@
 
 - [中文](./README.md) | [English](./docs/README_EN.md)
 
-## 考核材料（热重载）
-
-- 考核题目文档：[第三轮后端考核说明（热重载技术方向）](https://github.com/gduf-cs-tribe/2025-backend-recruit-03/blob/main/docs/level3/arceca.md)
-- 本项目考核交付文档：[配置文件热重载考核交付文档](./docs/配置文件热重载考核交付文档.md)
-
-> 评审提示：请以“本地运行 + 本地热重载复现”为准；线上 CI/CD + Docker 已验证但不要求复现（流程依赖评审侧环境）。
-
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
