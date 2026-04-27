@@ -175,6 +175,19 @@ curl http://127.0.0.1:8080/post/runtime/config
 
 若配置值变化已反映在返回中，说明 Docker 部署下热重载生效。
 
+如果你通过 CI/CD 推送 `deploy/prod/runtime-config.yml`：
+
+- 工作流会执行“仅同步配置 + 调用重载接口”；
+- 不执行 `docker compose up`，因此不会重建后端容器。
+
+可通过以下命令确认容器未重启：
+
+```bash
+docker inspect ayeezblog-backend --format='StartedAt={{.State.StartedAt}}  Status={{.State.Status}}  RestartCount={{.RestartCount}}'
+```
+
+在配置更新前后 `StartedAt` 保持一致，即表示容器持续运行。
+
 ---
 
 ## 7. 常用运维命令

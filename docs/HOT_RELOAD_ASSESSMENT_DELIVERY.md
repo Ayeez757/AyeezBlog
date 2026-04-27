@@ -9,6 +9,10 @@
 - 配置更新后可真实影响后续请求行为（前端可观察到分页条数变化）；
 - 配置加载失败时保持上一版配置继续服务，不发生服务中断。
 
+> Reviewer note:  
+> This project has been validated in **production CI/CD + Docker** as additional evidence, but the CI/CD pipeline is highly environment-dependent (secrets, server paths, volumes/networks).  
+> Reviewers are **not required to reproduce** the online deployment. Please verify Level 1 via **local run + local hot reload** steps.
+
 ---
 
 ## 2. 实现范围与核心设计
@@ -79,6 +83,11 @@
 
 ## 4. 验证过程与结果
 
+Review suggestion (local-first):
+
+- Reviewers only need to verify `4.1~4.3` locally (manual reload / WatchService reload / rollback on invalid config).
+- Section `4.5` is additional online evidence and is not required to reproduce.
+
 ### 4.1 手动触发重载验证
 
 验证步骤：
@@ -143,12 +152,26 @@
 
 1. 使用 `deploy/prod/docker-compose.yml` 启动服务；
 2. 修改宿主机文件 `deploy/prod/runtime-config.yml` 并保存；
-3. 不重启后端容器，直接访问 `GET /post/runtime/config` 或业务接口。
+3. CI/CD 仅同步配置文件并调用 `POST /post/runtime/reload-config`；
+4. 不重启后端容器，直接访问 `GET /post/runtime/config` 或业务接口。
 
 验证结果：
 
 - 配置变化可在容器运行中自动生效；
 - 满足 Docker 场景下不停机配置热重载要求。
+
+Online verification evidence (excerpt):
+
+```text
+docker inspect ayeezblog-backend --format='StartedAt={{.State.StartedAt}}  Status={{.State.Status}}  RestartCount={{.RestartCount}}'
+StartedAt=2026-04-27T09:37:44.814540551Z  Status=running  RestartCount=0
+
+...after config update and CI/CD trigger...
+
+StartedAt=2026-04-27T09:37:44.814540551Z  Status=running  RestartCount=0
+```
+
+Conclusion: backend container keeps running without restart during config update.
 
 ---
 
@@ -189,4 +212,16 @@
 - 验证步骤与交付文档组织。
 
 所有关键代码、联调验证与最终交付结果均由项目作者在本地完成实现与确认。
+
+---
+
+## 8. Configuration Files (Delivery Scope)
+
+| File | Purpose | Notes |
+| --- | --- | --- |
+| `AyeezBlog-Backend/blog-server/src/main/resources/runtime-config.yml` | Local hot-reload config | Used for local development verification |
+| `deploy/prod/runtime-config.yml` | Production hot-reload config | Host-side file mounted into container |
+| `deploy/prod/.env` | Production env vars | Includes DB secrets and `RUNTIME_CONFIG_PATH` |
+| `deploy/prod/docker-compose.yml` | Production orchestration | Declares config mount and backend env injection |
+| `.github/workflows/cicd-deploy.yml` | CI/CD strategy | runtime-config-only changes do not restart container |
 
