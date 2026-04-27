@@ -42,9 +42,62 @@ jobs:
             runtime_config:
               - "deploy/prod/runtime-config.yml"
 
+  deploy-runtime-config:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.runtime_config == 'true' && needs.detect-changes.outputs.backend != 'true' && needs.detect-changes.outputs.deploy_other != 'true'
+    runs-on: ubuntu-latest
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      SERVER_BASE_DIR: ${{ secrets.SERVER_BASE_DIR || '/opt/ayeezblog' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure deploy config directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          port: ${{ env.SERVER_PORT }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 15m
+          script: |
+            set -eu
+            BASE_DIR="${SERVER_BASE_DIR:-/opt/ayeezblog}"
+            mkdir -p "$BASE_DIR/deploy/prod"
+
+      - name: Upload runtime config only
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          port: ${{ env.SERVER_PORT }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          source: "deploy/prod/runtime-config.yml"
+          target: ${{ env.SERVER_BASE_DIR }}
+          overwrite: true
+          strip_components: 0
+
+      - name: Verify backend container not recreated
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          port: ${{ env.SERVER_PORT }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 15m
+          script: |
+            set -eu
+            docker inspect ayeezblog-backend --format='StartedAt={{.State.StartedAt}}  Status={{.State.Status}}  RestartCount={{.RestartCount}}'
+
   deploy-stack:
     needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.deploy_other == 'true' || needs.detect-changes.outputs.runtime_config == 'true'
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.deploy_other == 'true'
     runs-on: ubuntu-latest
     env:
       SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -129,13 +182,6 @@ jobs:
             VOLCENGINE_ACCESS_KEY=${VOLCENGINE_ACCESS_KEY}
             VOLCENGINE_SECRET_KEY=${VOLCENGINE_SECRET_KEY}
             EOF
-
-            # 仅修改 runtime-config.yml 时，不执行 compose up，避免重启容器。
-            if [ "${CHANGED_RUNTIME_CONFIG}" = "true" ] && [ "${CHANGED_BACKEND}" != "true" ] && [ "${CHANGED_DEPLOY_OTHER}" != "true" ]; then
-              echo "Detected runtime config only change. Skip compose up to keep containers running."
-              docker compose -f deploy/prod/docker-compose.yml --env-file deploy/prod/.env ps
-              exit 0
-            fi
 
             SERVICES="backend"
             if [ "${CHANGED_DEPLOY_OTHER}" = "true" ]; then
