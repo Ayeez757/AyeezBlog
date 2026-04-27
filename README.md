@@ -5,6 +5,13 @@
 
 - [中文](./README.md) | [English](./docs/README_EN.md)
 
+## 考核材料（热重载）
+
+- 考核题目文档：[第三轮后端考核说明（热重载技术方向）](https://github.com/gduf-cs-tribe/2025-backend-recruit-03/blob/main/docs/level3/arceca.md)
+- 本项目考核交付文档：[配置文件热重载考核交付文档](./docs/配置文件热重载考核交付文档.md)
+
+> 评审提示：请以“本地运行 + 本地热重载复现”为准；线上 CI/CD + Docker 已验证但不要求复现（流程依赖评审侧环境）。
+
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
 
@@ -265,6 +272,22 @@ npm run dev
 | `qiniu.*` | 七牛配置（仅在管理端需要“获取上传 token”/AI 封面转存时必填；不使用可不配） |
 | `hm.deepseek.*` | 简介生成（可选） |
 | `hm.volcengine.*` | 封面生成（可选；通常还需要七牛可用） |
+
+### 热重载相关配置文件说明
+
+| 文件 | 场景 | 作用 |
+| --- | --- | --- |
+| `AyeezBlog-Backend/blog-server/src/main/resources/runtime-config.yml` | 本地开发 | 本地运行时热重载配置文件（IDE / `mvn spring-boot:run` 常用） |
+| `deploy/prod/runtime-config.yml` | Docker 线上 | 线上外置热重载配置文件，挂载到容器 `/app/config/runtime-config.yml` |
+| `deploy/prod/.env` | Docker 线上 | Compose 运行时环境变量（数据库、密钥、`RUNTIME_CONFIG_PATH` 等） |
+| `deploy/prod/docker-compose.yml` | Docker 线上 | 定义容器编排、runtime-config 文件挂载、后端环境变量注入 |
+| `.github/workflows/cicd-deploy.yml` | CI/CD | 仅改 runtime-config 时只同步文件并调用重载接口，不重启后端容器 |
+
+说明：
+
+- 后端优先读取 `-Druntime.config.path`，其次读取 `RUNTIME_CONFIG_PATH`；
+- Docker 推荐固定使用 `RUNTIME_CONFIG_PATH=/app/config/runtime-config.yml`；
+- 若只变更 `deploy/prod/runtime-config.yml`，CI/CD 会执行“上传配置 + 调用重载接口”而非 `compose up`。
 
 
 
