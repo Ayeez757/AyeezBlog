@@ -47,6 +47,8 @@
 运行时配置文件：
 
 - `AyeezBlog-Backend/blog-server/src/main/resources/runtime-config.yml`
+- Docker 部署推荐外置挂载文件：`deploy/prod/runtime-config.yml`
+- 容器内路径：`/app/config/runtime-config.yml`
 
 当前示例字段：
 
@@ -67,6 +69,7 @@
 - `WatchService` 监听 `runtime-config.yml` 文件变化；
 - 保存配置文件后自动调用 `RuntimeConfigManager.reload()`；
 - 含防抖策略，避免一次保存触发多次重复重载。
+- Docker 部署下通过 `RUNTIME_CONFIG_PATH=/app/config/runtime-config.yml` 指向挂载文件，容器内同样支持自动重载。
 
 业务联动接口：
 
@@ -133,6 +136,19 @@
 
 本方案为同一服务进程内执行配置切换，不依赖重启或新实例替换。  
 即：满足考核“不停机更新”的核心要求。
+
+### 4.5 Docker 场景验证
+
+验证步骤：
+
+1. 使用 `deploy/prod/docker-compose.yml` 启动服务；
+2. 修改宿主机文件 `deploy/prod/runtime-config.yml` 并保存；
+3. 不重启后端容器，直接访问 `GET /post/runtime/config` 或业务接口。
+
+验证结果：
+
+- 配置变化可在容器运行中自动生效；
+- 满足 Docker 场景下不停机配置热重载要求。
 
 ---
 
