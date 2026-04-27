@@ -94,6 +94,23 @@ jobs:
             set -eu
             docker inspect ayeezblog-backend --format='StartedAt={{.State.StartedAt}}  Status={{.State.Status}}  RestartCount={{.RestartCount}}'
 
+      - name: Trigger runtime config reload without restart
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USER }}
+          port: ${{ env.SERVER_PORT }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 15m
+          script: |
+            set -eu
+            echo "Triggering runtime config reload..."
+            curl -fsS http://127.0.0.1:8080/post/runtime/reload-config
+            echo
+            echo "Current runtime config:"
+            curl -fsS http://127.0.0.1:8080/post/runtime/config
+
   deploy-stack:
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true' || (needs.detect-changes.outputs.deploy_other == 'true' && needs.detect-changes.outputs.runtime_config != 'true')
