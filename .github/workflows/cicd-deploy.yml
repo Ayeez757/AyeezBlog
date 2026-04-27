@@ -43,7 +43,7 @@ jobs:
 
   deploy-runtime-config:
     needs: detect-changes
-    if: needs.detect-changes.outputs.runtime_config == 'true' && needs.detect-changes.outputs.backend != 'true' && needs.detect-changes.outputs.deploy_other != 'true'
+    if: needs.detect-changes.outputs.runtime_config == 'true' && needs.detect-changes.outputs.backend != 'true'
     runs-on: ubuntu-latest
     env:
       SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -96,7 +96,7 @@ jobs:
 
   deploy-stack:
     needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.deploy_other == 'true'
+    if: needs.detect-changes.outputs.backend == 'true' || (needs.detect-changes.outputs.deploy_other == 'true' && needs.detect-changes.outputs.runtime_config != 'true')
     runs-on: ubuntu-latest
     env:
       SERVER_HOST: ${{ secrets.SERVER_HOST }}
