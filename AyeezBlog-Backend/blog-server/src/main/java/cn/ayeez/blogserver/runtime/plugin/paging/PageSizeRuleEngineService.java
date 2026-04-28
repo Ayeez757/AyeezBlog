@@ -71,7 +71,9 @@ public class PageSizeRuleEngineService {
      * @return 分页规则输出
      */
     public PageSizeRuleOutput resolvePageSize(Integer requestedPageSize) {
-        // 外部插件一旦手动接管，就保持当前外部实现，避免被 runtime-config 每次请求自动切回。
+        // 外部插件一旦手动接管，就保持当前外部实现，避免 被 runtime-config 每次请求自动切回。
+        // 这样做的目的是让“外部 jar 热加载”真正落到业务请求上：外部插件接管后持续生效，
+        // 只有显式切回内置插件（或回退到配置指定插件）才会退出接管模式。
         if (!"external".equals(currentPluginOrigin)) {
             RuntimeConfig runtimeConfig = runtimeConfigManager.getCurrent();
             switchPlugin(runtimeConfig.getPageSizeRulePluginId(), "runtime-config");
@@ -154,6 +156,7 @@ public class PageSizeRuleEngineService {
      * @return 切换记录列表
      */
     public synchronized List<PageSizePluginSwitchRecord> getSwitchHistory(int limit) {
+        // 历史记录用于评审/自测时确认“谁在何时触发了切换、是否成功、外部 jar 来源是什么”。
         int size = Math.max(1, Math.min(limit, SWITCH_HISTORY_MAX));
         return switchHistory.stream().limit(size).toList();
     }
@@ -192,7 +195,7 @@ public class PageSizeRuleEngineService {
             return;
         }
 
-        // 先初始化新插件，确保其可用后再替换当前引用。
+        // 先 init 新插件，确保其可用后再替换 currentPlugin，避免切换中出现“无可用插件”的窗口。
         targetPlugin.init(pluginContext);
         currentPlugin.set(targetPlugin);
         lastSwitchedAt = LocalDateTime.now();
@@ -203,7 +206,7 @@ public class PageSizeRuleEngineService {
         currentExternalClassLoader = null;
         recordSwitch(true, source, "built-in", targetPlugin.id(), null, null, "切换到内置插件成功");
 
-        // 旧插件在新插件生效后再释放，避免切换中间窗口没有可用插件。
+        // 旧插件在新插件生效后再释放：保证新插件 init 成功后才下线旧插件，失败则天然回退。
         if (oldPlugin != null) {
             oldPlugin.dispose();
         }
@@ -224,7 +227,8 @@ public class PageSizeRuleEngineService {
         RulePlugin<PageSizeRuleInput, PageSizeRuleOutput> oldPlugin = currentPlugin.get();
         URLClassLoader oldExternalClassLoader = currentExternalClassLoader;
 
-        // 先初始化新插件，失败时保留旧插件继续服务。
+        // 外部插件切换同样遵循“先 init -> 再切换 -> 再释放旧插件/旧ClassLoader”的顺序，
+        // 这是热替换中最关键的稳定性保障点。
         newPlugin.init(pluginContext);
         currentPlugin.set(newPlugin);
         lastSwitchedAt = LocalDateTime.now();
@@ -246,6 +250,7 @@ public class PageSizeRuleEngineService {
      * 从“外部接管模式”回退到当前配置指定的内置插件。
      */
     public synchronized void revertToConfiguredBuiltIn(String source) {
+        // 回退语义：退出外部接管模式，恢复“配置驱动选择内置插件”的行为。
         RuntimeConfig runtimeConfig = runtimeConfigManager.getCurrent();
         switchPlugin(runtimeConfig.getPageSizeRulePluginId(), source);
     }

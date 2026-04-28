@@ -120,6 +120,7 @@ public class RuntimeConfigDemoController {
     public Result<Map<String, Object>> loadExternalPageSizePlugin(@RequestParam("jarPath") String jarPath,
                                                                   @RequestParam("className") String className) {
         try {
+            // Day6：手动加载外部 jar（包含 className），用于明确演示“运行时加载新逻辑并接管”。
             ExternalPageSizePluginLoadResult loadResult = externalPageSizePluginLoader.load(jarPath, className);
             pageSizeRuleEngineService.switchToExternalPlugin(loadResult, "external-jar");
         } catch (Exception ex) {
@@ -145,6 +146,7 @@ public class RuntimeConfigDemoController {
      */
     @GetMapping("/page-size-rule-history")
     public Result<List<PageSizePluginSwitchRecord>> getPageSizeRuleHistory(@RequestParam(value = "limit", required = false) Integer limit) {
+        // Day7：提供切换历史查询，便于验证“自动监听触发/手动触发/回退”等动作是否按预期发生。
         int safeLimit = (limit == null) ? 20 : Math.max(1, Math.min(limit, 50));
         return Result.success(pageSizeRuleEngineService.getSwitchHistory(safeLimit));
     }
@@ -157,6 +159,7 @@ public class RuntimeConfigDemoController {
     @PostMapping("/revert-page-size-rule-to-configured")
     public Result<Map<String, Object>> revertPageSizeRuleToConfigured() {
         try {
+            // Day7：一键回退到 runtime-config.yml 指定的内置插件，恢复“配置驱动”的行为。
             pageSizeRuleEngineService.revertToConfiguredBuiltIn("manual-revert");
         } catch (Exception ex) {
             return Result.error(400, "回退失败：" + ex.getMessage());

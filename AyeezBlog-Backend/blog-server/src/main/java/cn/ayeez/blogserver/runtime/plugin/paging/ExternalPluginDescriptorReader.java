@@ -26,6 +26,8 @@ public class ExternalPluginDescriptorReader {
             throw new IllegalStateException("未找到外部插件 jar 文件：" + path);
         }
 
+        // 通过读取 jar 内的元信息，做到“只给一个 jarPath，就能知道主类名/版本”等信息，
+        // 自动加载时无需再人工传 className，减少操作面与误用。
         try (JarFile jarFile = new JarFile(path.toFile())) {
             var entry = jarFile.getJarEntry(DESCRIPTOR_PATH);
             if (entry == null) {

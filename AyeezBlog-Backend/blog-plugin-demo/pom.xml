@@ -15,6 +15,7 @@
     <description>Day6 external plugin demo module</description>
 
     <properties>
+        <plugin.host.classes>${project.basedir}/../blog-server/target/classes</plugin.host.classes>
         <plugin.host.jar>${project.basedir}/../blog-server/target/blog-server-0.0.1-SNAPSHOT-plain.jar</plugin.host.jar>
     </properties>
 
@@ -25,7 +26,7 @@
                 <configuration>
                     <compilerArgs>
                         <arg>-classpath</arg>
-                        <arg>${plugin.host.jar}</arg>
+                        <arg>${plugin.host.classes}${path.separator}${plugin.host.jar}</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

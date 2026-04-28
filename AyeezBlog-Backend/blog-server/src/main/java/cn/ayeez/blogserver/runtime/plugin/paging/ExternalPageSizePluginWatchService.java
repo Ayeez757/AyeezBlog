@@ -29,6 +29,7 @@ public class ExternalPageSizePluginWatchService {
 
     private static final long RELOAD_DEBOUNCE_MS = 1200L;
     private static final long STABLE_CHECK_SLEEP_MS = 250L;
+    private static final String DEFAULT_PLUGIN_DIR = "plugins/page-size";
 
     private final ExternalPageSizePluginLoader externalPageSizePluginLoader;
     private final PageSizeRuleEngineService pageSizeRuleEngineService;
@@ -46,12 +47,8 @@ public class ExternalPageSizePluginWatchService {
 
     @PostConstruct
     public void startWatching() {
-        Optional<Path> pluginDir = resolvePluginDir();
-        if (pluginDir.isEmpty()) {
-            LOGGER.info("External plugin auto-reload disabled: PAGE_SIZE_PLUGIN_DIR not set.");
-            return;
-        }
-        Path dir = pluginDir.get();
+        // 默认启用自动监听，优先级：环境变量 > JVM参数 > 项目默认目录。
+        Path dir = resolvePluginDir();
         if (!Files.exists(dir)) {
             try {
                 Files.createDirectories(dir);
@@ -107,6 +104,7 @@ public class ExternalPageSizePluginWatchService {
                     continue;
                 }
                 String name = changed.getFileName().toString();
+                // 仅对“看起来是最终产物”的 jar 做响应：忽略临时文件，减少半写入触发。
                 if (name.endsWith(".jar") && !name.endsWith(".tmp.jar") && !name.endsWith(".jar.tmp")) {
                     shouldReload = true;
                     break;
@@ -133,8 +131,10 @@ public class ExternalPageSizePluginWatchService {
         lastReloadAt = now;
 
         try {
+            // 选择目录内“最新”的 jar 作为候选；这比依赖文件名规则更稳健（尤其在手动复制/脚本上传场景）。
             Path jarPath = pickLatestJar(pluginDir)
                     .orElseThrow(() -> new IllegalStateException("插件目录下未找到可加载的 .jar 文件。"));
+            // 避免复制/上传过程中读取到半写入 jar：简单做一次大小稳定性检查。
             if (!isStableFile(jarPath)) {
                 LOGGER.info("External plugin jar not stable yet, skip this round. jar={}", jarPath);
                 return;
@@ -143,6 +143,7 @@ public class ExternalPageSizePluginWatchService {
             pageSizeRuleEngineService.switchToExternalPlugin(loadResult, "auto-watch");
             LOGGER.info("External plugin auto-reload succeeded. jar={}", jarPath);
         } catch (Exception ex) {
+            // 失败不切换：保持当前插件继续服务，符合“热更新失败回退/不中断”的要求。
             LOGGER.warn("External plugin auto-reload failed, keep current plugin. reason={}", ex.getMessage(), ex);
         }
     }
@@ -170,13 +171,18 @@ public class ExternalPageSizePluginWatchService {
         }
     }
 
-    private Optional<Path> resolvePluginDir() {
+    private Path resolvePluginDir() {
         String fromEnv = System.getenv("PAGE_SIZE_PLUGIN_DIR");
-        String raw = (fromEnv == null || fromEnv.trim().isEmpty()) ? null : fromEnv.trim();
-        if (raw == null) {
-            return Optional.empty();
+        if (fromEnv != null && !fromEnv.trim().isEmpty()) {
+            return Paths.get(fromEnv.trim()).toAbsolutePath().normalize();
         }
-        return Optional.of(Paths.get(raw).toAbsolutePath().normalize());
+
+        String fromJvmProp = System.getProperty("page.size.plugin.dir");
+        if (fromJvmProp != null && !fromJvmProp.trim().isEmpty()) {
+            return Paths.get(fromJvmProp.trim()).toAbsolutePath().normalize();
+        }
+
+        return Paths.get(DEFAULT_PLUGIN_DIR).toAbsolutePath().normalize();
     }
 
     @PreDestroy
