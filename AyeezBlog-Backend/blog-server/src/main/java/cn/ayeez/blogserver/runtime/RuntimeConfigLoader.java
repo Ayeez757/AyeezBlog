@@ -131,6 +131,9 @@ public class RuntimeConfigLoader {
         if (runtimeConfig.getPostPageSize() < 1 || runtimeConfig.getPostPageSize() > 50) {
             throw new IllegalStateException("postPageSize must be between 1 and 50.");
         }
+        if (runtimeConfig.getPageSizeRulePluginId() == null || runtimeConfig.getPageSizeRulePluginId().trim().isEmpty()) {
+            throw new IllegalStateException("pageSizeRulePluginId 不能为空。");
+        }
     }
 
     /**

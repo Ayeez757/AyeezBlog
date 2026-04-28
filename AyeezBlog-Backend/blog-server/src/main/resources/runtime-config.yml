@@ -1,2 +1,10 @@
-postPageSize: 12
+# postPageSize: 运行时配置中的默认分页大小
+postPageSize: 5
+# strictModeEnabled:
+# - true  时，默认插件会强制使用 runtime-config 中的 postPageSize
+# - false 时，默认插件会优先使用前端请求的 pageSize，非法时才回退到 runtime-config
 strictModeEnabled: true
+# pageSizeRulePluginId:
+# - default-page-size-rule      默认规则：优先尊重前端请求，strict=true 时强制使用运行时配置
+# - runtime-only-page-size-rule 运行时优先规则：始终使用运行时配置中的 postPageSize
+pageSizeRulePluginId: default-page-size-rule

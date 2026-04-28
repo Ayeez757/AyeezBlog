@@ -11,8 +11,8 @@ import cn.ayeez.blogserver.mapper.BlogCategoryMapper;
 import cn.ayeez.blogserver.mapper.BlogPostTagMapper;
 import cn.ayeez.blogserver.mapper.BlogTagMapper;
 import cn.ayeez.blogserver.mapper.PostMapper;
-import cn.ayeez.blogserver.runtime.RuntimeConfig;
-import cn.ayeez.blogserver.runtime.RuntimeConfigManager;
+import cn.ayeez.blogserver.runtime.plugin.paging.PageSizeRuleEngineService;
+import cn.ayeez.blogserver.runtime.plugin.paging.PageSizeRuleOutput;
 import cn.ayeez.blogserver.service.ai.ArticleSummaryAiService;
 import cn.ayeez.blogserver.service.postServer.PostService;
 import com.github.pagehelper.Page;
@@ -44,7 +44,7 @@ public class PostServerImpl implements PostService {
     private ArticleSummaryAiService articleSummaryAiService;
 
     @Autowired
-    private RuntimeConfigManager runtimeConfigManager;
+    private PageSizeRuleEngineService pageSizeRuleEngineService;
 
     /**
      * 获取文章列表（详细）
@@ -64,25 +64,10 @@ public class PostServerImpl implements PostService {
             queryParam.setTitle(queryParam.getTitle().trim());
         }
 
-        // 热重载业务差异演示策略：
-        // - strictModeEnabled=false：沿用前端传入 pageSize（若非法则回退运行时配置）
-        // - strictModeEnabled=true：强制使用 runtime-config.yml 的 pageSize，保证前端也能直观看到热重载效果
-        RuntimeConfig runtimeConfig = runtimeConfigManager.getCurrent();
-        Integer requestedPageSize = queryParam.getPageSize();
-        int runtimePageSize = runtimeConfig.getPostPageSize();
-        boolean strictModeEnabled = runtimeConfig.isStrictModeEnabled();
-
-        int effectivePageSize;
-        if (strictModeEnabled) {
-            effectivePageSize = runtimePageSize;
-        } else if (requestedPageSize == null || requestedPageSize <= 0) {
-            effectivePageSize = runtimePageSize;
-        } else {
-            effectivePageSize = requestedPageSize;
-        }
-
-        log.info("文章分页大小决策：strictModeEnabled={}, requestedPageSize={}, runtimePageSize={}, effectivePageSize={}",
-                strictModeEnabled, requestedPageSize, runtimePageSize, effectivePageSize);
+        PageSizeRuleOutput pageSizeRuleOutput = pageSizeRuleEngineService.resolvePageSize(queryParam.getPageSize());
+        int effectivePageSize = pageSizeRuleOutput.getEffectivePageSize();
+        log.info("文章分页大小决策：请求pageSize={}, 生效pageSize={}, 规则原因={}",
+                queryParam.getPageSize(), effectivePageSize, pageSizeRuleOutput.getReason());
 
         // 开启分页
         PageHelper.startPage(queryParam.getPage(), effectivePageSize);

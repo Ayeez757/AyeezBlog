@@ -4,8 +4,13 @@ import cn.ayeez.blogcommon.util.Result;
 import cn.ayeez.blogserver.runtime.RuntimeConfig;
 import cn.ayeez.blogserver.runtime.RuntimeConfigLoader;
 import cn.ayeez.blogserver.runtime.RuntimeConfigManager;
+import cn.ayeez.blogserver.runtime.plugin.paging.ExternalPageSizePluginLoadResult;
+import cn.ayeez.blogserver.runtime.plugin.paging.ExternalPageSizePluginLoader;
+import cn.ayeez.blogserver.runtime.plugin.paging.PageSizeRuleEngineService;
+import cn.ayeez.blogserver.runtime.plugin.paging.PageSizePluginSwitchRecord;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,6 +36,8 @@ public class RuntimeConfigDemoController {
 
     private final RuntimeConfigManager runtimeConfigManager;
     private final RuntimeConfigLoader runtimeConfigLoader;
+    private final PageSizeRuleEngineService pageSizeRuleEngineService;
+    private final ExternalPageSizePluginLoader externalPageSizePluginLoader;
 
     /**
      * 通过构造器注入运行时配置管理器。
@@ -38,9 +45,13 @@ public class RuntimeConfigDemoController {
      * @param runtimeConfigManager 运行时配置管理器
      */
     public RuntimeConfigDemoController(RuntimeConfigManager runtimeConfigManager,
-                                       RuntimeConfigLoader runtimeConfigLoader) {
+                                       RuntimeConfigLoader runtimeConfigLoader,
+                                       PageSizeRuleEngineService pageSizeRuleEngineService,
+                                       ExternalPageSizePluginLoader externalPageSizePluginLoader) {
         this.runtimeConfigManager = runtimeConfigManager;
         this.runtimeConfigLoader = runtimeConfigLoader;
+        this.pageSizeRuleEngineService = pageSizeRuleEngineService;
+        this.externalPageSizePluginLoader = externalPageSizePluginLoader;
     }
 
     /**
@@ -51,6 +62,116 @@ public class RuntimeConfigDemoController {
     @GetMapping("/config")
     public Result<RuntimeConfig> getCurrentConfig() {
         return Result.success(runtimeConfigManager.getCurrent());
+    }
+
+    /**
+     * 查看当前分页规则插件状态。
+     *
+     * @return 当前插件 ID 与可用插件列表
+     */
+    @GetMapping("/page-size-rule")
+    public Result<Map<String, Object>> getCurrentPageSizeRule() {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("currentPluginId", pageSizeRuleEngineService.getCurrentPluginId());
+        payload.put("availablePluginIds", pageSizeRuleEngineService.getAvailablePluginIds());
+        payload.put("configuredPluginId", runtimeConfigManager.getCurrent().getPageSizeRulePluginId());
+        payload.put("lastSwitchedAt", pageSizeRuleEngineService.getLastSwitchedAt());
+        payload.put("lastSwitchSource", pageSizeRuleEngineService.getLastSwitchSource());
+        payload.put("currentPluginOrigin", pageSizeRuleEngineService.getCurrentPluginOrigin());
+        payload.put("currentExternalJarPath", pageSizeRuleEngineService.getCurrentExternalJarPath());
+        payload.put("currentExternalClassName", pageSizeRuleEngineService.getCurrentExternalClassName());
+        return Result.success(payload);
+    }
+
+    /**
+     * 手动切换分页规则插件。
+     *
+     * @param pluginId 目标插件 ID
+     * @return 切换结果
+     */
+    @PostMapping("/switch-page-size-rule")
+    public Result<Map<String, Object>> switchPageSizeRule(@RequestParam("pluginId") String pluginId) {
+        try {
+            pageSizeRuleEngineService.switchPlugin(pluginId);
+        } catch (IllegalStateException ex) {
+            return Result.error(400, ex.getMessage());
+        }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("currentPluginId", pageSizeRuleEngineService.getCurrentPluginId());
+        payload.put("availablePluginIds", pageSizeRuleEngineService.getAvailablePluginIds());
+        payload.put("configuredPluginId", runtimeConfigManager.getCurrent().getPageSizeRulePluginId());
+        payload.put("lastSwitchedAt", pageSizeRuleEngineService.getLastSwitchedAt());
+        payload.put("lastSwitchSource", pageSizeRuleEngineService.getLastSwitchSource());
+        payload.put("currentPluginOrigin", pageSizeRuleEngineService.getCurrentPluginOrigin());
+        payload.put("currentExternalJarPath", pageSizeRuleEngineService.getCurrentExternalJarPath());
+        payload.put("currentExternalClassName", pageSizeRuleEngineService.getCurrentExternalClassName());
+        payload.put("message", "分页规则插件切换成功");
+        return Result.success(payload);
+    }
+
+    /**
+     * 手动加载外部分页规则插件并切换为当前插件。
+     *
+     * @param jarPath 插件 jar 路径
+     * @param className 插件主类名
+     * @return 外部插件加载与切换结果
+     */
+    @PostMapping("/load-external-page-size-plugin")
+    public Result<Map<String, Object>> loadExternalPageSizePlugin(@RequestParam("jarPath") String jarPath,
+                                                                  @RequestParam("className") String className) {
+        try {
+            ExternalPageSizePluginLoadResult loadResult = externalPageSizePluginLoader.load(jarPath, className);
+            pageSizeRuleEngineService.switchToExternalPlugin(loadResult, "external-jar");
+        } catch (Exception ex) {
+            return Result.error(400, "外部分页插件加载失败：" + ex.getMessage());
+        }
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("currentPluginId", pageSizeRuleEngineService.getCurrentPluginId());
+        payload.put("lastSwitchedAt", pageSizeRuleEngineService.getLastSwitchedAt());
+        payload.put("lastSwitchSource", pageSizeRuleEngineService.getLastSwitchSource());
+        payload.put("currentPluginOrigin", pageSizeRuleEngineService.getCurrentPluginOrigin());
+        payload.put("currentExternalJarPath", pageSizeRuleEngineService.getCurrentExternalJarPath());
+        payload.put("currentExternalClassName", pageSizeRuleEngineService.getCurrentExternalClassName());
+        payload.put("message", "外部分页插件加载并切换成功");
+        return Result.success(payload);
+    }
+
+    /**
+     * 查询分页规则插件切换历史。
+     *
+     * @param limit 返回条数，默认 20
+     * @return 切换历史
+     */
+    @GetMapping("/page-size-rule-history")
+    public Result<List<PageSizePluginSwitchRecord>> getPageSizeRuleHistory(@RequestParam(value = "limit", required = false) Integer limit) {
+        int safeLimit = (limit == null) ? 20 : Math.max(1, Math.min(limit, 50));
+        return Result.success(pageSizeRuleEngineService.getSwitchHistory(safeLimit));
+    }
+
+    /**
+     * 从外部接管模式回退到当前配置指定的内置插件。
+     *
+     * @return 回退结果
+     */
+    @PostMapping("/revert-page-size-rule-to-configured")
+    public Result<Map<String, Object>> revertPageSizeRuleToConfigured() {
+        try {
+            pageSizeRuleEngineService.revertToConfiguredBuiltIn("manual-revert");
+        } catch (Exception ex) {
+            return Result.error(400, "回退失败：" + ex.getMessage());
+        }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("currentPluginId", pageSizeRuleEngineService.getCurrentPluginId());
+        payload.put("availablePluginIds", pageSizeRuleEngineService.getAvailablePluginIds());
+        payload.put("configuredPluginId", runtimeConfigManager.getCurrent().getPageSizeRulePluginId());
+        payload.put("lastSwitchedAt", pageSizeRuleEngineService.getLastSwitchedAt());
+        payload.put("lastSwitchSource", pageSizeRuleEngineService.getLastSwitchSource());
+        payload.put("currentPluginOrigin", pageSizeRuleEngineService.getCurrentPluginOrigin());
+        payload.put("currentExternalJarPath", pageSizeRuleEngineService.getCurrentExternalJarPath());
+        payload.put("currentExternalClassName", pageSizeRuleEngineService.getCurrentExternalClassName());
+        payload.put("message", "已回退到配置指定的内置插件");
+        return Result.success(payload);
     }
 
     /**

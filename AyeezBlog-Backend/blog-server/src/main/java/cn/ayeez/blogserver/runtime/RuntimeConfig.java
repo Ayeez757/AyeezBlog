@@ -23,6 +23,11 @@ public class RuntimeConfig {
     private boolean strictModeEnabled = false;
 
     /**
+     * 当前生效的分页规则插件 ID。
+     */
+    private String pageSizeRulePluginId = "default-page-size-rule";
+
+    /**
      * 返回默认分页大小。
      * <p>
      * 业务代码会通过 RuntimeConfigManager#getCurrent() 拿到当前快照，再调用本方法读取值。
@@ -69,5 +74,23 @@ public class RuntimeConfig {
      */
     public void setStrictModeEnabled(boolean strictModeEnabled) {
         this.strictModeEnabled = strictModeEnabled;
+    }
+
+    /**
+     * 返回当前生效的分页规则插件 ID。
+     *
+     * @return 分页规则插件 ID
+     */
+    public String getPageSizeRulePluginId() {
+        return pageSizeRulePluginId;
+    }
+
+    /**
+     * 设置当前生效的分页规则插件 ID。
+     *
+     * @param pageSizeRulePluginId 分页规则插件 ID
+     */
+    public void setPageSizeRulePluginId(String pageSizeRulePluginId) {
+        this.pageSizeRulePluginId = pageSizeRulePluginId;
     }
 }
