@@ -85,7 +85,7 @@ public class ExternalPageSizePluginLoader {
         return load(jarPath, descriptor.getClassName());
     }
 
-    /**
+    /**p
      * 安静地关闭类加载器。
      *
      * @param classLoader 待关闭类加载器
