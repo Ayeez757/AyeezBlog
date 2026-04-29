@@ -1,0 +1,117 @@
+﻿{
+    "baseUrl":  "http://localhost:8080",
+    "pid":  21168,
+    "pluginDir":  "D:\\Develop\\project\\AyeezBlog\\AyeezBlog-Backend\\plugins\\page-size",
+    "samples":  8,
+    "intervalSeconds":  3,
+    "exerciseRounds":  30,
+    "postRevertQuietSeconds":  10,
+    "threadDelta":  1,
+    "privateMemoryDeltaMB":  0.04,
+    "urlClassLoaderDelta":  null,
+    "heartbeatThreadPeak":  987,
+    "heartbeatThreadsAfterRevert":  987,
+    "heartbeatLogGrowthBytesDuringExercise":  8255895,
+    "heartbeatLogGrowthBytesAfterRevert":  905115,
+    "jarDeleteCheck":  {
+                           "checked":  true,
+                           "canDelete":  true,
+                           "message":  "temp copy/delete succeeded",
+                           "targetJar":  "D:\\Develop\\project\\AyeezBlog\\AyeezBlog-Backend\\plugins\\page-size\\review-loop-189.jar"
+                       },
+    "riskLevel":  "MEDIUM_OR_HIGH",
+    "riskItems":  [
+                      "Heartbeat threads still alive after revert (count = 987)",
+                      "Heartbeat log still grows after revert (bytes increased = 905115)"
+                  ],
+    "sampledData":  [
+                        {
+                            "index":  1,
+                            "at":  "2026-04-30T00:05:12",
+                            "processThreads":  1047,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2493.61,
+                            "privateMB":  3413.29,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2803308K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 20 young (81920K), 2 survivors (8192K)"
+                        },
+                        {
+                            "index":  2,
+                            "at":  "2026-04-30T00:05:22",
+                            "processThreads":  1047,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2495.15,
+                            "privateMB":  3413.3,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2821898K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 24 young (98304K), 2 survivors (8192K)"
+                        },
+                        {
+                            "index":  3,
+                            "at":  "2026-04-30T00:05:38",
+                            "processThreads":  1047,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2495.77,
+                            "privateMB":  3413.3,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2844314K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 30 young (122880K), 2 survivors (8192K)"
+                        },
+                        {
+                            "index":  4,
+                            "at":  "2026-04-30T00:05:54",
+                            "processThreads":  1048,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2496.38,
+                            "privateMB":  3413.33,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2870844K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 36 young (147456K), 2 survivors (8192K)"
+                        },
+                        {
+                            "index":  5,
+                            "at":  "2026-04-30T00:06:09",
+                            "processThreads":  1048,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2496.75,
+                            "privateMB":  3413.33,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2888109K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 41 young (167936K), 2 survivors (8192K)"
+                        },
+                        {
+                            "index":  6,
+                            "at":  "2026-04-30T00:06:26",
+                            "processThreads":  1048,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2497.3,
+                            "privateMB":  3413.33,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2919517K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 48 young (196608K), 2 survivors (8192K)"
+                        },
+                        {
+                            "index":  7,
+                            "at":  "2026-04-30T00:06:41",
+                            "processThreads":  1048,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2497.91,
+                            "privateMB":  3413.33,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2932877K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 52 young (212992K), 2 survivors (8192K)"
+                        },
+                        {
+                            "index":  8,
+                            "at":  "2026-04-30T00:06:57",
+                            "processThreads":  1048,
+                            "jcmdThreads":  null,
+                            "heartbeatThreads":  987,
+                            "urlClassLoaders":  null,
+                            "workingSetMB":  2498.07,
+                            "privateMB":  3413.33,
+                            "heapInfoSnippet":  "21168: |  garbage-first heap   total 3096576K, used 2948370K [0x0000000608000000, 0x0000000800000000) |   region size 4096K, 55 young (225280K), 2 survivors (8192K)"
+                        }
+                    ]
+}
