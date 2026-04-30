@@ -158,6 +158,14 @@ cd AyeezBlog
 
 ```
 
+若你正在进行**第三轮后端考核（热重载方向）**，请切换到考核分支后再继续：
+
+```bash
+git checkout 25-backendRecruit3-hotReload
+```
+
+说明：`git clone` 默认会检出仓库默认分支，不会自动切到考核分支。
+
   
 
 #### 2. 初始化数据库
