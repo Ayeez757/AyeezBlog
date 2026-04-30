@@ -298,11 +298,36 @@ create table if not exists blog_talk
 )
     comment '说说/朋友圈' collate = utf8mb4_unicode_ci;
 
-create index if not exists idx_blog_talk_created_at
-    on blog_talk (created_at desc);
+-- 兼容较低版本 MySQL：不使用 CREATE INDEX IF NOT EXISTS
+set @sql_idx_blog_talk_created_at = if(
+    exists(
+        select 1
+        from information_schema.statistics
+        where table_schema = database()
+          and table_name = 'blog_talk'
+          and index_name = 'idx_blog_talk_created_at'
+    ),
+    'select ''idx_blog_talk_created_at already exists''',
+    'create index idx_blog_talk_created_at on blog_talk (created_at)'
+);
+prepare stmt_idx_blog_talk_created_at from @sql_idx_blog_talk_created_at;
+execute stmt_idx_blog_talk_created_at;
+deallocate prepare stmt_idx_blog_talk_created_at;
 
-create index if not exists idx_blog_talk_published_created_at
-    on blog_talk (published, created_at desc);
+set @sql_idx_blog_talk_published_created_at = if(
+    exists(
+        select 1
+        from information_schema.statistics
+        where table_schema = database()
+          and table_name = 'blog_talk'
+          and index_name = 'idx_blog_talk_published_created_at'
+    ),
+    'select ''idx_blog_talk_published_created_at already exists''',
+    'create index idx_blog_talk_published_created_at on blog_talk (published, created_at)'
+);
+prepare stmt_idx_blog_talk_published_created_at from @sql_idx_blog_talk_published_created_at;
+execute stmt_idx_blog_talk_published_created_at;
+deallocate prepare stmt_idx_blog_talk_published_created_at;
 
 
 create table if not exists blog_talk_sidebar

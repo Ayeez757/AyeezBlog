@@ -158,13 +158,12 @@ cd AyeezBlog
 
 ```
 
-若你正在进行**第三轮后端考核（热重载方向）**，请切换到考核分支后再继续：
+若你正在进行**第三轮后端考核（热重载方向）**，请切换到考核分支后再继续后续步骤：
 
 ```bash
 git checkout 25-backendRecruit3-hotReload
 ```
 
-说明：`git clone` 默认会检出仓库默认分支，不会自动切到考核分支。
 
   
 
@@ -184,7 +183,7 @@ git checkout 25-backendRecruit3-hotReload
 
 你可以二选一：
 
-- **方式 A（推荐）**：通过环境变量配置数据库连接（Windows PowerShell 示例）
+- **方式 A**：通过环境变量配置数据库连接（Windows PowerShell 示例）
 
 ```powershell
 $env:HM_DB_HOST="localhost"
