@@ -1,6 +1,7 @@
 param(
     [string]$BaseUrl = "http://localhost:8080",
     [string]$BusinessVerifyPath = "/post/list?page=1&pageSize=10",
+    [string]$PluginDir = "",
     [int]$Rounds = 50,
     [int]$WaitSeconds = 2,
     [int]$SwitchWaitTimeoutSeconds = 8
@@ -58,11 +59,33 @@ function Wait-ForExternalAutoWatch {
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $backendRoot = Join-Path $repoRoot "AyeezBlog-Backend"
 $pluginSourceJar = Join-Path $backendRoot "blog-plugin-demo\target\blog-plugin-demo-0.0.1-SNAPSHOT.jar"
-$pluginDir = Join-Path $backendRoot "plugins\page-size"
+$backendDefaultPluginDir = Join-Path $backendRoot "plugins\page-size"
+$blogServerDefaultPluginDir = Join-Path $backendRoot "blog-server\plugins\page-size"
 $outputDir = Join-Path $repoRoot "scripts\review\output"
 $templatePath = Join-Path $repoRoot "scripts\review\templates\report-cn.md"
 $resultPath = Join-Path $outputDir "results.json"
 $reportPath = Join-Path $outputDir "report.md"
+
+if (-not [string]::IsNullOrWhiteSpace($PluginDir)) {
+    if ([System.IO.Path]::IsPathRooted($PluginDir)) {
+        $pluginDir = $PluginDir
+    } else {
+        $pluginDir = Join-Path $repoRoot $PluginDir
+    }
+} elseif (-not [string]::IsNullOrWhiteSpace($env:PAGE_SIZE_PLUGIN_DIR)) {
+    $pluginDir = $env:PAGE_SIZE_PLUGIN_DIR
+} elseif (Test-Path $backendDefaultPluginDir) {
+    $pluginDir = $backendDefaultPluginDir
+} elseif (Test-Path $blogServerDefaultPluginDir) {
+    $pluginDir = $blogServerDefaultPluginDir
+} else {
+    $pluginDir = $backendDefaultPluginDir
+}
+
+$resolvedPluginDir = Resolve-Path -Path $pluginDir -ErrorAction SilentlyContinue
+if ($null -ne $resolvedPluginDir) {
+    $pluginDir = $resolvedPluginDir.Path
+}
 
 if (-not (Test-Path $pluginSourceJar)) {
     throw "Plugin jar not found: $pluginSourceJar. Run mvn compile -f pom.xml and mvn -pl blog-plugin-demo clean package first."
@@ -83,6 +106,10 @@ $results = @()
 Write-Host "Starting Level2 auto-watch loop test..."
 Write-Host "BaseUrl=$BaseUrl Rounds=$Rounds PluginDir=$pluginDir"
 Write-Host "BusinessVerifyPath=$BusinessVerifyPath"
+if ((Test-Path $backendDefaultPluginDir) -and (Test-Path $blogServerDefaultPluginDir) -and
+    ($pluginDir -ne $backendDefaultPluginDir) -and ($pluginDir -ne $blogServerDefaultPluginDir)) {
+    Write-Host "Warning: both default plugin dirs exist. Ensure PluginDir matches backend watch dir."
+}
 
 for ($i = 1; $i -le $Rounds; $i++) {
     $roundTag = "{0:D3}" -f $i
