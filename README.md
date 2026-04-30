@@ -187,7 +187,7 @@ git checkout 25-backendRecruit3-hotReload
 
 ```powershell
 $env:HM_DB_HOST="localhost"
-$env:HM_DB_USER="root"
+$env:HM_DB_USERNAME="root"
 $env:HM_DB_PASSWORD="你的数据库密码"
 ```
 
