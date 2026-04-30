@@ -15,3 +15,8 @@ AyeezBlog-Backend/blog-server/.env.local
 AyeezBlog-Backend/blog-server/src/main/resources/application-local-secret.yml
 **/.jwt-secret
 deploy/prod/.env
+
+# Review artifacts to keep out of git
+AyeezBlog-Backend/plugins/page-size/*.jar
+AyeezBlog-Backend/plugins/page-size/side-effect-heartbeat.log
+scripts/review/output/classloader-probe-debug.txt
