@@ -181,19 +181,7 @@ git checkout 25-backendRecruit3-hotReload
 
 先配置数据库连接再启动后端。注意：后端默认配置里 **数据库账号/密码没有默认值**，如果不配置会直接启动失败（报错类似 *Could not resolve placeholder 'hm.db.username'*）。
 
-~~你可以二选一：~~
-~~~~
-~~- **方式 A**：通过环境变量配置数据库连接（Windows PowerShell 示例）~~
-~~~~
-~~```powershell~~
-~~$env:HM_DB_HOST="localhost"~~
-~~$env:HM_DB_USERNAME="root"~~
-~~$env:HM_DB_PASSWORD="你的数据库密码"~~
-~~```~~
-
-**考核按方式B**
-
-- **方式 B**：直接修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml`，把 `hm.db.host / hm.db.username / hm.db.password` 填成你的本地配置。
+- **考核建议注入方式**：直接修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml`，把 `hm.db.host / hm.db.username / hm.db.password` 填成你的本地配置。
 
 说明：
 
