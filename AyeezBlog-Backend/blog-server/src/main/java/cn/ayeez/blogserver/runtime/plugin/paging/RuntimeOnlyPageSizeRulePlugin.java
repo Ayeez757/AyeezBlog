@@ -36,5 +36,5 @@ public class RuntimeOnlyPageSizeRulePlugin implements RulePlugin<PageSizeRuleInp
     @Override
     public void dispose() {
         this.runtimeConfigManager = null;
-    }
+    }  
 }
