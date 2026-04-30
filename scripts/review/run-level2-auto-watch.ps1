@@ -74,12 +74,12 @@ if (-not [string]::IsNullOrWhiteSpace($PluginDir)) {
     }
 } elseif (-not [string]::IsNullOrWhiteSpace($env:PAGE_SIZE_PLUGIN_DIR)) {
     $pluginDir = $env:PAGE_SIZE_PLUGIN_DIR
-} elseif (Test-Path $backendDefaultPluginDir) {
-    $pluginDir = $backendDefaultPluginDir
 } elseif (Test-Path $blogServerDefaultPluginDir) {
     $pluginDir = $blogServerDefaultPluginDir
-} else {
+} elseif (Test-Path $backendDefaultPluginDir) {
     $pluginDir = $backendDefaultPluginDir
+} else {
+    $pluginDir = $blogServerDefaultPluginDir
 }
 
 $resolvedPluginDir = Resolve-Path -Path $pluginDir -ErrorAction SilentlyContinue

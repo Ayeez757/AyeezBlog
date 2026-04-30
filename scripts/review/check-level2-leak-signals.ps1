@@ -215,7 +215,15 @@ function Try-DeleteJarCheck {
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 if ([string]::IsNullOrWhiteSpace($PluginDir)) {
-    $PluginDir = Join-Path $repoRoot "AyeezBlog-Backend\plugins\page-size"
+    if (-not [string]::IsNullOrWhiteSpace($env:PAGE_SIZE_PLUGIN_DIR)) {
+        $PluginDir = $env:PAGE_SIZE_PLUGIN_DIR
+    } elseif (Test-Path (Join-Path $repoRoot "AyeezBlog-Backend\blog-server\plugins\page-size")) {
+        $PluginDir = Join-Path $repoRoot "AyeezBlog-Backend\blog-server\plugins\page-size"
+    } elseif (Test-Path (Join-Path $repoRoot "AyeezBlog-Backend\plugins\page-size")) {
+        $PluginDir = Join-Path $repoRoot "AyeezBlog-Backend\plugins\page-size"
+    } else {
+        $PluginDir = Join-Path $repoRoot "AyeezBlog-Backend\blog-server\plugins\page-size"
+    }
 }
 if ([string]::IsNullOrWhiteSpace($PluginSourceJar)) {
     $PluginSourceJar = Join-Path $repoRoot "AyeezBlog-Backend\blog-plugin-demo\target\blog-plugin-demo-0.0.1-SNAPSHOT.jar"
