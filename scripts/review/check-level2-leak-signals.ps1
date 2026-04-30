@@ -28,10 +28,17 @@ function Get-JcmdPath {
 
 function Parse-ThreadCountFromJcmd {
     param([string]$Text)
-    $line = ($Text -split "`r?`n" | Where-Object { $_ -match "thread #\d+" } | Select-Object -First 1)
-    if ($null -eq $line) { return $null }
-    $m = [regex]::Match($line, "thread #(\d+)")
-    if ($m.Success) { return [int]$m.Groups[1].Value }
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $null }
+    # JDK 版本差异较大：Thread.print 在不同版本可能输出为 "thread #N" 或 "ThreadName" #N。
+    $matchLegacy = [regex]::Match($Text, "thread #(\d+)")
+    if ($matchLegacy.Success) {
+        return [int]$matchLegacy.Groups[1].Value
+    }
+    # 对 JDK 21 这类输出，按线程头行数量统计： "name" #123 ...
+    $threadHeaders = [regex]::Matches($Text, '(?m)^".*"\s+#\d+')
+    if ($threadHeaders.Count -gt 0) {
+        return $threadHeaders.Count
+    }
     return $null
 }
 
@@ -44,10 +51,75 @@ function Parse-HeartbeatThreadCountFromJcmd {
 function Parse-UrlClassLoaderCountFromJcmd {
     param([string]$Text)
     if ([string]::IsNullOrWhiteSpace($Text)) { return $null }
-    $line = ($Text -split "`r?`n" | Where-Object { $_ -match "URLClassLoader" } | Select-Object -First 1)
-    if ($null -eq $line) { return $null }
-    $m = [regex]::Match($line, "^\s*(\d+)\s+")
-    if ($m.Success) { return [int]$m.Groups[1].Value }
+    if ($Text -match "Unknown diagnostic command") { return $null }
+    # 先在原始文本上匹配，避免 ANSI 清理误伤正常内容。
+    $rawRows = [regex]::Matches($Text, '(?im)^0x[0-9a-f]+\s+0x[0-9a-f]+\s+0x[0-9a-f]+\s+\d+\s+\d+\s+\d+\s+.*URLClassLoader\s*$')
+    if ($rawRows.Count -gt 0) {
+        return $rawRows.Count
+    }
+    $rawMatches = [regex]::Matches($Text, '(?i)(java\.net\.)?URLClassLoader')
+    if ($rawMatches.Count -gt 0) {
+        return $rawMatches.Count
+    }
+    # 去掉 ANSI 转义，避免终端装饰字符影响正则匹配。
+    $sanitized = [regex]::Replace($Text, "\x1b\[[0-9;]*[A-Za-z]", "")
+    # 优先按 classloader_stats 明细行统计，避免 ToString/格式噪声影响关键字计数。
+    $urlLoaderRows = [regex]::Matches($sanitized, '(?im)^0x[0-9a-f]+\s+0x[0-9a-f]+\s+0x[0-9a-f]+\s+\d+\s+\d+\s+\d+\s+.*URLClassLoader\s*$')
+    if ($urlLoaderRows.Count -gt 0) {
+        return $urlLoaderRows.Count
+    }
+    # 兼容其它输出，退化为关键字计数（java.net.URLClassLoader / URLClassLoader）。
+    $matches = [regex]::Matches($sanitized, '(?i)(java\.net\.)?URLClassLoader')
+    if ($matches.Count -gt 0) {
+        return $matches.Count
+    }
+    # 若当前输出不包含 URLClassLoader（JDK/命令输出差异），回退解析汇总总数：Total = N
+    $totalMatch = [regex]::Match($sanitized, "(?m)^Total\s*=\s*(\d+)")
+    if ($totalMatch.Success) {
+        return [int]$totalMatch.Groups[1].Value
+    }
+    # 再兜底：按 classloader_stats 表格数据行计数（排除标题/说明）。
+    $rows = [regex]::Matches($sanitized, "(?m)^0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\d+\s+\d+\s+\d+\s+.+$")
+    if ($rows.Count -gt 0) {
+        return $rows.Count
+    }
+    return $null
+}
+
+function Get-ClassLoaderStatsText {
+    param(
+        [string]$JcmdPath,
+        [int]$JavaProcessId
+    )
+    $candidateCommands = @("VM.classloader_stats", "VM.classloaders")
+    foreach ($command in $candidateCommands) {
+        $output = & $JcmdPath $JavaProcessId $command 2>&1 | Out-String
+        if ($output -notmatch "Unknown diagnostic command") {
+            return [PSCustomObject]@{
+                command = $command
+                text = $output
+            }
+        }
+    }
+    return [PSCustomObject]@{
+        command = "unsupported"
+        text = ""
+    }
+}
+
+function Get-UrlClassLoaderCountFromHistogram {
+    param(
+        [string]$JcmdPath,
+        [int]$JavaProcessId
+    )
+    $histogram = & $JcmdPath $JavaProcessId GC.class_histogram 2>&1 | Out-String
+    if ([string]::IsNullOrWhiteSpace($histogram)) { return $null }
+    if ($histogram -match "Unknown diagnostic command") { return $null }
+    # 兼容 JDK 输出：num #instances #bytes class name (module)
+    $row = [regex]::Match($histogram, '(?im)^\s*\d+:\s+(\d+)\s+\d+\s+java\.net\.URLClassLoader(?:\s+\(|\s*$)')
+    if ($row.Success) {
+        return [int]$row.Groups[1].Value
+    }
     return $null
 }
 
@@ -179,6 +251,9 @@ $heartbeatBeforeExercise = Get-HeartbeatState -HeartbeatPath $heartbeatPath
 
 Invoke-ExerciseHotReload -PluginSourceJar $PluginSourceJar -PluginDir $PluginDir -Rounds $ExerciseRounds -WaitMs $ExerciseWaitMs
 
+$classLoaderProbe = Get-ClassLoaderStatsText -JcmdPath $jcmd -JavaProcessId $javaPid
+Write-Host "ClassLoaderCommand=$($classLoaderProbe.command)"
+
 $sampleRows = @()
 for ($i = 1; $i -le $Samples; $i++) {
     $proc = Get-Process -Id $javaPid -ErrorAction Stop
@@ -190,8 +265,12 @@ for ($i = 1; $i -le $Samples; $i++) {
     $threadCountJcmd = Parse-ThreadCountFromJcmd -Text $threadPrint
     $heartbeatThreadCount = Parse-HeartbeatThreadCountFromJcmd -Text $threadPrint
 
-    $classLoaderStats = & $jcmd $javaPid VM.classloader_stats 2>&1 | Out-String
+    $classLoaderStats = $classLoaderProbe.text
     $urlClassLoaderCount = Parse-UrlClassLoaderCountFromJcmd -Text $classLoaderStats
+    if ($null -eq $urlClassLoaderCount) {
+        # 兜底走 GC.class_histogram，避免 VM.classloader_stats 在部分环境解析不到。
+        $urlClassLoaderCount = Get-UrlClassLoaderCountFromHistogram -JcmdPath $jcmd -JavaProcessId $javaPid
+    }
 
     $heapInfo = & $jcmd $javaPid GC.heap_info 2>&1 | Out-String
     $heapFirst = ($heapInfo -split "`r?`n" | Select-Object -First 3) -join " | "
@@ -283,6 +362,7 @@ $payload = [PSCustomObject]@{
     heartbeatThreadsAfterRevert = $heartbeatThreadsAfterRevert
     heartbeatLogGrowthBytesDuringExercise = $heartbeatFileGrowthExercise
     heartbeatLogGrowthBytesAfterRevert = $heartbeatFileGrowthAfterRevert
+    classLoaderCommandUsed = $classLoaderProbe.command
     jarDeleteCheck = $jarCheck
     riskLevel = $riskLevel
     riskItems = $riskItems

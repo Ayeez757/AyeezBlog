@@ -28,6 +28,11 @@ public class RuntimeConfig {
     private String pageSizeRulePluginId = "default-page-size-rule";
 
     /**
+     * 是否启用平台侧插件资源回收。
+     */
+    private boolean pluginCleanupEnabled = true;
+
+    /**
      * 返回默认分页大小。
      * <p>
      * 业务代码会通过 RuntimeConfigManager#getCurrent() 拿到当前快照，再调用本方法读取值。
@@ -92,5 +97,23 @@ public class RuntimeConfig {
      */
     public void setPageSizeRulePluginId(String pageSizeRulePluginId) {
         this.pageSizeRulePluginId = pageSizeRulePluginId;
+    }
+
+    /**
+     * 返回平台是否启用插件资源回收。
+     *
+     * @return true 表示启用平台回收
+     */
+    public boolean isPluginCleanupEnabled() {
+        return pluginCleanupEnabled;
+    }
+
+    /**
+     * 设置平台是否启用插件资源回收。
+     *
+     * @param pluginCleanupEnabled 是否启用平台回收
+     */
+    public void setPluginCleanupEnabled(boolean pluginCleanupEnabled) {
+        this.pluginCleanupEnabled = pluginCleanupEnabled;
     }
 }

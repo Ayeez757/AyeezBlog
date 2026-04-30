@@ -8,3 +8,7 @@ strictModeEnabled: true
 # - default-page-size-rule      默认规则：优先尊重前端请求，strict=true 时强制使用运行时配置
 # - runtime-only-page-size-rule 运行时优先规则：始终使用运行时配置中的 postPageSize
 pageSizeRulePluginId: default-page-size-rule
+# pluginCleanupEnabled:
+# - true  时，平台在插件下线阶段执行已登记资源的统一回收（推荐）
+# - false 时，平台跳过统一回收，可用于残留风险对照测试
+pluginCleanupEnabled: true

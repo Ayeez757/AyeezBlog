@@ -25,10 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 用于“副作用与状态残留”验证的外部插件：
  * 1) 有状态：execute 次数会影响返回值；
  * 2) 有副作用：启动心跳任务并写入本地文件；
- * 3) dispose 是否真正清理由系统属性控制，便于对比测试。
+ * 3) 是否回收由主程序 runtime-config.yml 的 pluginCleanupEnabled 控制，便于 A/B 对照测试。
  *
- * 默认 plugin.sideeffect.cleanup=true（默认执行清理，避免残留风险）。
- * 如需验证“故意不清理”，启动时加：-Dplugin.sideeffect.cleanup=false
+ * 默认 pluginCleanupEnabled=true（平台执行统一回收，避免残留风险）。
+ * 如需验证“故意不清理”，将 runtime-config.yml 中 pluginCleanupEnabled 改为 false。
  */
 public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSizeRuleInput, PageSizeRuleOutput> {
 
@@ -58,6 +58,17 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
             t.setDaemon(true);
             return t;
         });
+        // 平台统一回收入口：登记该插件实例的兜底清理动作。
+        // 这样即使插件作者忘记在 dispose 中完全释放，平台也能在下线时尝试兜底回收。
+        ScheduledExecutorService localScheduler = scheduler;
+        context.registerCleanupAction(() -> {
+            if (localScheduler != null) {
+                localScheduler.shutdownNow();
+            }
+            ACTIVE_HEARTBEAT_TASKS.updateAndGet(v -> Math.max(0, v - 1));
+            ACTIVE_PLUGIN_INSTANCES.remove(instanceId);
+            pluginContext = null;
+        });
 
         ACTIVE_HEARTBEAT_TASKS.incrementAndGet();
         scheduler.scheduleAtFixedRate(this::writeHeartbeat, 0, 2, TimeUnit.SECONDS);
@@ -75,23 +86,15 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
         String reason = "stateful-side-effect plugin active, executeCount=" + currentCount
                 + ", activeInstances=" + ACTIVE_PLUGIN_INSTANCES.size()
                 + ", activeHeartbeatTasks=" + ACTIVE_HEARTBEAT_TASKS.get()
-                + ", cleanupFlag=" + System.getProperty("plugin.sideeffect.cleanup", "true");
+                + ", cleanupFlag=" + pluginContext.isPlatformCleanupEnabled();
 
         return new PageSizeRuleOutput(effectivePageSize, reason);
     }
 
     @Override
     public void dispose() {
-        boolean cleanupEnabled = Boolean.parseBoolean(System.getProperty("plugin.sideeffect.cleanup", "true"));
-        if (cleanupEnabled) {
-            if (scheduler != null) {
-                scheduler.shutdownNow();
-            }
-            ACTIVE_HEARTBEAT_TASKS.updateAndGet(v -> Math.max(0, v - 1));
-            ACTIVE_PLUGIN_INSTANCES.remove(instanceId);
-            pluginContext = null;
-        }
-        // cleanup=false 时故意不释放，便于测试“残留风险检测”脚本是否能捕捉异常信号。
+        // 资源释放改由平台统一兜底回收（PluginContext.registerCleanupAction）。
+        // 保留 dispose 空实现，表示插件生命周期已结束。
     }
 
     private void writeHeartbeat() {

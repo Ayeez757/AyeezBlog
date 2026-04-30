@@ -196,7 +196,12 @@ public class PageSizeRuleEngineService {
         }
 
         // 先 init 新插件，确保其可用后再替换 currentPlugin，避免切换中出现“无可用插件”的窗口。
-        targetPlugin.init(pluginContext);
+        pluginContext.beginPluginInitScope(targetPlugin);
+        try {
+            targetPlugin.init(pluginContext);
+        } finally {
+            pluginContext.endPluginInitScope();
+        }
         currentPlugin.set(targetPlugin);
         lastSwitchedAt = LocalDateTime.now();
         lastSwitchSource = source;
@@ -207,9 +212,7 @@ public class PageSizeRuleEngineService {
         recordSwitch(true, source, "built-in", targetPlugin.id(), null, null, "切换到内置插件成功");
 
         // 旧插件在新插件生效后再释放：保证新插件 init 成功后才下线旧插件，失败则天然回退。
-        if (oldPlugin != null) {
-            oldPlugin.dispose();
-        }
+        cleanupPluginWithPlatformFallback(oldPlugin);
         closeClassLoaderQuietly(oldExternalClassLoader);
     }
 
@@ -229,7 +232,17 @@ public class PageSizeRuleEngineService {
 
         // 外部插件切换同样遵循“先 init -> 再切换 -> 再释放旧插件/旧ClassLoader”的顺序，
         // 这是热替换中最关键的稳定性保障点。
-        newPlugin.init(pluginContext);
+        pluginContext.beginPluginInitScope(newPlugin);
+        try {
+            newPlugin.init(pluginContext);
+        } catch (Exception ex) {
+            // init 失败时新插件尚未接管，主动触发兜底清理，避免半初始化资源残留。
+            cleanupPluginWithPlatformFallback(newPlugin);
+            closeClassLoaderQuietly(loadResult.getClassLoader());
+            throw ex;
+        } finally {
+            pluginContext.endPluginInitScope();
+        }
         currentPlugin.set(newPlugin);
         lastSwitchedAt = LocalDateTime.now();
         lastSwitchSource = source;
@@ -240,9 +253,7 @@ public class PageSizeRuleEngineService {
         recordSwitch(true, source, "external", newPlugin.id(), currentExternalJarPath, currentExternalClassName,
                 "切换到外部插件成功");
 
-        if (oldPlugin != null) {
-            oldPlugin.dispose();
-        }
+        cleanupPluginWithPlatformFallback(oldPlugin);
         closeClassLoaderQuietly(oldExternalClassLoader);
     }
 
@@ -261,10 +272,24 @@ public class PageSizeRuleEngineService {
     @PreDestroy
     public void destroy() {
         RulePlugin<PageSizeRuleInput, PageSizeRuleOutput> plugin = currentPlugin.get();
-        if (plugin != null) {
-            plugin.dispose();
-        }
+        cleanupPluginWithPlatformFallback(plugin);
         closeClassLoaderQuietly(currentExternalClassLoader);
+    }
+
+    /**
+     * 先调用插件自定义 dispose，再执行平台登记的兜底清理动作。
+     *
+     * @param plugin 目标插件
+     */
+    private void cleanupPluginWithPlatformFallback(RulePlugin<PageSizeRuleInput, PageSizeRuleOutput> plugin) {
+        if (plugin == null) {
+            return;
+        }
+        try {
+            plugin.dispose();
+        } finally {
+            pluginContext.cleanupRegisteredResources(plugin);
+        }
     }
 
     /**
