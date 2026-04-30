@@ -74,9 +74,11 @@ spring:
   # - 简介功能开关在 blog.ai.summary.enabled（默认引用 hm.deepseek.summary-enabled）
   ai:
     openai:
-      api-key: ${hm.deepseek.api-key:}
+      # spring-ai 1.0.0 在启动时会校验 api-key 非空；默认给占位值，真实调用仍由 blog.ai.summary.enabled 控制
+      api-key: ${hm.deepseek.api-key:disabled}
       base-url: https://api.deepseek.com
       chat:
+        api-key: ${hm.deepseek.api-key:disabled}
         options:
           model: deepseek-chat
           temperature: 0.3
