@@ -167,17 +167,39 @@ cd AyeezBlog
 
 先配置数据库连接再启动后端。注意：后端默认配置里 **数据库账号/密码没有默认值**，如果不配置会直接启动失败（报错类似 *Could not resolve placeholder 'hm.db.username'*）。
 
-你可以二选一：
+推荐先复制本地示例配置文件（已提供占位符与注释）：
 
-- **方式 A（推荐）**：通过环境变量配置数据库连接（Windows PowerShell 示例）
+```powershell
+cd AyeezBlog-Backend/blog-server/src/main/resources
+Copy-Item application-local.example.yml application-local.yml
+```
+
+然后编辑 `application-local.yml`，至少填好以下必填项：
+
+- `hm.db.host`
+- `hm.db.username`
+- `hm.db.password`
+
+这个本地文件会被 `application.yml` 自动导入（`spring.config.import`），适合放本机私有配置，不需要提交到 Git。
+
+你可以三选一：
+
+- **方式 A**：通过环境变量配置数据库连接（默认启动方式，读取 `application.yml`）
 
 ```powershell
 $env:HM_DB_HOST="localhost"
-$env:HM_DB_USER="root"
+$env:HM_DB_USERNAME="root"
 $env:HM_DB_PASSWORD="你的数据库密码"
 ```
 
 - **方式 B**：直接修改 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml`，把 `hm.db.host / hm.db.username / hm.db.password` 填成你的本地配置。
+- **方式 C（推荐）**：修改你刚复制出来的 `application-local.yml`（推荐，不污染主配置文件，便于版本管理）。
+
+补充说明（避免“到底用哪个配置文件”的混淆）：
+
+- 直接执行 `mvn spring-boot:run` 时，默认读取 `application.yml`；
+- `application-dev.yml` 只有在显式启用 `dev` profile 时才会生效（例如 `mvn spring-boot:run -Dspring-boot.run.profiles=dev`）；
+- 若启用 `dev` profile，数据库用户名变量名是 `HM_DB_USER`（不是 `HM_DB_USERNAME`）。
 
 说明：
 
@@ -255,6 +277,12 @@ npm run dev
 ### 后端配置 (application.yml)
 
 配置说明仅保留关键项；更完整的填写示例、可选项与环境变量映射已写入 `AyeezBlog-Backend/blog-server/src/main/resources/application.yml` 的注释中（建议直接打开该文件照注释填）。
+
+默认读取规则：
+
+- 未指定 profile：读取 `application.yml`；
+- 指定 `dev` profile：读取 `application.yml` + `application-dev.yml`（后者可覆盖前者同名配置）；
+- 本地快速启动若不指定 profile，请优先按 `application.yml` 的键名配置环境变量（如 `HM_DB_USERNAME`）。
 
 | 配置项 | 说明 |
 | --- | --- |
@@ -373,7 +401,7 @@ GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ay
 
 ---
 
-*最后更新：2026-04-25
+*最后更新：2026-05-01
 
 
 [![Star History Chart](https://api.star-history.com/chart?repos=ayeez757/ayeezblog&type=date&legend=top-left)](https://www.star-history.com/?repos=ayeez757%2Fayeezblog&type=date&legend=top-left)

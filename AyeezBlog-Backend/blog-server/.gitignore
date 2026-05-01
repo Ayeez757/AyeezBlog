@@ -34,3 +34,4 @@ build/
 
 ### Local config (do not commit) ###
 src/main/resources/application-local.yml
+src/main/resources/application-local-secret.yml

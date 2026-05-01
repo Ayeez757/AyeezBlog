@@ -1,0 +1,50 @@
+# ============================================
+# 本地配置示例（可提交到仓库）
+# ============================================
+# 使用方式（PowerShell）：
+#   cd AyeezBlog-Backend/blog-server/src/main/resources
+#   Copy-Item application-local.example.yml application-local.yml
+#
+# 然后把下面占位符改成你自己的本地配置。
+# 注意：application-local.yml 已被 .gitignore 忽略，不会提交到 Git。
+
+hm:
+  db:
+    # 必填：后端启动必须有数据库连接
+    host: <YOUR_DB_HOST>
+    port: <YOUR_DB_PORT_OR_3306>
+    username: <YOUR_DB_USERNAME>
+    password: <YOUR_DB_PASSWORD>
+    # 本地常见示例：
+    # host: 127.0.0.1
+    # port: 3306
+    # username: root
+    # password: 123456
+
+  qiniu:
+    # 可选：仅在管理端上传 token / AI 封面转存七牛时需要
+    access-key: <YOUR_QINIU_ACCESS_KEY>
+    secret-key: <YOUR_QINIU_SECRET_KEY>
+    bucket: <YOUR_QINIU_BUCKET>
+    domain: <YOUR_QINIU_DOMAIN>
+    upload-url: https://up-z2.qiniup.com
+    token-expires: 1800
+
+  deepseek:
+    # 可选：AI 文章简介
+    api-key: <YOUR_DEEPSEEK_API_KEY>
+    summary-enabled: false
+
+  # 可选：火山引擎即梦封面（Access Key + Secret）
+  volcengine:
+    cover-enabled: false
+    access-key: <YOUR_VOLCENGINE_ACCESS_KEY>
+    secret-key: <YOUR_VOLCENGINE_SECRET_KEY>
+
+  rabbitmq:
+    # 可选：默认 guest/guest，仅使用消息队列能力时需要关注
+    host: localhost
+    port: 5672
+    username: ${HM_RABBITMQ_USERNAME:guest}
+    password: ${HM_RABBITMQ_PASSWORD:guest}
+    virtual-host: ${HM_RABBITMQ_VHOST:/}
