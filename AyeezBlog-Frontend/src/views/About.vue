@@ -59,17 +59,14 @@
 
         <!-- 完全不完全统计：直接放进个人简介卡片内部 -->
         <div class="stats-inline">
-          <h3 class="section-title section-title--stats">完全不完全统计</h3>
+          <div class="stats-title-row">
+            <h3 class="section-title section-title--stats">完全不完全统计</h3>
+            <img :src="wakatimeBadge" alt="WakaTime Badge" class="stats-img stats-img--stats stats-img--badge" loading="lazy" @error="hideImage" />
+          </div>
           <!-- <p class="muted muted--stats">喜欢看数据的人……这里也随便放一点。</p> -->
           <div class="stats-images stats-images--stats">
-            <img
-              :src="wakatimeBadge"
-              alt="WakaTime Badge"
-              class="stats-img stats-img--stats stats-img--stats-first"
-              loading="lazy"
-              @error="hideImage"
-            />
             <img :src="wakatimeCompact" alt="WakaTime Compact" class="stats-img stats-img--stats" loading="lazy" @error="hideImage" />
+            <img :src="githubStats" alt="GitHub Stats" class="stats-img stats-img--stats" loading="lazy" @error="hideImage" />
           </div>
         </div>
       </section>
@@ -294,14 +291,14 @@ export default {
       const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect x="6" y="6" width="52" height="52" rx="14" fill="rgba(0,184,40,0.12)" stroke="rgba(0,184,40,0.28)" /><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#7af58f">?</text></svg>';
       return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     },
+    githubStats() {
+      return 'https://stats.ayeez.cn/api?username=Ayeez757&show_icons=true';
+    },
     wakatimeBadge() {
       return 'https://wakatime.com/badge/user/923b7fe9-128b-4a46-b1d9-d4494ac957da.svg';
     },
-    wakatimeStats() {
-      return 'https://github-readme-stats-fast.vercel.app/api/wakatime?username=Ayeez757';
-    },
     wakatimeCompact() {
-      return 'https://github-readme-stats-fast.vercel.app/api/wakatime?username=Ayeez757&cache_seconds=1800&layout=compact';
+      return 'https://stats.ayeez.cn/api/wakatime?username=Ayeez757&cache_seconds=1800&layout=compact';
     },
     animeDisplayedItems() {
       if (!this.animeCollapsed) return this.animeList;
@@ -760,8 +757,16 @@ export default {
   margin-top: 14px;
 }
 
+.stats-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .section-title--stats {
-  margin-bottom: 8px;
+  margin-bottom: 0;
   font-size: 22px;
 }
 
@@ -773,13 +778,14 @@ export default {
 
 .stats-images.stats-images--stats {
   display: grid;
-  grid-template-columns: max-content;
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content);
   row-gap: 8px;
   column-gap: 12px;
   align-items: start;
   justify-items: start;
   justify-content: flex-start;
   width: 100%;
+  margin-top: 8px;
 }
 
 .stats-img--stats {
@@ -791,8 +797,10 @@ export default {
   display: block;
 }
 
-.stats-img--stats-first {
+.stats-img--badge {
   max-width: 180px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 .info-list {
@@ -1077,6 +1085,33 @@ export default {
 
   .anime-title-row {
     margin-bottom: 10px;
+  }
+
+  .stats-images.stats-images--stats {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    justify-content: center;
+  }
+
+  .stats-title-row {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .section-title--stats {
+    width: 100%;
+    text-align: left;
+  }
+
+  .stats-img--stats {
+    max-width: min(100%, 320px);
+  }
+
+  .stats-img--badge {
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
 }
 </style>
