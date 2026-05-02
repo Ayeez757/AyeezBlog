@@ -10,7 +10,7 @@
 - 考核题目文档：[第三轮后端考核说明（热重载技术方向）](https://github.com/gduf-cs-tribe/2025-backend-recruit-03/blob/main/docs/level3/arceca.md)
 - 本项目考核交付文档：[配置文件热重载考核交付文档](./docs/配置文件热重载考核交付文档.md)
 
-> 评审提示：请以“本地运行 + 本地热重载复现”为准；线上 CI/CD + Docker 已验证但不要求复现（流程依赖评审侧环境）。
+> 评审提示：推荐一键栈 `deploy/review/docker-compose.yml`（MySQL + 后端 + Nginx，`SPRING_PROFILES_ACTIVE=review`，DeepSeek / 即梦封面默认关闭，七牛留空即不启用）。亦支持本地运行 + 热重载复现。生产路径 `deploy/prod/` 与评审栈相互独立。
 
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)

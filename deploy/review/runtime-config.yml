@@ -1,0 +1,5 @@
+# 评审环境：挂载到容器 /app/config/runtime-config.yml，可通过 RUNTIME_CONFIG_PATH 指定。
+postPageSize: 5
+strictModeEnabled: true
+pageSizeRulePluginId: default-page-size-rule
+pluginCleanupEnabled: true

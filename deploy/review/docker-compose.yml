@@ -1,0 +1,91 @@
+# 评审用一键栈：MySQL + Spring Boot + Nginx。自包含 volume，不依赖外部 network。
+# 自仓库根目录或本目录执行均可，推荐在本目录：
+#   cd deploy/review && docker compose --env-file .env.example up --build
+# 或复制 .env.example 为 .env 后：docker compose up --build
+#
+# 可选集成默认关闭：HM_FEATURE_DEEPSEEK、HM_FEATURE_VOLCENGINE_COVER；七牛留空即不启用。
+
+name: ayeezblog-review
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: ayeezblog-review-mysql
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ayeezblog
+      MYSQL_USER: ${HM_DB_USER:-ayeezblog}
+      MYSQL_PASSWORD: ${HM_DB_PASSWORD:-ayeezblog_review}
+    ports:
+      - "${REVIEW_MYSQL_PORT:-33060}:3306"
+    volumes:
+      - mysql_review_data:/var/lib/mysql
+      - ../../AyeezBlog建表.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../../docs/sql/review-seed-posts.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent || exit 1"]
+      interval: 8s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+  backend:
+    build:
+      context: ../../AyeezBlog-Backend
+      dockerfile: ../deploy/review/Dockerfile.backend
+    image: ayeezblog-review-backend:local
+    container_name: ayeezblog-review-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SPRING_PROFILES_ACTIVE: review
+      RUNTIME_CONFIG_PATH: /app/config/runtime-config.yml
+      HM_DB_HOST: mysql
+      HM_DB_PORT: "3306"
+      HM_DB_USER: ${HM_DB_USER:-ayeezblog}
+      HM_DB_PASSWORD: ${HM_DB_PASSWORD:-ayeezblog_review}
+      HM_JWT_SECRET_KEY: ${HM_JWT_SECRET_KEY:-review-jwt-secret-change-me-at-least-32-bytes!!}
+      HM_FEATURE_DEEPSEEK: ${HM_FEATURE_DEEPSEEK:-false}
+      HM_FEATURE_VOLCENGINE_COVER: ${HM_FEATURE_VOLCENGINE_COVER:-false}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-disabled}
+      VOLCENGINE_ACCESS_KEY: ${VOLCENGINE_ACCESS_KEY:-}
+      VOLCENGINE_SECRET_KEY: ${VOLCENGINE_SECRET_KEY:-}
+      QINIU_ACCESS_KEY: ${QINIU_ACCESS_KEY:-}
+      QINIU_SECRET_KEY: ${QINIU_SECRET_KEY:-}
+      QINIU_BUCKET: ${QINIU_BUCKET:-}
+      QINIU_DOMAIN: ${QINIU_DOMAIN:-}
+    ports:
+      - "${REVIEW_BACKEND_PORT:-8080}:8080"
+    volumes:
+      - ./runtime-config.yml:/app/config/runtime-config.yml:rw
+      - ./plugins/page-size:/app/plugins/page-size
+    working_dir: /app
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/127.0.0.1/8080' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 120s
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: ayeezblog-review-nginx
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${REVIEW_NGINX_PORT:-8888}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  mysql_review_data:

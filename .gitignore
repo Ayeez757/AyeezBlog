@@ -15,6 +15,7 @@ AyeezBlog-Backend/blog-server/.env.local
 AyeezBlog-Backend/blog-server/src/main/resources/application-local-secret.yml
 **/.jwt-secret
 deploy/prod/.env
+deploy/review/.env
 
 # Review artifacts to keep out of git
 AyeezBlog-Backend/plugins/page-size/*.jar

@@ -1,0 +1,32 @@
+# 评审 / Docker Compose 用 profile：MySQL 必填；七牛、DeepSeek、即梦（火山封面）默认关闭，可通过环境变量开启。
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
+hm:
+  jwt:
+    secret-key: ${HM_JWT_SECRET_KEY:review-jwt-secret-change-me-at-least-32-bytes!!}
+  db:
+    host: ${HM_DB_HOST:mysql}
+    port: ${HM_DB_PORT:3306}
+    username: ${HM_DB_USER:ayeezblog}
+    password: ${HM_DB_PASSWORD:ayeezblog_review}
+  qiniu:
+    access-key: ${QINIU_ACCESS_KEY:}
+    secret-key: ${QINIU_SECRET_KEY:}
+    bucket: ${QINIU_BUCKET:}
+    domain: ${QINIU_DOMAIN:}
+    upload-url: ${QINIU_UPLOAD_URL:https://up-z2.qiniup.com}
+    token-expires: ${QINIU_TOKEN_EXPIRES:1800}
+  deepseek:
+    # 占位避免 spring-ai 启动校验失败；真实调用仍由 summary-enabled 与 blog.ai.summary.enabled 控制
+    api-key: ${DEEPSEEK_API_KEY:disabled}
+    summary-enabled: ${HM_FEATURE_DEEPSEEK:false}
+    verbose-log: ${DEEPSEEK_VERBOSE_LOG:false}
+  volcengine:
+    cover-enabled: ${HM_FEATURE_VOLCENGINE_COVER:false}
+    access-key: ${VOLCENGINE_ACCESS_KEY:}
+    secret-key: ${VOLCENGINE_SECRET_KEY:}
+    verbose-http-log: ${VOLCENGINE_VERBOSE_HTTP_LOG:false}
+    use-pre-llm: ${VOLCENGINE_USE_PRE_LLM:false}
