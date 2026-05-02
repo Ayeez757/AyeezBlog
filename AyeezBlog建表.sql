@@ -1,6 +1,8 @@
 
 create database if not exists ayeezblog;
 use ayeezblog;
+-- 初始化会话字符集：避免 mysql 客户端默认 latin1 导致注释/字面量中的中文被错误解释（Docker init 与手动导入均适用）
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 create table blog_category
 (

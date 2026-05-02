@@ -40,7 +40,8 @@ spring:
   #数据库的链接信息
   datasource:
     # useUnicode/characterEncoding：避免 Docker/Windows 下 JDBC 默认会话字符集导致中文标题等乱码
-    url: jdbc:mysql://${hm.db.host}:${hm.db.port:3306}/ayeezblog?useUnicode=true&characterEncoding=UTF-8
+    # connectionCollation：会话排序规则与表 utf8mb4_unicode_ci 一致，减少 JDBC 默认 latin1 会话导致的中文乱码
+    url: jdbc:mysql://${hm.db.host}:${hm.db.port:3306}/ayeezblog?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${hm.db.username}
     password: ${hm.db.password}
@@ -104,6 +105,11 @@ pagehelper:
 # 服务器端口配置
 server:
   port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 # AI：封面/简介在 INFO 输出 [AI-COVER] / [AI-SUMMARY]（需 blog.ai.*.verbose-* 为 true）；包级 DEBUG 保留其它调试行
 logging:

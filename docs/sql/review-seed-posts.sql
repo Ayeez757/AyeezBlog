@@ -6,6 +6,7 @@
 -- 3) 每篇文章都包含标题、正文、封面、描述、时间与卡片标记字段
 
 USE ayeezblog;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 演示分类（可重复执行）
 INSERT INTO blog_category (id, parent_id, name, slug, description, sort)
