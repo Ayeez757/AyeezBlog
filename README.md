@@ -284,6 +284,7 @@ npm run dev
 
 - 后端优先读取 `-Druntime.config.path`，其次读取 `RUNTIME_CONFIG_PATH`；
 - Docker 推荐固定使用 `RUNTIME_CONFIG_PATH=/app/config/runtime-config.yml`；
+- Docker Desktop（尤其 **Windows**）下宿主机文件变更未必触发容器内 **WatchService/inotify**；默认启用 **`blog.runtime-config.watch-poll-enabled`**，按 **`watch-poll-interval-ms`**（默认 2000）轮询文件 **mtime** 触发重载。**Linux 服务器原生挂载**通常无此问题；不需要轮询时可设 `watch-poll-enabled: false`。
 - 若只变更 `deploy/prod/runtime-config.yml`，CI/CD 会执行“上传配置 + 调用重载接口”而非 `compose up`。
 
 

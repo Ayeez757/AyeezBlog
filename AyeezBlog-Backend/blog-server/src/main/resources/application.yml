@@ -152,6 +152,11 @@ qiniu:
 # =========================
 # - enabled 默认引用 hm.deepseek.summary-enabled / hm.volcengine.cover-enabled
 blog:
+  # runtime-config.yml：Docker Desktop（尤其 Windows）bind mount 常导致 WatchService(inotify) 收不到宿主机保存事件，
+  # 默认启用 mtime 轮询兜底；本地不需要时可设 watch-poll-enabled: false
+  runtime-config:
+    watch-poll-enabled: true
+    watch-poll-interval-ms: 2000
   ai:
     summary:
       enabled: ${hm.deepseek.summary-enabled:false}
