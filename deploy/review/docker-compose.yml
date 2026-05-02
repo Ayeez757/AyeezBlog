@@ -4,6 +4,7 @@
 # 或复制 .env.example 为 .env 后：docker compose up --build
 #
 # 可选集成默认关闭：HM_FEATURE_DEEPSEEK、HM_FEATURE_VOLCENGINE_COVER；七牛留空即不启用。
+# Level1：挂载 runtime-config.yml；Level2：镜像内预置 demo jar，entrypoint 在空目录时复制到 plugins/page-size，且默认 EXTERNAL_PLUGIN_BOOT_SCAN=true 启动后补加载一次。
 
 name: ayeezblog-review
 
@@ -16,8 +17,6 @@ services:
       TZ: ${TZ:-Asia/Shanghai}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ayeezblog
-      MYSQL_USER: ${HM_DB_USER:-ayeezblog}
-      MYSQL_PASSWORD: ${HM_DB_PASSWORD:-ayeezblog_review}
     ports:
       - "${REVIEW_MYSQL_PORT:-33060}:3306"
     volumes:
@@ -50,8 +49,9 @@ services:
       RUNTIME_CONFIG_PATH: /app/config/runtime-config.yml
       HM_DB_HOST: mysql
       HM_DB_PORT: "3306"
-      HM_DB_USER: ${HM_DB_USER:-ayeezblog}
-      HM_DB_PASSWORD: ${HM_DB_PASSWORD:-ayeezblog_review}
+      HM_DB_USER: ${HM_DB_USER:-root}
+      HM_DB_PASSWORD: ${HM_DB_PASSWORD:-${MYSQL_ROOT_PASSWORD:-root}}
+      EXTERNAL_PLUGIN_BOOT_SCAN: ${EXTERNAL_PLUGIN_BOOT_SCAN:-true}
       HM_JWT_SECRET_KEY: ${HM_JWT_SECRET_KEY:-review-jwt-secret-change-me-at-least-32-bytes!!}
       HM_FEATURE_DEEPSEEK: ${HM_FEATURE_DEEPSEEK:-false}
       HM_FEATURE_VOLCENGINE_COVER: ${HM_FEATURE_VOLCENGINE_COVER:-false}

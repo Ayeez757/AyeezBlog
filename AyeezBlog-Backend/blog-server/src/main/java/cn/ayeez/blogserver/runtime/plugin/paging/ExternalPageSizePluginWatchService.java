@@ -31,6 +31,11 @@ public class ExternalPageSizePluginWatchService {
     private static final long STABLE_CHECK_SLEEP_MS = 250L;
     private static final String DEFAULT_PLUGIN_DIR = "plugins/page-size";
 
+    /**
+     * 为 true 时，启动后延迟补扫一次插件目录：解决「jar 在 WatchService 注册前已存在」时收不到 CREATE 事件的问题（Docker 评审镜像预置 jar 场景）。
+     */
+    private static final String BOOT_SCAN_ENV = "EXTERNAL_PLUGIN_BOOT_SCAN";
+
     private final ExternalPageSizePluginLoader externalPageSizePluginLoader;
     private final PageSizeRuleEngineService pageSizeRuleEngineService;
 
@@ -78,6 +83,32 @@ public class ExternalPageSizePluginWatchService {
         watchThread.setDaemon(true);
         watchThread.start();
         LOGGER.info("External plugin watch started. dir={}", dir.toAbsolutePath());
+        scheduleBootJarScanIfEnabled(dir);
+    }
+
+    private static boolean isBootJarScanEnabled() {
+        String v = System.getenv(BOOT_SCAN_ENV);
+        return v != null && ("true".equalsIgnoreCase(v.trim()) || "1".equals(v.trim()));
+    }
+
+    /**
+     * Docker 等场景：entrypoint 在进程启动前已放入 jar，WatchService 不会收到历史文件的创建事件，延迟触发一次与自动监听相同的加载链路。
+     */
+    private void scheduleBootJarScanIfEnabled(Path pluginDir) {
+        if (!isBootJarScanEnabled()) {
+            return;
+        }
+        Thread bootScan = new Thread(() -> {
+            try {
+                Thread.sleep(2500L);
+                LOGGER.info("External plugin boot scan enabled ({}=true), scanning dir={}", BOOT_SCAN_ENV, pluginDir.toAbsolutePath());
+                triggerReloadWithDebounce(pluginDir);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+        }, "external-page-size-plugin-boot-scan");
+        bootScan.setDaemon(true);
+        bootScan.start();
     }
 
     private void watchLoop(Path pluginDir) {

@@ -10,8 +10,8 @@ hm:
   db:
     host: ${HM_DB_HOST:mysql}
     port: ${HM_DB_PORT:3306}
-    username: ${HM_DB_USER:ayeezblog}
-    password: ${HM_DB_PASSWORD:ayeezblog_review}
+    username: ${HM_DB_USER:root}
+    password: ${HM_DB_PASSWORD:root}
   qiniu:
     access-key: ${QINIU_ACCESS_KEY:}
     secret-key: ${QINIU_SECRET_KEY:}
