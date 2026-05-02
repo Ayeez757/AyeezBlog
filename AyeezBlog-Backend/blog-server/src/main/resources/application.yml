@@ -157,6 +157,10 @@ blog:
   runtime-config:
     watch-poll-enabled: true
     watch-poll-interval-ms: 2000
+  # 外置分页 jar：与 runtime-config 类似，Docker Desktop bind mount 下复制 jar 常无 inotify；默认轮询目录签名
+  external-page-size-plugin:
+    watch-poll-enabled: true
+    watch-poll-interval-ms: 3000
   ai:
     summary:
       enabled: ${hm.deepseek.summary-enabled:false}

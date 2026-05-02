@@ -4,6 +4,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -43,6 +45,14 @@ public class ExternalPageSizePluginWatchService {
     private Thread watchThread;
     private volatile boolean running;
     private volatile long lastReloadAt = 0L;
+
+    /**
+     * 最近一次「目录里最新 jar」的稳定签名；用于轮询发现复制进目录但无 inotify 的场景。0 表示当时无 jar。
+     */
+    private volatile long lastPolledJarSignature = Long.MIN_VALUE;
+
+    @Value("${blog.external-page-size-plugin.watch-poll-enabled:true}")
+    private boolean pluginDirPollEnabled;
 
     public ExternalPageSizePluginWatchService(ExternalPageSizePluginLoader externalPageSizePluginLoader,
                                               PageSizeRuleEngineService pageSizeRuleEngineService) {
@@ -154,10 +164,55 @@ public class ExternalPageSizePluginWatchService {
         }
     }
 
+    /**
+     * Docker Desktop 等环境：宿主复制 jar 进挂载目录后 inotify 常丢失；在仍为内置插件时轮询目录签名以触发与 Watch 相同的加载链路。
+     * 已 external 接管时不轮询，避免与「先回退再换 jar」语义冲突；回退后若 jar 未变不会重复加载。
+     */
+    @Scheduled(fixedDelayString = "${blog.external-page-size-plugin.watch-poll-interval-ms:3000}")
+    public void pollPluginDirectory() {
+        if (!pluginDirPollEnabled) {
+            return;
+        }
+        if ("external".equals(pageSizeRuleEngineService.getCurrentPluginOrigin())) {
+            return;
+        }
+        Path dir = resolvePluginDir();
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
+        Optional<Path> jarOpt = pickLatestJar(dir);
+        long sig = jarOpt.map(this::signatureForJar).orElse(0L);
+        if (sig == 0L) {
+            lastPolledJarSignature = 0L;
+            return;
+        }
+        if (lastPolledJarSignature == sig) {
+            return;
+        }
+        if (triggerReloadWithDebounceReturning(dir)) {
+            lastPolledJarSignature = sig;
+        }
+    }
+
+    private long signatureForJar(Path jarPath) {
+        try {
+            return Files.getLastModifiedTime(jarPath).toMillis() ^ (Files.size(jarPath) << 1);
+        } catch (IOException ex) {
+            return -1L;
+        }
+    }
+
     private void triggerReloadWithDebounce(Path pluginDir) {
+        triggerReloadWithDebounceReturning(pluginDir);
+    }
+
+    /**
+     * @return 是否已成功切换为外部插件
+     */
+    private boolean triggerReloadWithDebounceReturning(Path pluginDir) {
         long now = System.currentTimeMillis();
         if (now - lastReloadAt < RELOAD_DEBOUNCE_MS) {
-            return;
+            return false;
         }
         lastReloadAt = now;
 
@@ -168,14 +223,16 @@ public class ExternalPageSizePluginWatchService {
             // 避免复制/上传过程中读取到半写入 jar：简单做一次大小稳定性检查。
             if (!isStableFile(jarPath)) {
                 LOGGER.info("External plugin jar not stable yet, skip this round. jar={}", jarPath);
-                return;
+                return false;
             }
             ExternalPageSizePluginLoadResult loadResult = externalPageSizePluginLoader.loadFromJar(jarPath.toString());
             pageSizeRuleEngineService.switchToExternalPlugin(loadResult, "auto-watch");
             LOGGER.info("External plugin auto-reload succeeded. jar={}", jarPath);
+            return true;
         } catch (Exception ex) {
             // 失败不切换：保持当前插件继续服务，符合“热更新失败回退/不中断”的要求。
             LOGGER.warn("External plugin auto-reload failed, keep current plugin. reason={}", ex.getMessage(), ex);
+            return false;
         }
     }
 
