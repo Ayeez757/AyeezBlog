@@ -1,10 +1,8 @@
-# 评审用一键栈：MySQL + Spring Boot + Nginx。自包含 volume，不依赖外部 network。
-# 自仓库根目录或本目录执行均可，推荐在本目录：
-#   cd deploy/review && docker compose --env-file .env.example up --build
-# 或复制 .env.example 为 .env 后：docker compose up --build
+# 评审用一键栈：MySQL + Spring Boot + 前台 Vue（Nginx 托管静态资源并反代 /api）。
+# 推荐在本目录执行：cd deploy/review && docker compose --env-file .env.example up --build
 #
 # 可选集成默认关闭：HM_FEATURE_DEEPSEEK、HM_FEATURE_VOLCENGINE_COVER；七牛留空即不启用。
-# Level1：挂载 runtime-config.yml；Level2：镜像内预置 demo jar，entrypoint 在空目录时复制到 plugins/page-size，且默认 EXTERNAL_PLUGIN_BOOT_SCAN=true 启动后补加载一次。
+# Level1：挂载 runtime-config.yml；Level2：镜像内预置 demo jar + EXTERNAL_PLUGIN_BOOT_SCAN。
 
 name: ayeezblog-review
 
@@ -75,17 +73,25 @@ services:
       retries: 18
       start_period: 120s
 
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: ayeezblog-review-nginx
+  frontend:
+    build:
+      context: ../..
+      dockerfile: deploy/review/Dockerfile.frontend
+    image: ayeezblog-review-frontend:local
+    container_name: ayeezblog-review-frontend
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
     ports:
+      # 浏览器访问博客前台（Vue）；REVIEW_NGINX_PORT 名称沿用旧 compose，实为「站点入口」
       - "${REVIEW_NGINX_PORT:-8888}:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
 volumes:
   mysql_review_data:

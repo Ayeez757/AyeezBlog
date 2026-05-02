@@ -39,7 +39,8 @@ spring:
     import: optional:classpath:application-local-secret.yml
   #数据库的链接信息
   datasource:
-    url: jdbc:mysql://${hm.db.host}:${hm.db.port:3306}/ayeezblog
+    # useUnicode/characterEncoding：避免 Docker/Windows 下 JDBC 默认会话字符集导致中文标题等乱码
+    url: jdbc:mysql://${hm.db.host}:${hm.db.port:3306}/ayeezblog?useUnicode=true&characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${hm.db.username}
     password: ${hm.db.password}
