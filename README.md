@@ -10,7 +10,7 @@
 - 考核题目文档：[第三轮后端考核说明（热重载技术方向）](https://github.com/gduf-cs-tribe/2025-backend-recruit-03/blob/main/docs/level3/arceca.md)
 - 本项目考核交付文档：[配置文件热重载考核交付文档](./docs/配置文件热重载考核交付文档.md)
 
-> 评审提示：推荐一键栈 `deploy/review/docker-compose.yml`（MySQL + 后端 + Nginx，`SPRING_PROFILES_ACTIVE=review`，DeepSeek / 即梦封面默认关闭，七牛留空即不启用）。亦支持本地运行 + 热重载复现。生产路径 `deploy/prod/` 与评审栈相互独立。
+> 评审提示：推荐一键栈 `deploy/review/docker-compose.yml`（MySQL + 后端 + 前台，`SPRING_PROFILES_ACTIVE=review`，DeepSeek / 即梦封面默认关闭，七牛留空即不启用）。外置 demo jar 默认在 `deploy/review/plugins/bundled-demo/`，需 Level2 时再复制到 `plugins/page-size/`。亦支持本地运行 + 热重载复现。生产路径 `deploy/prod/` 与评审栈相互独立。
 
 
 ![](https://qiniu.ayeez.cn/20260228215441383.jpg)
@@ -371,7 +371,7 @@ GitHub的activity记录：[Activity · Ayeez757/AyeezBlog](https://github.com/Ay
 ## 联系方式
 
 - 作者：[阿叶Ayeez]
-- 邮箱：[[3406608593@qq.com](mailto:3406608593@qq.com)]
+- 邮箱：[[leaf@ayeez.cn](mailto:leaf@ayeez.cn)]
 - 博客：本博客 [https://blog.ayeez.cn](https://blog.ayeez.cn)；旧博客（已停止维护） [https://butterfly.ayeez.cn](https://butterfly.ayeez.cn)
 - GitHub Issues： [https://github.com/ayeez757/AyeezBlog/issues](https://github.com/ayeez757/AyeezBlog/issues)
 - QQ交流群（不仅限于本博客，欢迎加入）：421300955

@@ -2,7 +2,8 @@
 # 推荐在本目录执行：cd deploy/review && docker compose --env-file .env.example up --build
 #
 # 可选集成默认关闭：HM_FEATURE_DEEPSEEK、HM_FEATURE_VOLCENGINE_COVER；七牛留空即不启用。
-# Level1：挂载 runtime-config.yml；Level2：镜像内预置 demo jar + EXTERNAL_PLUGIN_BOOT_SCAN。
+# Level1：监听目录 plugins/page-size 默认可空；demo jar 由 entrypoint 放到 plugins/bundled-demo（不触发加载）。
+# Level2：将 bundled-demo 内 jar 手动复制到 page-size 即可；EXTERNAL_PLUGIN_BOOT_SCAN 默认 true 便于补扫。
 
 name: ayeezblog-review
 
@@ -65,6 +66,7 @@ services:
     volumes:
       - ./runtime-config.yml:/app/config/runtime-config.yml:rw
       - ./plugins/page-size:/app/plugins/page-size
+      - ./plugins/bundled-demo:/app/plugins/bundled-demo
     working_dir: /app
     healthcheck:
       test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/127.0.0.1/8080' || exit 1"]
