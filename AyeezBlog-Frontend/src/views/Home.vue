@@ -653,11 +653,16 @@ export default {
   pointer-events: none;
   z-index: 0;
   opacity: 0.49;
+  /* 限制重绘与合成范围，减轻全页连带失效 */
+  contain: paint;
+  isolation: isolate;
 }
 
 .cyber-flow-svg {
   width: 100%;
   height: 100%;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .flow-soft-group {
@@ -755,9 +760,9 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 0px;
-  /* 引导线与箭头之间的间距 */
-  animation: floatAndBlink 2s infinite ease-in-out;
-
+  /* 引导线与箭头之间的间距：放慢并减弱位移，降低常驻合成开销 */
+  animation: floatAndBlink 3.6s infinite ease-in-out;
+  will-change: transform;
 }
 
 /* 引导线样式 */
@@ -788,8 +793,8 @@ export default {
   }
 
   50% {
-    transform: translateX(-50%) translateY(-10px);
-    opacity: 0.5;
+    transform: translateX(-50%) translateY(-5px);
+    opacity: 0.72;
   }
 }
 
@@ -1408,6 +1413,11 @@ export default {
 @media (prefers-reduced-motion: reduce) {
   .cyber-flow-svg animateTransform {
     display: none;
+  }
+
+  .arrow-container {
+    animation: none;
+    transform: translateX(-50%);
   }
 }
 </style>
