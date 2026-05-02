@@ -24,7 +24,8 @@ WORKDIR /app
 COPY --from=build /workspace/app.jar /app/app.jar
 COPY --from=build /workspace/blog-plugin-demo/target/blog-plugin-demo-0.0.1-SNAPSHOT.jar /opt/review-defaults/blog-plugin-demo.jar
 COPY docker/review-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+# Windows 检出常为 CRLF，会导致容器内 exec 报 no such file or directory（实际为 shebang 含 \r）
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 8080
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
