@@ -52,7 +52,8 @@ while [ $# -gt 0 ]; do
     --exercise-wait-ms) EXERCISE_WAIT_MS="$2"; shift 2 ;;
     --post-revert-quiet-seconds) POST_REVERT_QUIET_SECONDS="$2"; shift 2 ;;
     -h|--help)
-      echo "用法: $0 [--mode host|http|docker] [--base-url URL] [--plugin-dir DIR] ..."
+      echo "用法: $0 [--mode host|http|docker] [--base-url URL] [--plugin-dir DIR] [--plugin-source-jar PATH] ..."
+      echo "  未指定 --plugin-source-jar 时：优先 Maven target，其次 deploy/review/plugins/bundled-demo 下 .jar（评审 Docker 启动后可用）。"
       echo "  --mode host    默认：本机 jcmd（需宿主机 JDK）"
       echo "  --mode http    仅 curl 调 review 快照接口（无 JDK；指标较窄）"
       echo "  --mode docker  用临时容器跑 JDK 的 jcmd，目标：--docker-container（默认 ayeezblog-review-backend）"
@@ -84,7 +85,20 @@ fi
 BACKEND_ROOT="$REPO_ROOT/AyeezBlog-Backend"
 BLOG_SERVER_PLUGIN_DIR="$BACKEND_ROOT/blog-server/plugins/page-size"
 BACKEND_PLUGIN_DIR="$BACKEND_ROOT/plugins/page-size"
-DEFAULT_SOURCE_JAR="$BACKEND_ROOT/blog-plugin-demo/target/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+MAVEN_PLUGIN_JAR="$BACKEND_ROOT/blog-plugin-demo/target/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+BUNDLED_DEMO_DIR="$REPO_ROOT/deploy/review/plugins/bundled-demo"
+BUNDLED_DEMO_JAR="$BUNDLED_DEMO_DIR/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+
+# 未传 --plugin-source-jar 时：Maven target > 评审 Docker 挂载 bundled-demo（仅 Docker 的评审员无需本机 package）
+resolve_default_plugin_source_jar() {
+  if [ -f "$MAVEN_PLUGIN_JAR" ]; then echo "$MAVEN_PLUGIN_JAR"; return; fi
+  if [ -f "$BUNDLED_DEMO_JAR" ]; then echo "$BUNDLED_DEMO_JAR"; return; fi
+  local f
+  for f in "$BUNDLED_DEMO_DIR"/*.jar; do
+    if [ -f "$f" ]; then echo "$f"; return; fi
+  done
+  echo "$MAVEN_PLUGIN_JAR"
+}
 
 resolve_plugin_dir() {
   if [ -n "$PLUGIN_DIR_ARG" ]; then
@@ -107,7 +121,15 @@ resolve_plugin_dir() {
 PLUGIN_DIR="$(resolve_plugin_dir)"
 if [ -d "$PLUGIN_DIR" ]; then PLUGIN_DIR="$(cd "$PLUGIN_DIR" && pwd)"; fi
 
-PLUGIN_SOURCE_JAR="${PLUGIN_SOURCE_JAR_ARG:-$DEFAULT_SOURCE_JAR}"
+if [ -n "$PLUGIN_SOURCE_JAR_ARG" ]; then
+  if [[ "$PLUGIN_SOURCE_JAR_ARG" = /* ]] || [[ "$PLUGIN_SOURCE_JAR_ARG" =~ ^[A-Za-z]:[\\/] ]]; then
+    PLUGIN_SOURCE_JAR="$PLUGIN_SOURCE_JAR_ARG"
+  else
+    PLUGIN_SOURCE_JAR="$REPO_ROOT/${PLUGIN_SOURCE_JAR_ARG//\\//}"
+  fi
+else
+  PLUGIN_SOURCE_JAR="$(resolve_default_plugin_source_jar)"
+fi
 OUTPUT_DIR="$SCRIPT_DIR/output"
 TEMPLATE_PATH="$SCRIPT_DIR/templates/leak-report-cn.md"
 JSON_PATH="$OUTPUT_DIR/leak-signals.json"
@@ -302,6 +324,7 @@ fi
 
 if [ ! -f "$PLUGIN_SOURCE_JAR" ]; then
   echo "未找到插件源 jar: $PLUGIN_SOURCE_JAR" >&2
+  echo "任选其一：先启动评审 Docker 使 ${BUNDLED_DEMO_JAR} 存在；或在 AyeezBlog-Backend 执行 ./mvnw package -pl blog-server,blog-plugin-demo -am -DskipTests；或传 --plugin-source-jar。" >&2
   exit 1
 fi
 

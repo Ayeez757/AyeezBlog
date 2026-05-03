@@ -225,8 +225,25 @@ if ([string]::IsNullOrWhiteSpace($PluginDir)) {
         $PluginDir = Join-Path $repoRoot "AyeezBlog-Backend\blog-server\plugins\page-size"
     }
 }
+$mavenPluginJar = Join-Path $repoRoot "AyeezBlog-Backend\blog-plugin-demo\target\blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+$bundledDemoDir = Join-Path $repoRoot "deploy\review\plugins\bundled-demo"
+$bundledDemoJar = Join-Path $bundledDemoDir "blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+
 if ([string]::IsNullOrWhiteSpace($PluginSourceJar)) {
-    $PluginSourceJar = Join-Path $repoRoot "AyeezBlog-Backend\blog-plugin-demo\target\blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+    if (Test-Path $mavenPluginJar) {
+        $PluginSourceJar = $mavenPluginJar
+    } elseif (Test-Path $bundledDemoJar) {
+        $PluginSourceJar = $bundledDemoJar
+    } else {
+        $anyBundled = Get-ChildItem -Path $bundledDemoDir -Filter *.jar -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $anyBundled) {
+            $PluginSourceJar = $anyBundled.FullName
+        } else {
+            $PluginSourceJar = $mavenPluginJar
+        }
+    }
+} elseif (-not [System.IO.Path]::IsPathRooted($PluginSourceJar)) {
+    $PluginSourceJar = Join-Path $repoRoot $PluginSourceJar
 }
 $outputDir = Join-Path $repoRoot "scripts\review\output"
 $templatePath = Join-Path $repoRoot "scripts\review\templates\leak-report-cn.md"
@@ -238,6 +255,10 @@ if (-not (Test-Path $templatePath)) {
 }
 $jsonPath = Join-Path $outputDir "leak-signals.json"
 $reportPath = Join-Path $outputDir "leak-signals-report.md"
+
+if (-not (Test-Path $PluginSourceJar)) {
+    throw "Plugin source jar not found: $PluginSourceJar. Start Docker review (bundled-demo), or Maven package blog-plugin-demo, or pass -PluginSourceJar."
+}
 
 $javaPid = Get-JavaPid
 if ($null -eq $javaPid) {

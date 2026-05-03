@@ -21,7 +21,8 @@ SWITCH_WAIT_TIMEOUT_SECONDS="${SWITCH_WAIT_TIMEOUT_SECONDS:-8}"
 
 usage() {
   echo "用法: $0 [--base-url URL] [--business-path PATH] [--plugin-dir DIR] [--rounds N] [--wait-seconds N] [--switch-timeout N]"
-  echo "环境变量: BASE_URL, BUSINESS_VERIFY_PATH, PLUGIN_DIR, ROUNDS, WAIT_SECONDS, SWITCH_WAIT_TIMEOUT_SECONDS"
+  echo "环境变量: BASE_URL, BUSINESS_VERIFY_PATH, PLUGIN_DIR, PLUGIN_SOURCE_JAR（可选，显式指定源 jar）,"
+  echo "           ROUNDS, WAIT_SECONDS, SWITCH_WAIT_TIMEOUT_SECONDS"
   exit 0
 }
 
@@ -39,7 +40,9 @@ while [ $# -gt 0 ]; do
 done
 
 BACKEND_ROOT="$REPO_ROOT/AyeezBlog-Backend"
-PLUGIN_SOURCE_JAR="$BACKEND_ROOT/blog-plugin-demo/target/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+MAVEN_PLUGIN_JAR="$BACKEND_ROOT/blog-plugin-demo/target/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+BUNDLED_DEMO_DIR="$REPO_ROOT/deploy/review/plugins/bundled-demo"
+BUNDLED_DEMO_JAR="$BUNDLED_DEMO_DIR/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
 BACKEND_DEFAULT_PLUGIN_DIR="$BACKEND_ROOT/plugins/page-size"
 BLOG_SERVER_DEFAULT_PLUGIN_DIR="$BACKEND_ROOT/blog-server/plugins/page-size"
 OUTPUT_DIR="$SCRIPT_DIR/output"
@@ -76,8 +79,33 @@ if [ -d "$PLUGIN_DIR" ]; then
   PLUGIN_DIR="$(cd "$PLUGIN_DIR" && pwd)"
 fi
 
-if [ ! -f "$PLUGIN_SOURCE_JAR" ]; then
-  echo "未找到插件 jar: $PLUGIN_SOURCE_JAR。请先构建 blog-plugin-demo（Maven package）。" >&2
+# 源 jar：显式 PLUGIN_SOURCE_JAR 环境变量 > Maven target > 评审 Docker 挂载的 bundled-demo（无需本机 Maven）
+resolve_plugin_source_jar() {
+  if [ -n "${PLUGIN_SOURCE_JAR:-}" ] && [ -f "$PLUGIN_SOURCE_JAR" ]; then
+    echo "$(cd "$(dirname "$PLUGIN_SOURCE_JAR")" && pwd)/$(basename "$PLUGIN_SOURCE_JAR")"
+    return
+  fi
+  if [ -f "$MAVEN_PLUGIN_JAR" ]; then
+    echo "$MAVEN_PLUGIN_JAR"
+    return
+  fi
+  if [ -f "$BUNDLED_DEMO_JAR" ]; then
+    echo "$BUNDLED_DEMO_JAR"
+    return
+  fi
+  local f
+  for f in "$BUNDLED_DEMO_DIR"/*.jar; do
+    if [ -f "$f" ]; then echo "$f"; return; fi
+  done
+  echo ""
+}
+
+PLUGIN_SOURCE_JAR="$(resolve_plugin_source_jar)"
+if [ -z "$PLUGIN_SOURCE_JAR" ] || [ ! -f "$PLUGIN_SOURCE_JAR" ]; then
+  echo "未找到插件 demo jar。任选其一：" >&2
+  echo "  1) 已用评审 Docker：先 docker compose up -d，使 entrypoint 写入 ${BUNDLED_DEMO_JAR}（或 bundled-demo 下任意 .jar）" >&2
+  echo "  2) 本机构建：cd AyeezBlog-Backend && ./mvnw package -pl blog-server,blog-plugin-demo -am -DskipTests" >&2
+  echo "  3) 设置环境变量 PLUGIN_SOURCE_JAR 指向已有 jar 的绝对路径" >&2
   exit 1
 fi
 
@@ -133,6 +161,7 @@ wait_for_external_auto_watch() {
 
 echo "Starting Level2 auto-watch loop test..."
 echo "BaseUrl=$BASE_URL Rounds=$ROUNDS PluginDir=$PLUGIN_DIR"
+echo "PluginSourceJar=$PLUGIN_SOURCE_JAR"
 echo "BusinessVerifyPath=$BUSINESS_VERIFY_PATH"
 
 TMP_RESULTS="$(mktemp)"

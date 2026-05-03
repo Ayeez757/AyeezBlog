@@ -58,7 +58,23 @@ function Wait-ForExternalAutoWatch {
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $backendRoot = Join-Path $repoRoot "AyeezBlog-Backend"
-$pluginSourceJar = Join-Path $backendRoot "blog-plugin-demo\target\blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+$mavenPluginJar = Join-Path $backendRoot "blog-plugin-demo\target\blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+$bundledDemoDir = Join-Path $repoRoot "deploy\review\plugins\bundled-demo"
+$bundledDemoJar = Join-Path $bundledDemoDir "blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+
+$pluginSourceJar = $null
+if (-not [string]::IsNullOrWhiteSpace($env:PLUGIN_SOURCE_JAR) -and (Test-Path $env:PLUGIN_SOURCE_JAR)) {
+    $pluginSourceJar = (Resolve-Path $env:PLUGIN_SOURCE_JAR).Path
+} elseif (Test-Path $mavenPluginJar) {
+    $pluginSourceJar = $mavenPluginJar
+} elseif (Test-Path $bundledDemoJar) {
+    $pluginSourceJar = $bundledDemoJar
+} else {
+    $anyBundled = Get-ChildItem -Path $bundledDemoDir -Filter *.jar -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $anyBundled) {
+        $pluginSourceJar = $anyBundled.FullName
+    }
+}
 $backendDefaultPluginDir = Join-Path $backendRoot "plugins\page-size"
 $blogServerDefaultPluginDir = Join-Path $backendRoot "blog-server\plugins\page-size"
 $outputDir = Join-Path $repoRoot "scripts\review\output"
@@ -87,8 +103,13 @@ if ($null -ne $resolvedPluginDir) {
     $pluginDir = $resolvedPluginDir.Path
 }
 
-if (-not (Test-Path $pluginSourceJar)) {
-    throw "Plugin jar not found: $pluginSourceJar. Run mvn compile -f pom.xml and mvn -pl blog-plugin-demo clean package first."
+if ([string]::IsNullOrWhiteSpace($pluginSourceJar) -or -not (Test-Path $pluginSourceJar)) {
+    throw @"
+Plugin demo jar not found. Choose one:
+  1) Docker review stack: docker compose up -d so entrypoint writes $bundledDemoJar (or any .jar under bundled-demo)
+  2) Local Maven: cd AyeezBlog-Backend; .\mvnw.cmd package -pl blog-server,blog-plugin-demo -am -DskipTests
+  3) Set env PLUGIN_SOURCE_JAR to an existing jar path
+"@
 }
 
 if (-not (Test-Path $pluginDir)) {
@@ -105,6 +126,7 @@ $results = @()
 
 Write-Host "Starting Level2 auto-watch loop test..."
 Write-Host "BaseUrl=$BaseUrl Rounds=$Rounds PluginDir=$pluginDir"
+Write-Host "PluginSourceJar=$pluginSourceJar"
 Write-Host "BusinessVerifyPath=$BusinessVerifyPath"
 if ((Test-Path $backendDefaultPluginDir) -and (Test-Path $blogServerDefaultPluginDir) -and
     ($pluginDir -ne $backendDefaultPluginDir) -and ($pluginDir -ne $blogServerDefaultPluginDir)) {
