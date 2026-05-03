@@ -33,6 +33,8 @@ DOCKER_CONTAINER="${DOCKER_CONTAINER:-ayeezblog-review-backend}"
 DOCKER_JAVA_PID="${DOCKER_JAVA_PID:-1}"
 DOCKER_JDK_IMAGE="${DOCKER_JDK_IMAGE:-eclipse-temurin:21-jdk-jammy}"
 DOCKER_PULL="${DOCKER_PULL:-0}"
+# 为 0 时：classloader_stats 解析不到 URLClassLoader 则记为 null，不跑 GC.class_histogram（该命令极慢，docker 模式每轮易看似卡死）
+ALLOW_CLASS_HISTOGRAM="${ALLOW_CLASS_HISTOGRAM:-0}"
 
 UNWRAP='(if type == "object" and has("data") then .data else . end)'
 
@@ -44,6 +46,7 @@ while [ $# -gt 0 ]; do
     --docker-java-pid) DOCKER_JAVA_PID="$2"; shift 2 ;;
     --docker-jdk-image) DOCKER_JDK_IMAGE="$2"; shift 2 ;;
     --docker-pull) DOCKER_PULL="1"; shift ;;
+    --allow-class-histogram) ALLOW_CLASS_HISTOGRAM="1"; shift ;;
     --plugin-dir) PLUGIN_DIR_ARG="$2"; shift 2 ;;
     --plugin-source-jar) PLUGIN_SOURCE_JAR_ARG="$2"; shift 2 ;;
     --samples) SAMPLES="$2"; shift 2 ;;
@@ -61,6 +64,7 @@ while [ $# -gt 0 ]; do
       echo "  --docker-java-pid N       目标 JVM 在容器内 PID，评审镜像 entrypoint 为 exec java 时一般为 1"
       echo "  --docker-jdk-image IMG    默认 eclipse-temurin:21-jdk-jammy（需含 jcmd）"
       echo "  --docker-pull             先执行 docker pull 指定 JDK 镜像"
+      echo "  --allow-class-histogram   classloader_stats 解析不到时做一次 GC.class_histogram（很慢，默认不做）"
       exit 0
       ;;
     *) echo "未知参数: $1" >&2; exit 1 ;;
@@ -346,6 +350,8 @@ for ((ex = 1; ex <= EXERCISE_ROUNDS; ex++)); do
   sleep "$sleep_secs"
 done
 
+echo "[check-leak] 预热完成（${EXERCISE_ROUNDS} 轮），随后将进行 classloader 探测与 ${SAMPLES} 次采样…" >&2
+
 TMP_SAMPLES=$(mktemp)
 CL_BODY=""
 trap 'rm -f "$TMP_SAMPLES" "${TMP_SAMPLES}.full"; [ -n "${CL_BODY:-}" ] && rm -f "$CL_BODY"' EXIT
@@ -366,6 +372,14 @@ echo "PluginDir=$PLUGIN_DIR"
 echo "PluginSourceJar=$PLUGIN_SOURCE_JAR ExerciseRounds=$EXERCISE_ROUNDS"
 echo "ClassLoaderCommand=$CL_CMD"
 
+URL_CNT_FALLBACK=""
+if [ "$MODE" != "http" ]; then
+  if [ -z "$(parse_url_classloader_count "$CL_TEXT")" ] && [ "$ALLOW_CLASS_HISTOGRAM" = "1" ]; then
+    echo "[check-leak] classloader_stats 未解析出 URLClassLoader 计数，执行一次性 GC.class_histogram（很慢）…" >&2
+    URL_CNT_FALLBACK=$(histogram_url_classloader_count "$JAVA_PID" || true)
+  fi
+fi
+
 : >"$TMP_SAMPLES"
 
 if [ "$MODE" = "http" ]; then
@@ -380,6 +394,7 @@ if [ "$MODE" = "http" ]; then
   done
 else
   for ((i = 1; i <= SAMPLES; i++)); do
+    echo "[check-leak] 采样 $i/$SAMPLES（docker/host 每轮含多次 docker/jcmd 调用，请耐心等待数十秒至数分钟）…" >&2
     read -r working_mb private_mb <<<"$(proc_mem_mb "$JAVA_PID")"
     proc_threads=$(proc_thread_count "$JAVA_PID")
 
@@ -390,7 +405,7 @@ else
 
     url_cnt=$(parse_url_classloader_count "$CL_TEXT")
     if [ -z "$url_cnt" ]; then
-      url_cnt=$(histogram_url_classloader_count "$JAVA_PID" || true)
+      url_cnt="${URL_CNT_FALLBACK:-}"
       [ -z "$url_cnt" ] && url_cnt="null"
     fi
 
@@ -401,6 +416,19 @@ else
 
     uc_json="null"
     if [ "$url_cnt" != "null" ]; then uc_json="$url_cnt"; fi
+
+    working_mb="${working_mb:-0}"
+    private_mb="${private_mb:-0}"
+    proc_threads="${proc_threads:-0}"
+    hb_threads="${hb_threads:-0}"
+    working_mb=$(echo "$working_mb" | tr -cd '0-9.')
+    private_mb=$(echo "$private_mb" | tr -cd '0-9.')
+    proc_threads=$(echo "$proc_threads" | tr -cd '0-9')
+    hb_threads=$(echo "$hb_threads" | tr -cd '0-9')
+    [ -z "$working_mb" ] && working_mb=0
+    [ -z "$private_mb" ] && private_mb=0
+    [ -z "$proc_threads" ] && proc_threads=0
+    [ -z "$hb_threads" ] && hb_threads=0
 
     jq -nc \
       --argjson idx "$i" \
