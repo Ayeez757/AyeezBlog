@@ -419,6 +419,8 @@ else
   done
 fi
 
+echo "采样完成（${SAMPLES} 条），正在聚合指标并写入 scripts/review/output/ …"
+
 HB_AFTER_EX_BYTES=$(hb_bytes "$HEARTBEAT_PATH")
 
 curl -sS -m 15 -f -X POST "${BASE_URL%/}/post/runtime/revert-page-size-rule-to-configured" -o /dev/null || true
@@ -453,12 +455,19 @@ elif [ ! -d "$PLUGIN_DIR" ]; then
 fi
 
 SAMPLE_JSON=$(jq -s '.' "$TMP_SAMPLES")
-proc_start=$(echo "$SAMPLE_JSON" | jq '.[0].processThreads')
-proc_end=$(echo "$SAMPLE_JSON" | jq '.[-1].processThreads')
+sample_count=$(echo "$SAMPLE_JSON" | jq -r 'length')
+if [ "${sample_count:-0}" -lt 1 ]; then
+  echo "错误：未采集到任何采样（合并 ${TMP_SAMPLES} 为空或无效）。脚本已在写入报告前退出。" >&2
+  echo "请确认：① 在仓库根目录执行（路径中应能看到 scripts/review/）；② Docker 与后端容器 ${DOCKER_CONTAINER} 正常；③ 未 Ctrl+C 中断；④ 本机 jq 正常。" >&2
+  exit 1
+fi
+
+proc_start=$(echo "$SAMPLE_JSON" | jq -r '.[0].processThreads // 0')
+proc_end=$(echo "$SAMPLE_JSON" | jq -r '.[-1].processThreads // 0')
 proc_delta=$((proc_end - proc_start))
 
-priv_start=$(echo "$SAMPLE_JSON" | jq -r '.[0].privateMB')
-priv_end=$(echo "$SAMPLE_JSON" | jq -r '.[-1].privateMB')
+priv_start=$(echo "$SAMPLE_JSON" | jq -r '.[0].privateMB // 0')
+priv_end=$(echo "$SAMPLE_JSON" | jq -r '.[-1].privateMB // 0')
 priv_delta=$(awk -v a="$priv_start" -v b="$priv_end" 'BEGIN{printf "%.2f", b-a}')
 
 uc_start=$(echo "$SAMPLE_JSON" | jq '.[0].urlClassLoaders')
@@ -469,7 +478,7 @@ else
   uc_delta=$((uc_end - uc_start))
 fi
 
-hb_peak=$(echo "$SAMPLE_JSON" | jq '[.[].heartbeatThreads] | max')
+hb_peak=$(echo "$SAMPLE_JSON" | jq -r '[.[].heartbeatThreads] | max // 0')
 
 growth_exercise=$((HB_AFTER_EX_BYTES - HB_BEFORE_BYTES))
 growth_after_revert=$((HB_AFTER_QUIET_BYTES - HB_AFTER_EX_BYTES))
@@ -519,7 +528,7 @@ jar_obj=$(jq -cn \
   '{checked: $chk, canDelete: $del, message: $msg, targetJar: $tj}')
 
 jq -s '.' "$TMP_SAMPLES" >"$TMP_SAMPLES.full"
-priv_json=$(jq -n --arg v "$priv_delta" '$v|tonumber')
+priv_json=$(jq -n --arg v "${priv_delta:-0}" '$v|tonumber')
 if [ "$uc_delta" = "null" ]; then ucd_json=null; else ucd_json="$uc_delta"; fi
 
 PID_JSON_VAL=$(if [ "$MODE" = "http" ]; then echo null; else echo "$JAVA_PID"; fi)
