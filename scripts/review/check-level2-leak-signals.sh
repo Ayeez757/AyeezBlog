@@ -636,9 +636,9 @@ jq -n \
 
 rm -f "$TMP_SAMPLES.full"
 
-RISK_ITEMS_MD=$(echo "$risks_json" | jq -r 'if length == 0 then "- No obvious leak signals in current short sampling window." else (map("- " + .) | join("\r\n")) end')
+RISK_ITEMS_MD=$(echo "$risks_json" | jq -r 'if length == 0 then "- No obvious leak signals in current short sampling window." else (map("- " + .) | join("\n")) end')
 
-SAMPLES_TABLE=$(jq -r '[.sampledData[] | "| \(.index) | \(.at) | \(.processThreads) | \(.jcmdThreads) | \(.heartbeatThreads) | \(.urlClassLoaders // "null") | \(.workingSetMB) | \(.privateMB) |"] | join("\r\n")' "$JSON_PATH")
+SAMPLES_TABLE=$(jq -r '[.sampledData[] | "| \(.index) | \(.at) | \(.processThreads) | \(.jcmdThreads) | \(.heartbeatThreads) | \(.urlClassLoaders // "null") | \(.workingSetMB) | \(.privateMB) |"] | join("\n")' "$JSON_PATH")
 
 JAR_SUMMARY="$jar_can_delete ($jar_msg)"
 
@@ -661,7 +661,7 @@ JAR_SUMMARY="$jar_can_delete ($jar_msg)"
     --arg js "$JAR_SUMMARY" \
     --arg ri "$RISK_ITEMS_MD" \
     --arg st "$SAMPLES_TABLE" \
-    '($tpl|tostring)
+    '$tpl
       | gsub("{{RISK_LEVEL}}"; $rl)
       | gsub("{{PID}}"; $pid)
       | gsub("{{SAMPLES}}"; $sm)

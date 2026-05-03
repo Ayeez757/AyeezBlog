@@ -1,20 +1,28 @@
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-$backendRoot = Join-Path $repoRoot "AyeezBlog-Backend"
-$pluginDir = Join-Path $backendRoot "plugins\page-size"
+$pluginDirs = @(
+    (Join-Path $repoRoot "deploy\review\plugins\page-size"),
+    (Join-Path $repoRoot "AyeezBlog-Backend\plugins\page-size"),
+    (Join-Path $repoRoot "AyeezBlog-Backend\blog-server\plugins\page-size")
+)
 $outputDir = Join-Path $repoRoot "scripts\review\output"
 
 Write-Host "Starting cleanup..."
 
-if (Test-Path $pluginDir) {
-    $generated = Get-ChildItem -Path $pluginDir -Filter "review-loop-*.jar" -ErrorAction SilentlyContinue
-    foreach ($f in $generated) {
-        Remove-Item -Path $f.FullName -Force -ErrorAction SilentlyContinue
-        Write-Host ("Deleted plugin file: " + $f.Name)
+$foundAny = $false
+foreach ($pluginDir in $pluginDirs) {
+    if (Test-Path $pluginDir) {
+        $foundAny = $true
+        $generated = Get-ChildItem -Path $pluginDir -Filter "review-loop-*.jar" -ErrorAction SilentlyContinue
+        foreach ($f in $generated) {
+            Remove-Item -Path $f.FullName -Force -ErrorAction SilentlyContinue
+            Write-Host ("Deleted plugin file: " + $f.FullName)
+        }
     }
-} else {
-    Write-Host "Plugin directory not found, skipped."
+}
+if (-not $foundAny) {
+    Write-Host "No plugin directory found among deploy/review and AyeezBlog-Backend defaults; skipped review-loop-*.jar cleanup."
 }
 
 if (Test-Path $outputDir) {

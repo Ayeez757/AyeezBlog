@@ -64,6 +64,7 @@
 用于热重载验证的接口如下：
 
 - `GET /post/runtime/config`：查看当前生效配置；
+- `GET /post/runtime/runtime-config-source`：查看最近一次加载的 `runtime-config.yml` 路径（与磁盘挂载核对）；
 - `POST /post/runtime/reload-config`：手动触发配置重载；
 - `GET /post/runtime/reload-config`：兼容浏览器调试；
 - `GET /post/runtime/demo-cards`：演示配置变化对业务响应的影响。

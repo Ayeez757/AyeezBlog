@@ -410,14 +410,14 @@ $payload | ConvertTo-Json -Depth 8 | Set-Content -Path $jsonPath -Encoding UTF8
 $riskItemsText = if ($riskItems.Count -eq 0) {
     "- No obvious leak signals in current short sampling window."
 } else {
-    ($riskItems | ForEach-Object { "- " + $_ }) -join "`r`n"
+    ($riskItems | ForEach-Object { "- " + $_ }) -join "`n"
 }
 
 $sampleRowsText = (
     $sampleRows | ForEach-Object {
         "| $($_.index) | $($_.at) | $($_.processThreads) | $($_.jcmdThreads) | $($_.heartbeatThreads) | $($_.urlClassLoaders) | $($_.workingSetMB) | $($_.privateMB) |"
     }
-) -join "`r`n"
+) -join "`n"
 
 $jarDeleteSummary = "$($jarCheck.canDelete) ($($jarCheck.message))"
 

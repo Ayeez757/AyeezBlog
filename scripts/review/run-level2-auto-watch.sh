@@ -13,7 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
-BUSINESS_VERIFY_PATH="${BUSINESS_VERIFY_PATH:-/post/list?page=1&pageSize=10}"
+# 与 PageHelper / 交付文档 HTTP 示例一致（pageNum）
+BUSINESS_VERIFY_PATH="${BUSINESS_VERIFY_PATH:-/post/list?pageNum=1&pageSize=10}"
 PLUGIN_DIR_ARG="${PLUGIN_DIR:-}"
 ROUNDS="${ROUNDS:-50}"
 WAIT_SECONDS="${WAIT_SECONDS:-2}"
@@ -229,7 +230,7 @@ if [ "$fail_count" -eq 0 ]; then status="PASS"; else status="FAIL"; fi
 
 TABLE=$(jq -r '
   [.[] | "| \(.round) | \(.jar) | \(.success) | \(.origin // "") | \(.latestHistorySource // "") | \(.businessApi // "") | \((.message // "") | gsub("\\|"; "\\\\|")) |"]
-  | join("\r\n")
+  | join("\n")
 ' "$RESULT_PATH")
 
 {
@@ -241,7 +242,7 @@ TABLE=$(jq -r '
     --argjson pc "$pass_count" \
     --argjson fc "$fail_count" \
     --arg tbl "$TABLE" \
-    '($tpl | tostring)
+    '$tpl
       | gsub("{{STATUS}}"; $st)
       | gsub("{{BASE_URL}}"; $bu)
       | gsub("{{ROUNDS}}"; ($tr | tostring))

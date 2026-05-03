@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,6 +63,26 @@ public class RuntimeConfigDemoController {
     @GetMapping("/config")
     public Result<RuntimeConfig> getCurrentConfig() {
         return Result.success(runtimeConfigManager.getCurrent());
+    }
+
+    /**
+     * 返回最近一次成功加载的 runtime-config.yml 路径（以及可监听路径），便于与磁盘挂载对照。
+     * <p>
+     * {@link #getCurrentConfig()} 中的字段（含 {@code pluginCleanupEnabled}）均来自内存中的当前快照；
+     * 若与宿主机上编辑的文件不一致，请先核对本接口返回的 {@code lastLoadedFrom} 是否为你修改的那份文件，
+     * 以及 Docker 下 {@code RUNTIME_CONFIG_PATH} 挂载是否正确，必要时重启后端进程后再查。
+     * </p>
+     *
+     * @return 加载来源与可监听路径
+     */
+    @GetMapping("/runtime-config-source")
+    public Result<Map<String, String>> getRuntimeConfigSource() {
+        Map<String, String> payload = new LinkedHashMap<>();
+        payload.put("lastLoadedFrom", runtimeConfigLoader.getLastLoadedFrom());
+        payload.put("watchableConfigPath", runtimeConfigLoader.getWatchableConfigPath()
+                .map(Path::toString)
+                .orElse(""));
+        return Result.success(payload);
     }
 
     /**

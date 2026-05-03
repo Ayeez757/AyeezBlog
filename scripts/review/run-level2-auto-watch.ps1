@@ -1,6 +1,6 @@
 param(
     [string]$BaseUrl = "http://localhost:8080",
-    [string]$BusinessVerifyPath = "/post/list?page=1&pageSize=10",
+    [string]$BusinessVerifyPath = "/post/list?pageNum=1&pageSize=10",
     [string]$PluginDir = "",
     [int]$Rounds = 50,
     [int]$WaitSeconds = 2,
