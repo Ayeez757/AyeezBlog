@@ -2,7 +2,7 @@
 # 推荐在本目录执行：cd deploy/review && docker compose --env-file .env.example up --build
 #
 # 可选集成默认关闭：HM_FEATURE_DEEPSEEK、HM_FEATURE_VOLCENGINE_COVER；七牛留空即不启用。
-# Level1：监听目录 plugins/page-size 默认可空；demo jar 由 entrypoint 每次启动同步到 plugins/bundled-demo（覆盖镜像内最新构建，不触发加载）。
+# Level1：监听目录 plugins/page-size 默认可空；entrypoint 每次启动向 bundled-demo 同步 Stateful 主 jar 与 -double.jar（纯双倍，不触发加载）。
 # Level2：将 bundled-demo 内 jar 手动复制到 page-size 即可；EXTERNAL_PLUGIN_BOOT_SCAN 默认 true 便于补扫。
 
 name: ayeezblog-review

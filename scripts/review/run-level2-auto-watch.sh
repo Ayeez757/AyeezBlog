@@ -93,7 +93,10 @@ resolve_plugin_source_jar() {
   if [ -f "$BUNDLED_DEMO_JAR" ]; then echo "$BUNDLED_DEMO_JAR"; return; fi
   local f
   for f in "$BUNDLED_DEMO_DIR"/*.jar; do
-    if [ -f "$f" ]; then echo "$f"; return; fi
+    [ -f "$f" ] || continue
+    case "$(basename "$f")" in *-double.jar) continue ;; esac
+    echo "$f"
+    return
   done
   echo ""
 }

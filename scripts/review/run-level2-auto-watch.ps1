@@ -77,7 +77,9 @@ if (-not [string]::IsNullOrWhiteSpace($env:PLUGIN_SOURCE_JAR) -and (Test-Path $e
     } elseif ($bundledOk) {
         $pluginSourceJar = $bundledDemoJar
     } else {
-        $anyBundled = Get-ChildItem -Path $bundledDemoDir -Filter *.jar -ErrorAction SilentlyContinue | Select-Object -First 1
+        $anyBundled = Get-ChildItem -Path $bundledDemoDir -Filter *.jar -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notlike '*-double.jar' } |
+            Select-Object -First 1
         if ($null -ne $anyBundled) {
             $pluginSourceJar = $anyBundled.FullName
         }
