@@ -7,6 +7,7 @@
 #   docker— 拉取 JDK 镜像，docker run --pid=container:<后端容器> jcmd …（与 host 同口径，宿主机无需 JDK）
 
 set -euo pipefail
+trap 'echo "[check-leak] 异常退出（失败命令附近的行号：${LINENO}）。可打开 bash -x 重跑以定位。" >&2' ERR
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "需要 jq，请先安装。" >&2
@@ -182,32 +183,42 @@ find_blog_server_java_pid() {
 
 parse_thread_count_jcmd() {
   local text="$1"
-  local legacy
-  legacy=$(echo "$text" | grep -oE 'thread #[0-9]+' | head -1 | sed -E 's/thread #//')
-  if [ -n "$legacy" ] && [ "$legacy" -eq "$legacy" ] 2>/dev/null; then echo "$legacy"; return; fi
-  echo "$text" | grep -E '^"[^"]+"[[:space:]]+#[0-9]+' 2>/dev/null | wc -l | tr -d ' '
+  # pipefail 下 grep 无匹配会返回 1，勿让整条管道拖垮 set -e
+  (
+    set +o pipefail
+    local legacy
+    legacy=$(echo "$text" | grep -oE 'thread #[0-9]+' | head -1 | sed -E 's/thread #//')
+    if [ -n "$legacy" ] && [ "$legacy" -eq "$legacy" ] 2>/dev/null; then echo "$legacy"; exit 0; fi
+    echo "$text" | grep -E '^"[^"]+"[[:space:]]+#[0-9]+' 2>/dev/null | wc -l | tr -d ' '
+  )
 }
 
 parse_heartbeat_thread_count() {
-  echo "$1" | grep -o 'stateful-side-effect-heartbeat-' 2>/dev/null | wc -l | tr -d ' '
+  (
+    set +o pipefail
+    echo "$1" | grep -o 'stateful-side-effect-heartbeat-' 2>/dev/null | wc -l | tr -d ' '
+  )
 }
 
 parse_url_classloader_count() {
-  local text
-  text=$(echo "$1" | strip_ansi)
-  if echo "$text" | grep -qi "Unknown diagnostic command"; then echo ""; return; fi
-  local n
-  n=$(echo "$text" | grep -Eic '^0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]].*URLClassLoader[[:space:]]*$' || true)
-  if [ "${n:-0}" -gt 0 ] 2>/dev/null; then echo "$n"; return; fi
-  n=$(echo "$text" | grep -oiE '(java\.net\.)?URLClassLoader' | wc -l | tr -d ' ')
-  if [ "${n:-0}" -gt 0 ] 2>/dev/null; then echo "$n"; return; fi
-  if echo "$text" | grep -qEi '^Total[[:space:]]*=[[:space:]]*[0-9]+'; then
-    echo "$text" | grep -oiE '^Total[[:space:]]*=[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+'
-    return
-  fi
-  n=$(echo "$text" | grep -Eic '^0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]].+$' || true)
-  if [ "${n:-0}" -gt 0 ] 2>/dev/null; then echo "$n"; return; fi
-  echo ""
+  (
+    set +o pipefail
+    local text
+    text=$(echo "$1" | strip_ansi)
+    if echo "$text" | grep -qi "Unknown diagnostic command"; then echo ""; exit 0; fi
+    local n
+    n=$(echo "$text" | grep -Eic '^0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]].*URLClassLoader[[:space:]]*$' || true)
+    if [ "${n:-0}" -gt 0 ] 2>/dev/null; then echo "$n"; exit 0; fi
+    n=$(echo "$text" | grep -oiE '(java\.net\.)?URLClassLoader' | wc -l | tr -d ' ')
+    if [ "${n:-0}" -gt 0 ] 2>/dev/null; then echo "$n"; exit 0; fi
+    if echo "$text" | grep -qEi '^Total[[:space:]]*=[[:space:]]*[0-9]+'; then
+      echo "$text" | grep -oiE '^Total[[:space:]]*=[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+'
+      exit 0
+    fi
+    n=$(echo "$text" | grep -Eic '^0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]]+[0-9]+[[:space:]].+$' || true)
+    if [ "${n:-0}" -gt 0 ] 2>/dev/null; then echo "$n"; exit 0; fi
+    echo ""
+  )
 }
 
 # 将 jcmd 输出写入 $2，在 stdout 打印选用的子命令名
@@ -230,25 +241,35 @@ histogram_url_classloader_count() {
   local pid="$1"
   local histogram line
   histogram=$(run_jcmd_pid "$pid" GC.class_histogram 2>&1 || true)
-  if echo "$histogram" | grep -qi "Unknown diagnostic command"; then echo ""; return; fi
-  line=$(echo "$histogram" | grep -iE 'java\.net\.URLClassLoader(\s|\(|$)' | head -1)
-  if [ -z "$line" ]; then echo ""; return; fi
-  echo "$line" | sed -nE 's/^[[:space:]]*[0-9]+:[[:space:]]+([0-9]+)[[:space:]].*/\1/p'
+  (
+    set +o pipefail
+    if echo "$histogram" | grep -qi "Unknown diagnostic command"; then echo ""; exit 0; fi
+    line=$(echo "$histogram" | grep -iE 'java\.net\.URLClassLoader(\s|\(|$)' | head -1)
+    if [ -z "$line" ]; then echo ""; exit 0; fi
+    echo "$line" | sed -nE 's/^[[:space:]]*[0-9]+:[[:space:]]+([0-9]+)[[:space:]].*/\1/p'
+  )
 }
 
 proc_mem_mb() {
   local pid="$1"
   if [ "$MODE" = "docker" ]; then
-    docker run --rm --pid="container:${DOCKER_CONTAINER}" "${DOCKER_JDK_IMAGE}" \
-      cat "/proc/${pid}/status" 2>/dev/null | awk '
-        /^VmRSS:/{r=$2}
-        /^RssAnon:/{a=$2}
-        END {
-          if (r == "") r = 0
-          if (a == "") a = r
-          printf "%.2f %.2f\n", r/1024, a/1024
-        }'
-    return
+    local out
+    out=$(
+      docker run --rm --pid="container:${DOCKER_CONTAINER}" "${DOCKER_JDK_IMAGE}" \
+        cat "/proc/${pid}/status" 2>/dev/null | awk '
+          /^VmRSS:/{r=$2}
+          /^RssAnon:/{a=$2}
+          END {
+            if (r == "") r = 0
+            if (a == "") a = r
+            printf "%.2f %.2f\n", r/1024, a/1024
+          }'
+      || printf '%s\n' "0.00 0.00"
+    )
+    out=$(echo "$out" | tr -d '\r')
+    [ -n "$out" ] || out="0.00 0.00"
+    echo "$out"
+    return 0
   fi
   case "$(uname -s)" in
     Linux)
@@ -273,10 +294,14 @@ proc_thread_count() {
   local pid="$1"
   if [ "$MODE" = "docker" ]; then
     local tc
-    tc=$(docker run --rm --pid="container:${DOCKER_CONTAINER}" "${DOCKER_JDK_IMAGE}" \
-      cat "/proc/${pid}/status" 2>/dev/null | awk '/^Threads:/{print $2; exit}')
+    tc=$(
+      docker run --rm --pid="container:${DOCKER_CONTAINER}" "${DOCKER_JDK_IMAGE}" \
+        cat "/proc/${pid}/status" 2>/dev/null | awk '/^Threads:/{print $2; exit}' \
+      || echo "0"
+    )
+    tc=$(echo "$tc" | tr -d '\r')
     echo "${tc:-0}"
-    return
+    return 0
   fi
   case "$(uname -s)" in
     Linux)
