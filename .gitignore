@@ -21,3 +21,4 @@ deploy/review/.env
 AyeezBlog-Backend/plugins/page-size/*.jar
 AyeezBlog-Backend/plugins/page-size/side-effect-heartbeat.log
 scripts/review/output/classloader-probe-debug.txt
+scripts/review/output/.leak-check-*

@@ -148,6 +148,12 @@ JSON_PATH="$OUTPUT_DIR/leak-signals.json"
 REPORT_PATH="$OUTPUT_DIR/leak-signals-report.md"
 
 mkdir -p "$OUTPUT_DIR"
+# Windows Git Bash：/tmp + mktemp 偶发 jq/curl 收尾失败；临时文件固定放在 output 目录（仓库内路径）
+LEAK_TMP_STEM="$OUTPUT_DIR/.leak-check-$$"
+TMP_SAMPLES="${LEAK_TMP_STEM}.jsonl"
+TMP_SAMPLES_FULL="${LEAK_TMP_STEM}.full.json"
+CL_BODY=""
+trap 'rm -f "$TMP_SAMPLES" "$TMP_SAMPLES_FULL"; [ -n "${CL_BODY:-}" ] && rm -f "$CL_BODY"' EXIT
 if [ ! -f "$TEMPLATE_PATH" ]; then
   echo "未找到模板: $TEMPLATE_PATH" >&2
   exit 1
@@ -383,13 +389,10 @@ done
 
 echo "[check-leak] 预热完成（${EXERCISE_ROUNDS} 轮），随后将进行 classloader 探测与 ${SAMPLES} 次采样…" >&2
 
-TMP_SAMPLES=$(mktemp)
-CL_BODY=""
-trap 'rm -f "$TMP_SAMPLES" "${TMP_SAMPLES}.full"; [ -n "${CL_BODY:-}" ] && rm -f "$CL_BODY"' EXIT
 CL_CMD=""
 CL_TEXT=""
 if [ "$MODE" = "host" ] || [ "$MODE" = "docker" ]; then
-  CL_BODY=$(mktemp)
+  CL_BODY="${LEAK_TMP_STEM}.cl.txt"
   CL_CMD=$(write_classloader_probe "$JAVA_PID" "$CL_BODY")
   CL_TEXT=$(cat "$CL_BODY")
 else
@@ -586,7 +589,7 @@ jar_obj=$(jq -cn \
   --arg tj "$jar_target" \
   '{checked: $chk, canDelete: $del, message: $msg, targetJar: $tj}')
 
-jq -s '.' "$TMP_SAMPLES" >"$TMP_SAMPLES.full"
+jq -s '.' "$TMP_SAMPLES" >"$TMP_SAMPLES_FULL"
 priv_json=$(jq -n --arg v "${priv_delta:-0}" '$v|tonumber')
 if [ "$uc_delta" = "null" ]; then ucd_json=null; else ucd_json="$uc_delta"; fi
 
@@ -611,7 +614,7 @@ jq -n \
   --argjson jo "$jar_obj" \
   --arg rl "$risk_level" \
   --argjson ri "$risks_json" \
-  --slurpfile sd "$TMP_SAMPLES.full" \
+  --slurpfile sd "$TMP_SAMPLES_FULL" \
   '{
     baseUrl: $bu,
     pid: $pid,
@@ -634,7 +637,7 @@ jq -n \
     sampledData: $sd[0]
   }' >"$JSON_PATH"
 
-rm -f "$TMP_SAMPLES.full"
+rm -f "$TMP_SAMPLES_FULL"
 
 RISK_ITEMS_MD=$(echo "$risks_json" | jq -r 'if length == 0 then "- No obvious leak signals in current short sampling window." else (map("- " + .) | join("\n")) end')
 
