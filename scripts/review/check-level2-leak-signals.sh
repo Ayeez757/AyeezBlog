@@ -57,7 +57,7 @@ while [ $# -gt 0 ]; do
     --post-revert-quiet-seconds) POST_REVERT_QUIET_SECONDS="$2"; shift 2 ;;
     -h|--help)
       echo "用法: $0 [--mode host|http|docker] [--base-url URL] [--plugin-dir DIR] [--plugin-source-jar PATH] ..."
-      echo "  未指定 --plugin-source-jar 时：优先 Maven target，其次 deploy/review/plugins/bundled-demo 下 .jar（评审 Docker 启动后可用）。"
+      echo "  未指定 --plugin-source-jar 时：Maven target 与 bundled-demo 并存则取修改时间较新者；否则单一存在方可用。"
       echo "  --mode host    默认：本机 jcmd（需宿主机 JDK）"
       echo "  --mode http    仅 curl 调 review 快照接口（无 JDK；指标较窄）"
       echo "  --mode docker  用临时容器跑 JDK 的 jcmd，目标：--docker-container（默认 ayeezblog-review-backend）"
@@ -94,8 +94,12 @@ MAVEN_PLUGIN_JAR="$BACKEND_ROOT/blog-plugin-demo/target/blog-plugin-demo-0.0.1-S
 BUNDLED_DEMO_DIR="$REPO_ROOT/deploy/review/plugins/bundled-demo"
 BUNDLED_DEMO_JAR="$BUNDLED_DEMO_DIR/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
 
-# 未传 --plugin-source-jar 时：Maven target > 评审 Docker 挂载 bundled-demo（仅 Docker 的评审员无需本机 package）
+# 未传 --plugin-source-jar 时：Maven 与 bundled-demo 并存则取较新；否则单一存在方；再否则 bundled 目录内任意 jar
 resolve_default_plugin_source_jar() {
+  if [ -f "$MAVEN_PLUGIN_JAR" ] && [ -f "$BUNDLED_DEMO_JAR" ]; then
+    if [ "$BUNDLED_DEMO_JAR" -nt "$MAVEN_PLUGIN_JAR" ]; then echo "$BUNDLED_DEMO_JAR"; else echo "$MAVEN_PLUGIN_JAR"; fi
+    return
+  fi
   if [ -f "$MAVEN_PLUGIN_JAR" ]; then echo "$MAVEN_PLUGIN_JAR"; return; fi
   if [ -f "$BUNDLED_DEMO_JAR" ]; then echo "$BUNDLED_DEMO_JAR"; return; fi
   local f
@@ -255,16 +259,15 @@ proc_mem_mb() {
   if [ "$MODE" = "docker" ]; then
     local out
     out=$(
-      docker run --rm --pid="container:${DOCKER_CONTAINER}" "${DOCKER_JDK_IMAGE}" \
-        cat "/proc/${pid}/status" 2>/dev/null | awk '
-          /^VmRSS:/{r=$2}
-          /^RssAnon:/{a=$2}
-          END {
-            if (r == "") r = 0
-            if (a == "") a = r
-            printf "%.2f %.2f\n", r/1024, a/1024
-          }'
-      || printf '%s\n' "0.00 0.00"
+      { docker run --rm --pid="container:${DOCKER_CONTAINER}" "${DOCKER_JDK_IMAGE}" \
+          cat "/proc/${pid}/status" 2>/dev/null | awk '
+            /^VmRSS:/{r=$2}
+            /^RssAnon:/{a=$2}
+            END {
+              if (r == "") r = 0
+              if (a == "") a = r
+              printf "%.2f %.2f\n", r/1024, a/1024
+            }'; } || printf '%s\n' "0.00 0.00"
     )
     out=$(echo "$out" | tr -d '\r')
     [ -n "$out" ] || out="0.00 0.00"

@@ -65,14 +65,22 @@ $bundledDemoJar = Join-Path $bundledDemoDir "blog-plugin-demo-0.0.1-SNAPSHOT.jar
 $pluginSourceJar = $null
 if (-not [string]::IsNullOrWhiteSpace($env:PLUGIN_SOURCE_JAR) -and (Test-Path $env:PLUGIN_SOURCE_JAR)) {
     $pluginSourceJar = (Resolve-Path $env:PLUGIN_SOURCE_JAR).Path
-} elseif (Test-Path $mavenPluginJar) {
-    $pluginSourceJar = $mavenPluginJar
-} elseif (Test-Path $bundledDemoJar) {
-    $pluginSourceJar = $bundledDemoJar
 } else {
-    $anyBundled = Get-ChildItem -Path $bundledDemoDir -Filter *.jar -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($null -ne $anyBundled) {
-        $pluginSourceJar = $anyBundled.FullName
+    $mavenOk = Test-Path $mavenPluginJar
+    $bundledOk = Test-Path $bundledDemoJar
+    if ($mavenOk -and $bundledOk) {
+        $mt = (Get-Item $mavenPluginJar).LastWriteTimeUtc
+        $bt = (Get-Item $bundledDemoJar).LastWriteTimeUtc
+        $pluginSourceJar = if ($bt -gt $mt) { $bundledDemoJar } else { $mavenPluginJar }
+    } elseif ($mavenOk) {
+        $pluginSourceJar = $mavenPluginJar
+    } elseif ($bundledOk) {
+        $pluginSourceJar = $bundledDemoJar
+    } else {
+        $anyBundled = Get-ChildItem -Path $bundledDemoDir -Filter *.jar -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $anyBundled) {
+            $pluginSourceJar = $anyBundled.FullName
+        }
     }
 }
 $backendDefaultPluginDir = Join-Path $backendRoot "plugins\page-size"

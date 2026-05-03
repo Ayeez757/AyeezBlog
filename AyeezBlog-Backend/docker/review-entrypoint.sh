@@ -6,7 +6,8 @@ DEMO_SRC=/opt/review-defaults/blog-plugin-demo.jar
 BUNDLED_DIR=/app/plugins/bundled-demo
 PAGE_SIZE_DIR=/app/plugins/page-size
 mkdir -p "$BUNDLED_DIR" "$PAGE_SIZE_DIR"
-if [ -f "$DEMO_SRC" ] && ! ls "$BUNDLED_DIR"/*.jar >/dev/null 2>&1; then
-  cp "$DEMO_SRC" "$BUNDLED_DIR/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
+# 始终用镜像内 jar 覆盖 bundled-demo，避免宿主机卷残留旧构建产物（改 plugin.properties 重建镜像后仍能拿到新 jar）。
+if [ -f "$DEMO_SRC" ]; then
+  cp -f "$DEMO_SRC" "$BUNDLED_DIR/blog-plugin-demo-0.0.1-SNAPSHOT.jar"
 fi
 exec java -jar /app/app.jar "$@"

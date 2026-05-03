@@ -230,9 +230,15 @@ $bundledDemoDir = Join-Path $repoRoot "deploy\review\plugins\bundled-demo"
 $bundledDemoJar = Join-Path $bundledDemoDir "blog-plugin-demo-0.0.1-SNAPSHOT.jar"
 
 if ([string]::IsNullOrWhiteSpace($PluginSourceJar)) {
-    if (Test-Path $mavenPluginJar) {
+    $mavenOk = Test-Path $mavenPluginJar
+    $bundledOk = Test-Path $bundledDemoJar
+    if ($mavenOk -and $bundledOk) {
+        $mt = (Get-Item $mavenPluginJar).LastWriteTimeUtc
+        $bt = (Get-Item $bundledDemoJar).LastWriteTimeUtc
+        $PluginSourceJar = if ($bt -gt $mt) { $bundledDemoJar } else { $mavenPluginJar }
+    } elseif ($mavenOk) {
         $PluginSourceJar = $mavenPluginJar
-    } elseif (Test-Path $bundledDemoJar) {
+    } elseif ($bundledOk) {
         $PluginSourceJar = $bundledDemoJar
     } else {
         $anyBundled = Get-ChildItem -Path $bundledDemoDir -Filter *.jar -ErrorAction SilentlyContinue | Select-Object -First 1

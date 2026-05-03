@@ -79,20 +79,18 @@ if [ -d "$PLUGIN_DIR" ]; then
   PLUGIN_DIR="$(cd "$PLUGIN_DIR" && pwd)"
 fi
 
-# 源 jar：显式 PLUGIN_SOURCE_JAR 环境变量 > Maven target > 评审 Docker 挂载的 bundled-demo（无需本机 Maven）
+# 源 jar：显式 PLUGIN_SOURCE_JAR 环境变量 >（Maven 与 bundled-demo 并存时取修改时间较新者）> 单一存在方 > bundled-demo 目录内任意 .jar
 resolve_plugin_source_jar() {
   if [ -n "${PLUGIN_SOURCE_JAR:-}" ] && [ -f "$PLUGIN_SOURCE_JAR" ]; then
     echo "$(cd "$(dirname "$PLUGIN_SOURCE_JAR")" && pwd)/$(basename "$PLUGIN_SOURCE_JAR")"
     return
   fi
-  if [ -f "$MAVEN_PLUGIN_JAR" ]; then
-    echo "$MAVEN_PLUGIN_JAR"
+  if [ -f "$MAVEN_PLUGIN_JAR" ] && [ -f "$BUNDLED_DEMO_JAR" ]; then
+    if [ "$BUNDLED_DEMO_JAR" -nt "$MAVEN_PLUGIN_JAR" ]; then echo "$BUNDLED_DEMO_JAR"; else echo "$MAVEN_PLUGIN_JAR"; fi
     return
   fi
-  if [ -f "$BUNDLED_DEMO_JAR" ]; then
-    echo "$BUNDLED_DEMO_JAR"
-    return
-  fi
+  if [ -f "$MAVEN_PLUGIN_JAR" ]; then echo "$MAVEN_PLUGIN_JAR"; return; fi
+  if [ -f "$BUNDLED_DEMO_JAR" ]; then echo "$BUNDLED_DEMO_JAR"; return; fi
   local f
   for f in "$BUNDLED_DEMO_DIR"/*.jar; do
     if [ -f "$f" ]; then echo "$f"; return; fi
