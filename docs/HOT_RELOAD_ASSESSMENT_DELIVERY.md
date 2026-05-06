@@ -202,6 +202,8 @@ Conclusion: backend container keeps running without restart during config update
 - 增加重载次数与资源稳定性统计；
 - 进一步演进到 Level 2 逻辑热重载（插件化 + 可卸载生命周期）。
 
+Level 2 外置分页规则 jar 的第三方接口与打包摘要（中文）：[`docs/分页规则插件_第三方SDK说明.md`](./分页规则插件_第三方SDK说明.md)。完整评审步骤仍以中文版交付文档第 7 节为准。
+
 ---
 
 ## 7. AIGC 使用说明（诚信披露）
