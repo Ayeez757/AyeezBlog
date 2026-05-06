@@ -228,27 +228,35 @@ fail_count=$(jq '[.[] | select(.success == false)] | length' "$RESULT_PATH")
 total=$(jq 'length' "$RESULT_PATH")
 if [ "$fail_count" -eq 0 ]; then status="PASS"; else status="FAIL"; fi
 
-TABLE=$(jq -r '
-  [.[] | "| \(.round) | \(.jar) | \(.success) | \(.origin // "") | \(.latestHistorySource // "") | \(.businessApi // "") | \((.message // "") | gsub("\\|"; "\\\\|")) |"]
-  | join("\n")
-' "$RESULT_PATH")
-
+# 表格必须在单次 jq 内拼接：经 bash --arg 传入多行 TABLE 时，Windows/Git Bash 易混入 \r，
+# Markdown 会在行间出现空行，GFM 会把一张表拆成多张。
 {
   printf '\xEF\xBB\xBF'
-  jq --rawfile tpl "$TEMPLATE_PATH" -n \
+  jq -r \
+    --rawfile tpl "$TEMPLATE_PATH" \
+    --slurpfile rows "$RESULT_PATH" \
+    -n \
     --arg st "$status" \
     --arg bu "$BASE_URL" \
     --argjson tr "$total" \
     --argjson pc "$pass_count" \
     --argjson fc "$fail_count" \
-    --arg tbl "$TABLE" \
-    '$tpl
+    '
+    ($rows[0]) as $r |
+    (
+      $r
+      | [.[] | "| \(.round) | \(.jar) | \(.success) | \(.origin // "") | \(.latestHistorySource // "") | \(.businessApi // "") | \((.message // "") | gsub("\\|"; "\\\\|") | gsub("[\r\n]+"; " ")) |"]
+      | join("\n")
+    ) as $tbl |
+    $tpl
       | gsub("{{STATUS}}"; $st)
       | gsub("{{BASE_URL}}"; $bu)
       | gsub("{{ROUNDS}}"; ($tr | tostring))
       | gsub("{{PASS}}"; ($pc | tostring))
       | gsub("{{FAIL}}"; ($fc | tostring))
-      | gsub("{{TABLE}}"; $tbl)'
+      | gsub("{{TABLE}}"; $tbl)
+      | gsub("\r"; "")
+    '
 } > "$REPORT_PATH"
 
 final="$status"

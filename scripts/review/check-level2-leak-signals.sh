@@ -639,15 +639,15 @@ jq -n \
 
 rm -f "$TMP_SAMPLES_FULL"
 
-RISK_ITEMS_MD=$(echo "$risks_json" | jq -r 'if length == 0 then "- No obvious leak signals in current short sampling window." else (map("- " + .) | join("\n")) end')
-
-SAMPLES_TABLE=$(jq -r '[.sampledData[] | "| \(.index) | \(.at) | \(.processThreads) | \(.jcmdThreads) | \(.heartbeatThreads) | \(.urlClassLoaders // "null") | \(.workingSetMB) | \(.privateMB) |"] | join("\n")' "$JSON_PATH")
-
 JAR_SUMMARY="$jar_can_delete ($jar_msg)"
 
+# 风险项与采样表勿经 bash --arg 传入多行：Windows/Git Bash 易混入 \r，GFM 表格会被空行拆碎。
 {
   printf '\xEF\xBB\xBF'
-  jq --rawfile tpl "$TEMPLATE_PATH" -n \
+  jq -r \
+    --rawfile tpl "$TEMPLATE_PATH" \
+    --slurpfile leak "$JSON_PATH" \
+    -n \
     --arg rl "$risk_level" \
     --arg pid "$PID_FOR_REPORT" \
     --arg sm "$SAMPLES" \
@@ -662,9 +662,20 @@ JAR_SUMMARY="$jar_can_delete ($jar_msg)"
     --arg er "$EXERCISE_ROUNDS" \
     --arg pq "$POST_REVERT_QUIET_SECONDS" \
     --arg js "$JAR_SUMMARY" \
-    --arg ri "$RISK_ITEMS_MD" \
-    --arg st "$SAMPLES_TABLE" \
-    '$tpl
+    '
+    ($leak[0]) as $L |
+    (
+      $L.riskItems
+      | if length == 0 then "- No obvious leak signals in current short sampling window."
+        else (map("- " + (.|gsub("[\r\n]+"; " "))) | join("\n"))
+        end
+    ) as $ri |
+    (
+      $L.sampledData
+      | [.[] | "| \(.index) | \(.at) | \(.processThreads) | \(.jcmdThreads) | \(.heartbeatThreads) | \(.urlClassLoaders // "null") | \(.workingSetMB) | \(.privateMB) |"]
+      | join("\n")
+    ) as $st |
+    $tpl
       | gsub("{{RISK_LEVEL}}"; $rl)
       | gsub("{{PID}}"; $pid)
       | gsub("{{SAMPLES}}"; $sm)
@@ -680,7 +691,9 @@ JAR_SUMMARY="$jar_can_delete ($jar_msg)"
       | gsub("{{POST_REVERT_QUIET_SECONDS}}"; $pq)
       | gsub("{{JAR_DELETE_CHECK}}"; $js)
       | gsub("{{RISK_ITEMS}}"; $ri)
-      | gsub("{{SAMPLES_TABLE}}"; $st)'
+      | gsub("{{SAMPLES_TABLE}}"; $st)
+      | gsub("\r"; "")
+    '
 } >"$REPORT_PATH"
 
 echo "Leak signal check finished."
