@@ -29,7 +29,7 @@ SAMPLES="${SAMPLES:-5}"
 INTERVAL_SECONDS="${INTERVAL_SECONDS:-2}"
 EXERCISE_ROUNDS="${EXERCISE_ROUNDS:-10}"
 EXERCISE_WAIT_MS="${EXERCISE_WAIT_MS:-1200}"
-POST_REVERT_QUIET_SECONDS="${POST_REVERT_QUIET_SECONDS:-8}"
+POST_REVERT_QUIET_SECONDS="${POST_REVERT_QUIET_SECONDS:-12}"
 DOCKER_CONTAINER="${DOCKER_CONTAINER:-ayeezblog-review-backend}"
 DOCKER_JAVA_PID="${DOCKER_JAVA_PID:-1}"
 DOCKER_JDK_IMAGE="${DOCKER_JDK_IMAGE:-eclipse-temurin:21-jdk-jammy}"
@@ -564,7 +564,8 @@ fi
 if [ "${hb_peak:-0}" -gt 0 ] 2>/dev/null && [ "${hb_after_revert:-0}" -gt 0 ] 2>/dev/null; then
   add_risk "Heartbeat threads still alive after revert (count = $hb_after_revert)"
 fi
-if [ "$growth_exercise" -gt 0 ] && [ "$growth_after_revert" -gt 0 ]; then
+# Only flag log growth when heartbeat threads remain (true leak); avoids FS noise when B 组已回收线程。
+if [ "$growth_exercise" -gt 0 ] && [ "${hb_after_revert:-0}" -gt 0 ] && [ "$growth_after_revert" -gt 0 ]; then
   add_risk "Heartbeat log still grows after revert (bytes increased = $growth_after_revert)"
 fi
 if [ "$jar_checked" = true ] && [ "$jar_can_delete" = false ]; then

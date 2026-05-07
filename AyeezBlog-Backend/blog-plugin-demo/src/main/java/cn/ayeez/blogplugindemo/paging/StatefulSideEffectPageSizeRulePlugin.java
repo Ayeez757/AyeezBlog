@@ -43,6 +43,8 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
 
     private volatile PluginContext pluginContext;
     private volatile ScheduledExecutorService scheduler;
+    /** Worker thread of {@link #scheduler}; used for join/interrupt after shutdown. */
+    private volatile Thread heartbeatThread;
     private final AtomicBoolean released = new AtomicBoolean(false);
 
     @Override
@@ -58,6 +60,7 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "stateful-side-effect-heartbeat-" + instanceId);
             t.setDaemon(true);
+            heartbeatThread = t;
             return t;
         });
         // 平台统一回收入口：登记该插件实例的兜底清理动作。
@@ -65,7 +68,8 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
         context.registerCleanupAction(this::releaseResources);
 
         ACTIVE_HEARTBEAT_TASKS.incrementAndGet();
-        scheduler.scheduleAtFixedRate(this::writeHeartbeat, 0, 2, TimeUnit.SECONDS);
+        // fixedDelay avoids stacking runs if IO is slow; aligns better with clean shutdown.
+        scheduler.scheduleWithFixedDelay(this::writeHeartbeat, 0, 2, TimeUnit.SECONDS);
     }
 
     @Override
@@ -105,24 +109,53 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
         }
         ScheduledExecutorService s = scheduler;
         scheduler = null;
+        Thread ht = heartbeatThread;
         if (s != null) {
             s.shutdownNow();
+            try {
+                // Wait for the worker thread to exit; ThreadMXBean may still count
+                // stateful-side-effect-heartbeat-* briefly after shutdownNow() alone.
+                if (!s.awaitTermination(10, TimeUnit.SECONDS)) {
+                    s.shutdownNow();
+                    if (!s.awaitTermination(5, TimeUnit.SECONDS) && ht != null) {
+                        ht.interrupt();
+                        try {
+                            ht.join(TimeUnit.SECONDS.toMillis(3));
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                s.shutdownNow();
+            }
         }
+        heartbeatThread = null;
         ACTIVE_HEARTBEAT_TASKS.updateAndGet(v -> Math.max(0, v - 1));
         ACTIVE_PLUGIN_INSTANCES.remove(instanceId);
         pluginContext = null;
     }
 
     private void writeHeartbeat() {
+        if (released.get() || Thread.currentThread().isInterrupted()) {
+            return;
+        }
         try {
             Path parent = heartbeatLog.getParent();
             if (parent != null && !Files.exists(parent)) {
                 Files.createDirectories(parent);
             }
+            if (released.get()) {
+                return;
+            }
             String line = LocalDateTime.now() + " instance=" + instanceId
                     + " executeCount=" + executeCount.get()
                     + " activeInstances=" + ACTIVE_PLUGIN_INSTANCES.size()
                     + System.lineSeparator();
+            if (released.get()) {
+                return;
+            }
             Files.write(heartbeatLog, line.getBytes(StandardCharsets.UTF_8),
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException ignored) {

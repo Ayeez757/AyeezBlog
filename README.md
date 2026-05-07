@@ -8,7 +8,7 @@
 ## 考核材料（热重载）
 
 - 考核题目文档：[第三轮后端考核说明（热重载技术方向）](https://github.com/gduf-cs-tribe/2025-backend-recruit-03/blob/main/docs/level3/arceca.md)
-- 本项目考核交付文档：[配置文件热重载考核交付文档](./docs/配置文件热重载考核交付文档.md)
+- 本项目考核交付文档：[热重载考核交付文档](./docs/热重载考核交付文档.md)
 
 > 评审提示：推荐一键栈 `deploy/review/docker-compose.yml`（MySQL + 后端 + 前台，`SPRING_PROFILES_ACTIVE=review`，DeepSeek / 即梦封面默认关闭，七牛留空即不启用）。外置 demo jar 默认在 `deploy/review/plugins/bundled-demo/`，需 Level2 时再复制到 `plugins/page-size/`。亦支持本地运行 + 热重载复现。生产路径 `deploy/prod/` 与评审栈相互独立。
 

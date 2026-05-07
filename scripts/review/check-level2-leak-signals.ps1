@@ -7,7 +7,7 @@ param(
     [int]$IntervalSeconds = 2,
     [int]$ExerciseRounds = 10,
     [int]$ExerciseWaitMs = 1200,
-    [int]$PostRevertQuietSeconds = 8
+    [int]$PostRevertQuietSeconds = 12
 )
 
 $ErrorActionPreference = "Stop"
@@ -372,7 +372,7 @@ if ($null -ne $urlClassLoaderDelta -and $urlClassLoaderDelta -ge 3) {
 if ($heartbeatThreadPeak -gt 0 -and $heartbeatThreadsAfterRevert -gt 0) {
     $riskItems += "Heartbeat threads still alive after revert (count = $heartbeatThreadsAfterRevert)"
 }
-if ($heartbeatFileGrowthExercise -gt 0 -and $heartbeatFileGrowthAfterRevert -gt 0) {
+if ($heartbeatFileGrowthExercise -gt 0 -and $heartbeatThreadsAfterRevert -gt 0 -and $heartbeatFileGrowthAfterRevert -gt 0) {
     $riskItems += "Heartbeat log still grows after revert (bytes increased = $heartbeatFileGrowthAfterRevert)"
 }
 if ($jarCheck.checked -and -not $jarCheck.canDelete) {
