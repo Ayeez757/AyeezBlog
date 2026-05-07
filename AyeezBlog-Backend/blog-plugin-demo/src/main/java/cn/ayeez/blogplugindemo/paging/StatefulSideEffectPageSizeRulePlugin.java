@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -42,6 +43,7 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
 
     private volatile PluginContext pluginContext;
     private volatile ScheduledExecutorService scheduler;
+    private final AtomicBoolean released = new AtomicBoolean(false);
 
     @Override
     public String id() {
@@ -60,15 +62,7 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
         });
         // 平台统一回收入口：登记该插件实例的兜底清理动作。
         // 这样即使插件作者忘记在 dispose 中完全释放，平台也能在下线时尝试兜底回收。
-        ScheduledExecutorService localScheduler = scheduler;
-        context.registerCleanupAction(() -> {
-            if (localScheduler != null) {
-                localScheduler.shutdownNow();
-            }
-            ACTIVE_HEARTBEAT_TASKS.updateAndGet(v -> Math.max(0, v - 1));
-            ACTIVE_PLUGIN_INSTANCES.remove(instanceId);
-            pluginContext = null;
-        });
+        context.registerCleanupAction(this::releaseResources);
 
         ACTIVE_HEARTBEAT_TASKS.incrementAndGet();
         scheduler.scheduleAtFixedRate(this::writeHeartbeat, 0, 2, TimeUnit.SECONDS);
@@ -93,8 +87,30 @@ public class StatefulSideEffectPageSizeRulePlugin implements RulePlugin<PageSize
 
     @Override
     public void dispose() {
-        // 资源释放改由平台统一兜底回收（PluginContext.registerCleanupAction）。
-        // 保留 dispose 空实现，表示插件生命周期已结束。
+        // 平台回收开启时：dispose 与 registerCleanupAction 双路径收敛到同一幂等逻辑，
+        // 避免仅依赖登记 Runnable（文档推荐的做法）。
+        // A/B 对照（pluginCleanupEnabled=false）时不在 dispose 里释放，便于观察「跳过平台回收」的残留。
+        PluginContext ctx = pluginContext;
+        if (ctx != null && ctx.isPlatformCleanupEnabled()) {
+            releaseResources();
+        }
+    }
+
+    /**
+     * 释放心跳调度器并清理本实例在静态记账中的登记；多次调用安全。
+     */
+    private void releaseResources() {
+        if (!released.compareAndSet(false, true)) {
+            return;
+        }
+        ScheduledExecutorService s = scheduler;
+        scheduler = null;
+        if (s != null) {
+            s.shutdownNow();
+        }
+        ACTIVE_HEARTBEAT_TASKS.updateAndGet(v -> Math.max(0, v - 1));
+        ACTIVE_PLUGIN_INSTANCES.remove(instanceId);
+        pluginContext = null;
     }
 
     private void writeHeartbeat() {
