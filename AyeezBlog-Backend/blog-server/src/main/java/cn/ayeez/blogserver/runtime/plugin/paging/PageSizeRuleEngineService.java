@@ -52,7 +52,15 @@ public class PageSizeRuleEngineService {
         for (RulePlugin<PageSizeRuleInput, PageSizeRuleOutput> plugin : pageSizeRulePlugins) {
             this.pageSizeRulePlugins.put(plugin.id(), plugin);
         }
+    }private void releaseResources() {
+    if (!released.compareAndSet(false, true)) {
+        return;
     }
+    // ... 关闭线程池 ...
+    ACTIVE_HEARTBEAT_TASKS.updateAndGet(v -> Math.max(0, v - 1));  // ✅ 递减本 ClassLoader 的计数器
+    ACTIVE_PLUGIN_INSTANCES.remove(instanceId);                     // ✅ 移除本实例 ID
+}
+
 
     /**
      * 启动时初始化插件。
