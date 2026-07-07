@@ -1,3 +1,10 @@
+:root {
+  --blog-link-color: #8dff98;
+  --blog-link-hover-color: #c8ffb8;
+  --blog-link-color-on-light: #179447;
+  --blog-link-hover-color-on-light: #0f7a39;
+}
+
 html,
 body {
   width: 100%;
@@ -29,6 +36,17 @@ body {
   overflow-y: scroll; /* 强制显示垂直滚动条 */
   color: white;
   touch-action: pan-y;
+}
+
+a,
+a:visited {
+  color: var(--blog-link-color);
+  text-decoration-color: currentColor;
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--blog-link-hover-color);
 }
 
 /* 磁力框选光标：隐藏系统原生光标，仅显示自定义光标 */

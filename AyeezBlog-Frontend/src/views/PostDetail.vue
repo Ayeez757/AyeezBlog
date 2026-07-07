@@ -960,7 +960,7 @@ export default {
 }
 
 .toc-link {
-  color: #2e789d;
+  color: var(--blog-link-color);
   text-decoration: none;
   flex: 1;
   min-width: 0;
@@ -971,7 +971,7 @@ export default {
 
 .toc-link:hover {
   text-decoration: underline;
-  color: #fff;
+  color: var(--blog-link-hover-color);
 }
 
 /* 桌面端贴右逻辑由 JS 动态计算 left，CSS 仅保留回退定位 */
@@ -1584,11 +1584,12 @@ export default {
 }
 
 .reader-post-content :deep(a) {
-  color: #2563eb;
+  color: var(--blog-link-color-on-light);
   text-decoration: none;
 }
 
 .reader-post-content :deep(a:hover) {
+  color: var(--blog-link-hover-color-on-light);
   text-decoration: underline;
 }
 
