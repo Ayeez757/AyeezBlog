@@ -1,6 +1,5 @@
 
 
-
 # 阿叶Ayeez的博客
 
 - [中文](./README.md) | [English](./docs/README_EN.md)
@@ -24,9 +23,6 @@
   <!-- Java 版本（从 properties.java.version 手动获取） -->
   <img alt="Java" src="https://img.shields.io/badge/Java-21-007396?logo=java">
 </p>
-
-
-
 
 
 
@@ -59,7 +55,7 @@
 | **后端**          | Java 21 + Spring Boot 3.2.0 + Spring Security + JWT + MyBatis + Spring AI（可选 DeepSeek）+ Redis | 业务逻辑与数据接口  |
 | **数据库**         | MySQL                                                                     | 持久化存储      |
 | **部署**          | Docker + Docker Compose + Nginx                                           | 容器化部署，反向代理 |
-| **服务器（当前实际部署）** | ubantu22.04                                                               | 服务器系统      |
+| **服务器（当前实际部署）** | Ubuntu 22.04                                                              | 服务器系统      |
 | **其他第三方工具**     | twikoo（评论）                                                                |            |
 
 
@@ -309,8 +305,6 @@ npm run dev
 - 后端优先读取 `-Druntime.config.path`，其次读取 `RUNTIME_CONFIG_PATH`；
 - Docker 推荐固定使用 `RUNTIME_CONFIG_PATH=/app/config/runtime-config.yml`；
 - 若只变更 `deploy/prod/runtime-config.yml`，CI/CD 会执行“上传配置 + 调用重载接口”而非 `compose up`。
-
-
 
 
 
