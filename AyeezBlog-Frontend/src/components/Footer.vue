@@ -84,6 +84,11 @@ onUnmounted(() => {
           https://butterfly.ayeez.cn
         </a>
       </span>
+      <span class="footer-line">
+        <router-link to="/privacy">隐私政策</router-link>
+        ｜
+        <a href="https://ayeez.cn" target="_blank" rel="noopener noreferrer">主站</a>
+      </span>
       <span class="footer-line">粤ICP备2025505813号-1</span>
     </div>
   </footer>
