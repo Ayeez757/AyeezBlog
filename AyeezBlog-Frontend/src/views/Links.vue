@@ -18,7 +18,7 @@
           <a v-for="(site, index) in group.link_list" :key="site.link || index" class="link-card row-reveal-item" :href="site.link"
             target="_blank" rel="noopener">
             <div class="link-card-header">
-              <img class="link-avatar" :src="site.avatar" :alt="site.name" />
+              <img class="link-avatar" :src="site.avatar" :alt="site.name" @error="useDefaultAvatar(site)" />
               <div class="link-meta">
                 <h2 class="link-name">{{ site.name }}</h2>
                 <p class="link-descr">
@@ -94,6 +94,7 @@
 <script>
 import { loadTwikoo, getTwikooEnvId } from '@/utils/twikoo';
 import { fetchLinks } from '@/api';
+import defaultLinkAvatar from '@/assets/imgs/link-avatar-placeholder.png';
 
 export default {
   name: 'Links',
@@ -143,6 +144,9 @@ export default {
     }
   },
   methods: {
+    useDefaultAvatar(site) {
+      site.avatar = defaultLinkAvatar;
+    },
     async loadLinks() {
       this.loadingLinks = true;
       this.linksError = '';
@@ -156,7 +160,7 @@ export default {
               ? (group.link_list ?? group.linkList).map((site) => ({
                 name: site.name ?? '',
                 link: site.link ?? '',
-                avatar: site.avatar ?? '',
+                avatar: (typeof site.avatar === 'string' && site.avatar.trim()) || defaultLinkAvatar,
                 descr: site.descr ?? ''
               }))
               : []
