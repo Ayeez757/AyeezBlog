@@ -6,6 +6,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    concurrency: production-frontend
 
     steps:
       - name: 检出代码
@@ -26,13 +27,10 @@ jobs:
         working-directory: ./AyeezBlog-Frontend
         run: npm run build
 
-      # 同步到站点根目录；排除 admin/，避免覆盖管理端（管理端由 deploy-adminpanel 部署）
       - name: 部署到服务器（rsync）
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avz --delete --exclude=admin/
-          path: AyeezBlog-Frontend/dist/
-          remote_path: /var/lib/docker/volumes/html/_data/
-          remote_host: ${{ secrets.SERVER_HOST }}
-          remote_user: ${{ secrets.SERVER_USER }}
-          remote_key: ${{ secrets.SERVER_SSH_KEY }}
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: bash .github/scripts/deploy-frontend.sh
