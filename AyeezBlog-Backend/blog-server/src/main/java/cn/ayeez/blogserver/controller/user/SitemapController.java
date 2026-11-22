@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -36,14 +37,38 @@ public class SitemapController {
     @Value("${blog.site-url:https://blog.ayeez.cn}")
     private String siteUrl;
 
-    @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
+    @GetMapping("/sitemap.xml")
     public ResponseEntity<String> sitemap() {
-        String baseUrl = normalizeBaseUrl(siteUrl);
-        List<Post> posts = postMapper.listForSitemap();
-
         StringBuilder xml = new StringBuilder(4096);
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+        for (SitemapEntry entry : entries()) {
+            appendUrl(xml, entry);
+        }
+        xml.append("</urlset>\n");
+        return sitemapResponse(MediaType.APPLICATION_XML, xml.toString());
+    }
+
+    @GetMapping("/sitemap.txt")
+    public ResponseEntity<String> textSitemap() {
+        StringBuilder text = new StringBuilder(4096);
+        for (SitemapEntry entry : entries()) {
+            text.append(entry.loc()).append('\n');
+        }
+        return sitemapResponse(MediaType.TEXT_PLAIN, text.toString());
+    }
+
+    private ResponseEntity<String> sitemapResponse(MediaType type, String body) {
+        return ResponseEntity.ok()
+                .contentType(new MediaType(type, StandardCharsets.UTF_8))
+                .cacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES).cachePublic())
+                .body(body);
+    }
+
+    private List<SitemapEntry> entries() {
+        String baseUrl = normalizeBaseUrl(siteUrl);
+        List<Post> posts = postMapper.listForSitemap();
+        List<SitemapEntry> entries = new ArrayList<>();
 
         LocalDateTime latestUpdate = null;
         if (posts != null && !posts.isEmpty()) {
@@ -51,9 +76,9 @@ public class SitemapController {
             latestUpdate = first.getUpdateTime() != null ? first.getUpdateTime() : first.getCreateTime();
         }
 
-        appendUrl(xml, baseUrl + "/", latestUpdate, "daily", "1.0");
-        appendUrl(xml, baseUrl + "/archive", latestUpdate, "daily", "0.8");
-        appendUrl(xml, baseUrl + "/about", null, "monthly", "0.6");
+        entries.add(new SitemapEntry(baseUrl + "/", latestUpdate, "daily", "1.0"));
+        entries.add(new SitemapEntry(baseUrl + "/archive", latestUpdate, "daily", "0.8"));
+        entries.add(new SitemapEntry(baseUrl + "/about", null, "monthly", "0.6"));
 
         if (posts != null) {
             for (Post post : posts) {
@@ -63,16 +88,11 @@ public class SitemapController {
                 String encodedId = URLEncoder.encode(post.getId().trim(), StandardCharsets.UTF_8)
                         .replace("+", "%20");
                 LocalDateTime lastMod = post.getUpdateTime() != null ? post.getUpdateTime() : post.getCreateTime();
-                appendUrl(xml, baseUrl + "/posts/" + encodedId, lastMod, "weekly", "0.9");
+                entries.add(new SitemapEntry(baseUrl + "/posts/" + encodedId, lastMod, "weekly", "0.9"));
             }
         }
 
-        xml.append("</urlset>\n");
-
-        return ResponseEntity.ok()
-                .contentType(new MediaType("application", "xml", StandardCharsets.UTF_8))
-                .cacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES).cachePublic())
-                .body(xml.toString());
+        return entries;
     }
 
     private String normalizeBaseUrl(String raw) {
@@ -86,26 +106,18 @@ public class SitemapController {
         return trimmed;
     }
 
-    private void appendUrl(
-            StringBuilder xml,
-            String loc,
-            LocalDateTime lastMod,
-            String changeFreq,
-            String priority
-    ) {
+    private record SitemapEntry(String loc, LocalDateTime lastMod, String changeFreq, String priority) {}
+
+    private void appendUrl(StringBuilder xml, SitemapEntry entry) {
         xml.append("  <url>\n");
-        xml.append("    <loc>").append(escapeXml(loc)).append("</loc>\n");
-        if (lastMod != null) {
+        xml.append("    <loc>").append(escapeXml(entry.loc())).append("</loc>\n");
+        if (entry.lastMod() != null) {
             xml.append("    <lastmod>")
-                    .append(lastMod.atOffset(ZoneOffset.ofHours(8)).format(W3C_DATETIME))
+                    .append(entry.lastMod().atOffset(ZoneOffset.ofHours(8)).format(W3C_DATETIME))
                     .append("</lastmod>\n");
         }
-        if (changeFreq != null && !changeFreq.isEmpty()) {
-            xml.append("    <changefreq>").append(changeFreq).append("</changefreq>\n");
-        }
-        if (priority != null && !priority.isEmpty()) {
-            xml.append("    <priority>").append(priority).append("</priority>\n");
-        }
+        xml.append("    <changefreq>").append(entry.changeFreq()).append("</changefreq>\n");
+        xml.append("    <priority>").append(entry.priority()).append("</priority>\n");
         xml.append("  </url>\n");
     }
 

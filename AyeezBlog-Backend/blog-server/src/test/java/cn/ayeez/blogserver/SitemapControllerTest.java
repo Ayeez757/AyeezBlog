@@ -4,10 +4,12 @@ import cn.ayeez.blogpojo.entity.Post;
 import cn.ayeez.blogserver.controller.user.SitemapController;
 import cn.ayeez.blogserver.mapper.PostMapper;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SitemapControllerTest {
 
     @Test
-    void generatesValidSitemapXmlWithPostsAndStaticPages() throws Exception {
+    void generatesBothSitemapFormatsWithPostsAndStaticPages() throws Exception {
         Post p1 = new Post();
         p1.setId("mysql-notes");
         p1.setUpdateTime(LocalDateTime.of(2026, 11, 10, 12, 30, 0));
@@ -50,6 +52,8 @@ class SitemapControllerTest {
 
         ResponseEntity<String> response = controller.sitemap();
         assertEquals(200, response.getStatusCode().value());
+        assertEquals(new MediaType(MediaType.APPLICATION_XML, StandardCharsets.UTF_8),
+                response.getHeaders().getContentType());
         String body = response.getBody();
         assertNotNull(body);
         assertTrue(body.contains("<loc>https://blog.ayeez.cn/</loc>"));
@@ -59,6 +63,18 @@ class SitemapControllerTest {
         assertTrue(body.contains("<lastmod>2026-11-10T12:30:00+08:00</lastmod>"));
         assertTrue(body.contains("<loc>https://blog.ayeez.cn/posts/a%26b</loc>"));
         assertFalse(body.contains("/posts/   "));
+
+        ResponseEntity<String> text = controller.textSitemap();
+        assertEquals(200, text.getStatusCode().value());
+        assertEquals(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8),
+                text.getHeaders().getContentType());
+        assertEquals("""
+                https://blog.ayeez.cn/
+                https://blog.ayeez.cn/archive
+                https://blog.ayeez.cn/about
+                https://blog.ayeez.cn/posts/mysql-notes
+                https://blog.ayeez.cn/posts/a%26b
+                """, text.getBody());
     }
 
     private static void setField(Object target, String name, Object value) throws Exception {
