@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /fc
+
+User-agent: Mediapartners-Google
+Allow: /
+
+Sitemap: https://blog.ayeez.cn/sitemap.xml

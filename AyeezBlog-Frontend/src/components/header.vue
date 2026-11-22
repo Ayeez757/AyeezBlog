@@ -28,7 +28,7 @@
                             :target="item.external ? '_blank' : undefined"
                             :rel="item.external ? 'noopener noreferrer' : undefined"
                         >{{ item.name }}</a>
-                        <a v-else @click.prevent="navigate(item.section)" href="#">{{ item.name }}</a>
+                        <router-link v-else :to="item.section ? `/${item.section}` : '/'">{{ item.name }}</router-link>
                         <div class="fluorescent-bar"></div>
                     </li>
                 </ul>
@@ -92,22 +92,16 @@ export default {
             const githubUrl =
                 (import.meta.env.VITE_GITHUB_URL && String(import.meta.env.VITE_GITHUB_URL).trim()) ||
                 "https://github.com/Ayeez757/AyeezBlog";
-            const adminUrl =
-                (import.meta.env.VITE_ADMIN_URL && String(import.meta.env.VITE_ADMIN_URL).trim()) ||
-                "/admin";
             return [
                 { name: "首页", section: "" },
                 { name: "关于", section: "about" },
                 { name: "归档", section: "archive" },
                 { name: "友链", section: "links" },
                 { name: "说说", section: "talks" },
-                // { name: "朋友圈", section: "fc" },
                 { name: "留言", section: "comments" },
                 { name: "相册", section: "albums" },
                 { name: "日志", section: "logs" },
-                // { name: "联系", section: "contact" },
-                { name: "GitHub", href: githubUrl, external: true },
-                { name: "管理端", href: adminUrl, external: false }
+                { name: "GitHub", href: githubUrl, external: true }
             ];
         }
     },

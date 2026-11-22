@@ -79,15 +79,11 @@ onUnmounted(() => {
       <span class="footer-line">总访问量（PV）：{{ pageViews }} ｜ 总访客数（UV）：{{ uniqueVisitors }}</span>
       <span class="footer-line">2026-2026 by 阿叶Ayeez</span>
       <span class="footer-line">
-        旧站：
-        <a href="https://butterfly.ayeez.cn" target="_blank" rel="noopener noreferrer">
-          https://butterfly.ayeez.cn
-        </a>
-      </span>
-      <span class="footer-line">
-        <router-link to="/privacy">隐私政策</router-link>
+        <router-link to="/about">关于我</router-link>
         ｜
-        <a href="https://ayeez.cn" target="_blank" rel="noopener noreferrer">主站</a>
+        <router-link to="/archive">文章归档</router-link>
+        ｜
+        <router-link to="/privacy">隐私政策</router-link>
       </span>
       <span class="footer-line">粤ICP备2025505813号-1</span>
     </div>

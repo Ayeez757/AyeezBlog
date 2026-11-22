@@ -22,7 +22,11 @@
                     <div class="nick">{{ authorName }}</div>
                     <div class="meta">
                       <span class="time">{{ formatTime(t.createdAt) }}</span>
-                      <span class="id">#{{ t.id }}</span>
+                      <router-link
+                        class="id"
+                        :to="{ name: 'TalkDetail', params: { id: t.id } }"
+                        @click.stop
+                      >#{{ t.id }}</router-link>
                     </div>
                   </div>
 
@@ -555,6 +559,11 @@ export default {
   color: rgba(255, 255, 255, 0.65);
   white-space: nowrap;
   flex: 0 0 auto;
+}
+
+.meta .id {
+  color: inherit;
+  text-decoration: none;
 }
 
 .content {

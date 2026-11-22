@@ -84,7 +84,12 @@
 
     <!-- 文章内容（左侧） -->
     <main class="post-main">
-      <div class="post-detail">
+      <div v-if="postNotFound" class="post-detail post-not-found">
+        <h1>文章未找到</h1>
+        <p class="post-not-found-desc">该文章可能已下线或链接地址有误。</p>
+        <p><router-link to="/">返回首页</router-link> ｜ <router-link to="/archive">查看文章归档</router-link></p>
+      </div>
+      <div v-else class="post-detail">
         <!-- 标题 -->
         <h1>{{ frontMatter.title || post.title }}</h1>
 
@@ -198,6 +203,8 @@ import 'highlight.js/styles/github-dark.css';
 import 'katex/dist/katex.min.css';
 import Lenis from 'lenis';
 import { initSmoothScroll, destroySmoothScroll } from '@/plugins/smoothScroll';
+import { updatePageSeo, extractPlainTextExcerpt, buildCanonicalUrl } from '@/utils/seo';
+import { ensureAdsenseLoaded } from '@/utils/adsense';
 
 export default {
   name: 'PostDetail',
@@ -205,6 +212,7 @@ export default {
   data() {
     return {
       post: {},
+      postNotFound: false,
       frontMatter: {},
       headings: [],     // { level, title, anchor }
       collapsedMap: {}, // { [anchor]: boolean }
@@ -795,15 +803,104 @@ export default {
           }
         });
       });
+    },
+
+    applyPostSeo(postData) {
+      if (!postData || !postData.id) {
+        updatePageSeo({
+          title: '文章未找到',
+          description: '请求的文章不存在或已下线。',
+          canonicalPath: `/posts/${this.id || ''}`,
+          robots: 'noindex, nofollow'
+        });
+        return;
+      }
+
+      let parsedAttrs = {};
+      try {
+        const parsed = fm(postData.content || '');
+        parsedAttrs = parsed?.attributes || {};
+      } catch (_) {}
+
+      const title = parsedAttrs.title || postData.title || '文章详情';
+      const description =
+        parsedAttrs.description ||
+        postData.description ||
+        extractPlainTextExcerpt(postData.content, 160);
+      const canonicalPath = `/posts/${postData.id}`;
+      const canonicalUrl = buildCanonicalUrl(canonicalPath);
+      const isEditing = Boolean(postData.editing);
+
+      const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: title,
+        description,
+        url: canonicalUrl,
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': canonicalUrl
+        },
+        author: {
+          '@type': 'Person',
+          name: '阿叶Ayeez',
+          url: 'https://blog.ayeez.cn/about'
+        }
+      };
+      if (postData.cover) {
+        jsonLd.image = [postData.cover];
+      }
+      if (postData.createTime) {
+        jsonLd.datePublished = postData.createTime;
+      }
+      if (postData.updateTime || postData.createTime) {
+        jsonLd.dateModified = postData.updateTime || postData.createTime;
+      }
+
+      updatePageSeo({
+        title,
+        description,
+        canonicalPath,
+        robots: isEditing ? 'noindex, follow' : '',
+        jsonLd
+      });
+
+      // 仅对有效且非“正在编辑”状态的正式文章触发 AdSense 加载
+      if (!isEditing) {
+        ensureAdsenseLoaded();
+      }
+    },
+
+    async loadPost(postId) {
+      this.postNotFound = false;
+      try {
+        const response = await fetchPostById(postId);
+        const data = response && response.data ? response.data : null;
+        if (!data || !data.id) {
+          this.post = {};
+          this.postNotFound = true;
+          this.applyPostSeo(null);
+          return;
+        }
+        this.post = data;
+        this.applyPostSeo(data);
+      } catch (error) {
+        console.error('加载文章失败:', error);
+        this.post = {};
+        this.postNotFound = true;
+        this.applyPostSeo(null);
+      }
+    }
+  },
+  watch: {
+    id(newId, oldId) {
+      if (newId && newId !== oldId) {
+        this.loadPost(newId);
+      }
     }
   },
   async created() {
-    try {
-      const response = await fetchPostById(this.id);
-      this.post = response.data;
-    } catch (error) {
-      console.error('加载文章失败:', error);
-    }
+    await this.loadPost(this.id);
   },
   async mounted() {
     await this.$nextTick();
@@ -875,6 +972,25 @@ export default {
   flex: 1 1 700px;
   max-width: 700px;
   min-width: 0;
+}
+
+.post-not-found {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.post-not-found-desc {
+  color: rgba(255, 255, 255, 0.78);
+  margin: 12px 0 20px;
+}
+
+.post-not-found a {
+  color: #7af58f;
+  text-decoration: none;
+}
+
+.post-not-found a:hover {
+  text-decoration: underline;
 }
 
 .toc-sidebar-container {

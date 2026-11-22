@@ -7,9 +7,7 @@
       </div>
 
       <p class="comments-subtitle">
-        这里会把 <span class="highlight">全站所有评论</span>汇总到一起。
-        旧站留言页请看：
-        <a class="sub-link" href="https://blog.ayeez.cn/comments" target="_blank" rel="noopener">旧站留言页</a>
+        这里会把 <span class="highlight">全站所有评论</span>汇总到一起，欢迎在这里留言交流。
       </p>
 
       <div class="comment-card comment-card--all">

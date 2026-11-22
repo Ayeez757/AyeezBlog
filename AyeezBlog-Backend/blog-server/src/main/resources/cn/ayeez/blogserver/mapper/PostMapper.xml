@@ -128,4 +128,16 @@
         WHERE bpt.tag_id = #{tagId}
         ORDER BY p.create_time DESC
     </select>
+
+    <select id="listForSitemap" resultType="cn.ayeez.blogpojo.entity.Post">
+        SELECT
+        id,
+        create_time as createTime,
+        update_time as updateTime,
+        editing,
+        water
+        FROM blog_post
+        WHERE (editing IS NULL OR editing = 0)
+        ORDER BY update_time DESC, create_time DESC
+    </select>
 </mapper>

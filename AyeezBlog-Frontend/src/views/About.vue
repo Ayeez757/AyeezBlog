@@ -75,9 +75,6 @@
       <section class="section-card">
         <h2 class="section-title">我的一些社交账号</h2>
         <div class="social-grid">
-          <a href="https://ayeez.cn" target="_blank" rel="noopener" class="social-button">
-            <i class="fa fa-blog"></i><span>个人主页</span>
-          </a>
           <a href="https://github.com/Ayeez757" target="_blank" rel="noopener" class="social-button">
             <i class="fab fa-github"></i><span>GitHub</span>
           </a>

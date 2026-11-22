@@ -96,14 +96,11 @@
           </div>
 
           <div class="group-items">
-            <div
+            <router-link
               v-for="post in group.items"
               :key="post.id"
+              :to="{ name: 'PostDetail', params: { id: post.id } }"
               class="timeline-item row-reveal-item"
-              @click="goToPost(post.id)"
-              role="button"
-              tabindex="0"
-              @keydown.enter="goToPost(post.id)"
             >
               <div class="timeline-card">
                 <div class="timeline-title" :title="post.title">{{ post.title || '未命名文章' }}</div>
@@ -112,7 +109,7 @@
                 </div>
                 <div class="timeline-date">{{ formatDate(post.updateTime) }}</div>
               </div>
-            </div>
+            </router-link>
           </div>
         </div>
       </div>
@@ -145,7 +142,8 @@ export default {
       orderBy: 'update_time',
       orderType: 'desc',
       rowObserver: null,
-      revealTimer: null
+      revealTimer: null,
+      revealFallbackTimer: null
     };
   },
   computed: {
@@ -254,7 +252,7 @@ export default {
   async mounted() {
     await this.loadAllPosts();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.rowObserver) {
       this.rowObserver.disconnect();
       this.rowObserver = null;
@@ -262,6 +260,10 @@ export default {
     if (this.revealTimer) {
       clearTimeout(this.revealTimer);
       this.revealTimer = null;
+    }
+    if (this.revealFallbackTimer) {
+      clearTimeout(this.revealFallbackTimer);
+      this.revealFallbackTimer = null;
     }
   },
   methods: {
@@ -314,10 +316,18 @@ export default {
       }, 120);
     },
     setupArchiveRowReveal() {
-      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
-      if (this.rowObserver) this.rowObserver.disconnect();
+      if (this.revealFallbackTimer) {
+        clearTimeout(this.revealFallbackTimer);
+        this.revealFallbackTimer = null;
+      }
 
       const items = document.querySelectorAll('.timeline .row-reveal-item');
+      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+        items.forEach((item) => item.classList.add('row-revealed'));
+        return;
+      }
+      if (this.rowObserver) this.rowObserver.disconnect();
+
       items.forEach((item) => item.classList.remove('row-revealed'));
 
       this.rowObserver = new IntersectionObserver((entries) => {
@@ -332,6 +342,11 @@ export default {
       });
 
       items.forEach((item) => this.rowObserver.observe(item));
+
+      // 兜底：避免无滚动爬虫快照时条目长期透明
+      this.revealFallbackTimer = setTimeout(() => {
+        items.forEach((item) => item.classList.add('row-revealed'));
+      }, 600);
     }
   }
 };
@@ -576,6 +591,8 @@ export default {
   padding: 10px 0;
   cursor: pointer;
   outline: none;
+  text-decoration: none;
+  color: inherit;
   opacity: 0;
   transform: translateY(24px);
 }

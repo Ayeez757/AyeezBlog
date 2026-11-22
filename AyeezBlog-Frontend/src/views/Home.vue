@@ -103,8 +103,8 @@
       <img id="home-card-avatar" src="https://qiniu.ayeez.cn/avatar.jpg" alt="头像">
       <div class="card-content">
         <text style="font-size: 20px;font-weight: 1000;padding: 20px 5px;">公告！</text>
-        <text>这是新博客，仍然在持续开发~（内容已经迁移，可能有部分图片丢失，可联系管理员修复）</text>
-        <text>旧站：<a href="https://butterfly.ayeez.cn" target="_blank">https://butterfly.ayeez.cn</a> （可能停止更新）</text>
+        <text>欢迎来到阿叶 Ayeez 的个人技术博客，这里持续记录后端开发、运维实战与学习笔记~</text>
+        <text>涵盖 Java、Spring Boot、MySQL、Docker、计算机网络与开源项目总结，欢迎交流指正！</text>
         <text>qq闲聊交流群：421300955</text>
         <!-- 圆形图标链接 -->
         <div class="social-icons">
@@ -129,14 +129,13 @@
 
     <!-- 文章卡片展示区域 -->
     <div class="posts-container">
-      <div
+      <router-link
         v-for="(post, index) in posts"
         :key="post.id"
+        :to="{ name: 'PostDetail', params: { id: post.id } }"
         class="post-card row-reveal-item"
         :data-post-id="post.id"
         :data-row-key="getPostRowKey(index)"
-        role="link"
-        tabindex="0"
         :aria-label="`打开文章：${post.title}`"
         :class="[
           {
@@ -146,10 +145,7 @@
           }
         ]"
         @mouseenter="hoveredCardId = post.id"
-        @mouseleave="hoveredCardId = null"
-        @click="goToPost(post.id)"
-        @keydown.enter.prevent="goToPost(post.id)"
-        @keydown.space.prevent="goToPost(post.id)">
+        @mouseleave="hoveredCardId = null">
         <div class="post-cover-wrap">
           <img :src="post.cover || post.fallbackCover || defaultCover" :alt="post.title" class="post-cover" />
           <div v-if="post.cardBadges && post.cardBadges.length" class="post-badges">
@@ -166,7 +162,7 @@
           <p class="post-description">{{ truncateContent(post.description) }}</p>
           <p class="post-date">更新于 {{ formatDate(post.updateTime) }}</p>
         </div>
-      </div>
+      </router-link>
     </div>
 
     <!-- 分页控件 -->
@@ -215,6 +211,7 @@ export default {
       // 卡片滚动观察器
       cardObserver: null,
       resizeTimer: null,
+      revealFallbackTimer: null,
 
       // 加载状态
       isLoading: true
@@ -229,12 +226,8 @@ export default {
   },
   async mounted() {
     try {
-      // 等待所有资源加载完成
-      await Promise.all([
-        this.preloadFonts(), // 预加载字体
-        this.preloadImages(), // 预加载图片
-        this.loadPosts() // 加载文章数据//在犹豫要不要放下面
-      ]);
+      // 仅等待核心文章数据返回，避免外部字体（本地已内置 @font-face）与图床预加载阻塞首屏呈现
+      await this.loadPosts();
     } finally {
       this.isLoading = false; // 隐藏加载动画
       this.animateText(); // 触发文本动画
@@ -257,6 +250,10 @@ export default {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
     }
+    if (this.revealFallbackTimer) {
+      clearTimeout(this.revealFallbackTimer);
+      this.revealFallbackTimer = null;
+    }
   },
   methods: {
     // 跳转到文章详情页
@@ -266,7 +263,8 @@ export default {
     // 加载文章数据
     async loadPosts() {
       try {
-        await this.ensureDefaultCoverPool();
+        // 默认封面池改为异步非阻塞加载，避免串行等待相册接口拖慢首屏文章呈现
+        const coverPoolTask = this.ensureDefaultCoverPool();
         const response = await fetchPosts(this.currentPage, this.pageSize);
         const payload = response?.data || response || {};
         const rows = payload.rows || [];
@@ -275,6 +273,13 @@ export default {
           cardBadges: getPostCardBadges(p),
           fallbackCover: this.pickDefaultCoverForPost(p, index)
         }));
+        coverPoolTask.then(() => {
+          if (!this.defaultCoverPool.length || !Array.isArray(this.posts)) return;
+          this.posts = this.posts.map((p, index) => ({
+            ...p,
+            fallbackCover: this.pickDefaultCoverForPost(p, index)
+          }));
+        });
         this.total = Number(payload.total) || 0; // 总条数
 
         // 后端可能在 strictMode 下覆盖分页大小，前端分页条必须按“实际生效值”计算。
@@ -460,8 +465,30 @@ export default {
       return this.revealedRowKeys.includes(rowKey);
     },
 
+    revealAllHomeRows() {
+      const keys = ['notice-row'];
+      const columns = this.getPostColumns();
+      const rowCount = Math.ceil((this.posts || []).length / columns);
+      for (let i = 0; i < rowCount; i++) {
+        keys.push(`post-row-${i}`);
+      }
+      keys.forEach((key) => {
+        if (!this.revealedRowKeys.includes(key)) {
+          this.revealedRowKeys.push(key);
+        }
+      });
+    },
+
     setupHomeRowReveal() {
-      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+      if (this.revealFallbackTimer) {
+        clearTimeout(this.revealFallbackTimer);
+        this.revealFallbackTimer = null;
+      }
+
+      if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+        this.revealAllHomeRows();
+        return;
+      }
       if (this.cardObserver) this.cardObserver.disconnect();
 
       this.cardObserver = new IntersectionObserver((entries) => {
@@ -486,6 +513,11 @@ export default {
       for (let i = 0; i < postCards.length; i += columns) {
         this.cardObserver.observe(postCards[i]);
       }
+
+      // 兜底：无滚动环境（如搜索引擎渲染快照）下确保卡片不会长期停留在 opacity: 0
+      this.revealFallbackTimer = setTimeout(() => {
+        this.revealAllHomeRows();
+      }, 600);
     },
 
     warmupRouteChunks() {
@@ -501,7 +533,6 @@ export default {
         import('@/views/About.vue');
         import('@/views/Archive.vue');
         import('@/views/Links.vue');
-        import('@/views/FriendsCircle.vue');
         import('@/views/Comments.vue');
         import('@/views/Logs.vue');
         import('@/views/Albums.vue');
@@ -1033,6 +1064,9 @@ export default {
 }
 
 .post-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
   background: linear-gradient(135deg,
       rgba(108, 171, 106, 0.3),
       rgba(42, 184, 73, 0.6));

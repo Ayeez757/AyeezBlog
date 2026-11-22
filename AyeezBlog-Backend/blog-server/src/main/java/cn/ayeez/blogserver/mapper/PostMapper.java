@@ -46,4 +46,9 @@ public interface PostMapper {
      * 按标签ID查询文章简要列表
      */
     List<Post> listByTagId(Long tagId);
+
+    /**
+     * 查询用于生成 sitemap.xml 的文章列表（轻量字段，排除正在编辑草稿）
+     */
+    List<Post> listForSitemap();
 }

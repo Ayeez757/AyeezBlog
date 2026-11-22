@@ -10,14 +10,11 @@
       </p>
 
       <div class="albums-grid">
-        <article
+        <router-link
           v-for="album in albums"
           :key="album.id"
+          :to="{ name: 'AlbumDetail', params: { id: album.id } }"
           class="album-card"
-          @click="goToAlbum(album.id)"
-          role="button"
-          tabindex="0"
-          @keydown.enter="goToAlbum(album.id)"
         >
           <div class="album-stack">
             <img class="stack-photo stack-photo--one" :src="getCover(album, 0)" :alt="album.title" />
@@ -26,7 +23,7 @@
           </div>
           <h3 class="album-title">{{ album.title }}</h3>
           <p class="album-desc">{{ album.description }}</p>
-        </article>
+        </router-link>
       </div>
       <p v-if="!isLoading && !albums.length" class="empty-tip">暂无相册内容</p>
     </div>
@@ -122,6 +119,9 @@ export default {
 }
 
 .album-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
   background: transparent;
   border-radius: 12px;
   border: none;
