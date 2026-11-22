@@ -29,13 +29,14 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
+          predicate-quantifier: every
           filters: |
             backend:
               - "AyeezBlog-Backend/**"
             frontend:
               - "AyeezBlog-Frontend/**"
             frontend_deploy:
-              - ".github/scripts/deploy-frontend.sh"
+              - ".github/{scripts/deploy-frontend.sh,workflows/cicd-deploy.yml}"
             adminpanel:
               - "AyeezBlog-AdminPanel/**"
             deploy_other:
