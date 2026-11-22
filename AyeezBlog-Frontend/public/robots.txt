@@ -2,6 +2,10 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
+Allow: /api/post/get$
+Allow: /api/post/get?
+Allow: /api/post/list$
+Allow: /api/post/list?
 Disallow: /fc
 
 User-agent: Mediapartners-Google
